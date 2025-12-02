@@ -1,6 +1,6 @@
 class Answer {
   final String slideId;
-  final String? answerIndex;
+  final List<int>? answerIndex;
   final int? timeElapsedSeconds;
 
 

@@ -1,7 +1,7 @@
 class Option {
   final int index;
   final String? text;
-  final int? mediaId;
+  final String? mediaId;
 
   Option({
     required this.index,

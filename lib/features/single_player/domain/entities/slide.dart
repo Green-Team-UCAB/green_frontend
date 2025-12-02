@@ -2,14 +2,14 @@ import 'package:green_frontend/features/single_player/domain/entities/option.dar
 
 enum QuestionType {
   singleChoice,
-  trueFalse,
+  multipleChoice,
 }
 
 class Slide {
   final String slideId;
   final QuestionType questionType;
   final String questionText;
-  final int timeLimiSeconds;
+  final int timeLimitSeconds;
   final String? mediaId;
   final List<Option> options;
 
@@ -17,7 +17,7 @@ class Slide {
     required this.slideId,
     required this.questionType,
     required this.questionText,
-    required this.timeLimiSeconds,
+    required this.timeLimitSeconds,
     this.mediaId,
     required this.options,
   });
