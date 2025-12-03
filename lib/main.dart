@@ -1,24 +1,30 @@
 import 'package:flutter/material.dart';
-import 'package:kahoot_project/Presentation//Screens/KahootCreatorScreen.dart';
+import 'package:provider/provider.dart';
+import 'package:kahoot_project/features/kahoot/application/providers/kahoot_provider.dart';
+import 'package:kahoot_project/features/kahoot/application/providers/theme_provider.dart';
+import 'package:kahoot_project/features/kahoot/presentation/screens/create_kahoot_screen.dart';
 
-void main() => runApp(KahootCreatorApp());
+void main() {
+  runApp(MyApp());
+}
 
-class KahootCreatorApp extends StatelessWidget {
-    KahootCreatorApp({super.key});
-
+class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Kahoot Creator',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorSchemeSeed: Colors.black,
-        useMaterial3: true,
-        brightness: Brightness.light,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => KahootProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+      ],
+      child: MaterialApp(
+        title: 'Kahoot Creator',
+        theme: ThemeData(
+          primarySwatch: Colors.purple,
+          visualDensity: VisualDensity.adaptivePlatformDensity,
+        ),
+        home: CreateKahootScreen(),
+        debugShowCheckedModeBanner: false,
       ),
-      
-      home: KahootCreatorScreen(),
     );
   }
 }
-
