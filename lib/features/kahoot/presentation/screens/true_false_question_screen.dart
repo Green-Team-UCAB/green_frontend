@@ -34,9 +34,15 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
   void _loadQuestion() {
     final kahootProvider = Provider.of<KahootProvider>(context, listen: false);
     final question = kahootProvider.currentKahoot.questions[widget.questionIndex!];
+    
     _questionTextController.text = question.text;
     _timeLimit = question.timeLimitSeconds;
-    _answers = question.answers;
+    _answers = question.answers.map((a) => Answer(
+      id: a.id,
+      text: a.text,
+      mediaId: a.mediaId,
+      isCorrect: a.isCorrect,
+    )).toList();
     _selectedMediaId = question.mediaId;
   }
 
@@ -50,6 +56,9 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
 
     final kahootProvider = Provider.of<KahootProvider>(context, listen: false);
     final question = Question(
+      id: widget.questionIndex != null 
+          ? kahootProvider.currentKahoot.questions[widget.questionIndex!].id 
+          : null,
       text: _questionTextController.text,
       mediaId: _selectedMediaId,
       timeLimitSeconds: _timeLimit,
@@ -62,6 +71,7 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
     } else {
       kahootProvider.updateQuestion(widget.questionIndex!, question);
     }
+    
     Navigator.pop(context);
   }
 
@@ -91,7 +101,6 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
               ],
             ),
             SizedBox(height: 20),
-
             // Campo de pregunta
             TextField(
               controller: _questionTextController,
@@ -103,7 +112,6 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
               ),
             ),
             SizedBox(height: 20),
-
             // Botón para añadir multimedia
             ElevatedButton.icon(
               icon: Icon(Icons.image),
@@ -124,7 +132,6 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
               ),
             ),
             SizedBox(height: 20),
-
             // Temporizador
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -149,7 +156,6 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
               },
             ),
             SizedBox(height: 20),
-
             // Opciones Verdadero/Falso
             Text('Opciones:', style: TextStyle(fontWeight: FontWeight.bold)),
             SizedBox(height: 10),

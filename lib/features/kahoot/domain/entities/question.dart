@@ -18,14 +18,4 @@ class Question {
     required this.type,
     required this.answers,
   });
-
-  Map<String, dynamic> toJson() {
-    return {
-      'text': text,
-      'mediaId': mediaId,
-      'timeLimitSeconds': timeLimitSeconds,
-      'type': type.toString().split('.').last,
-      'answers': answers.map((a) => a.toJson()).toList(),
-    };
-  }
 }

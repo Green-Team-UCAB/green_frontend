@@ -10,12 +10,4 @@ class Answer {
     this.mediaId,
     required this.isCorrect,
   });
-
-  Map<String, dynamic> toJson() {
-    return {
-      'text': text,
-      'mediaId': mediaId,
-      'isCorrect': isCorrect,
-    };
-  }
 }

@@ -1,60 +1,67 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import '../../domain/entities/kahoot.dart';
-import '../../domain/entities/question.dart';
+import 'package:kahoot_project/features/kahoot/domain/entities/kahoot.dart';
+import 'package:kahoot_project/features/kahoot/domain/entities/question.dart';
+import 'package:kahoot_project/features/kahoot/application/use_cases/save_kahoot_use_case.dart';
 
 class KahootProvider with ChangeNotifier {
   Kahoot _currentKahoot = Kahoot.empty();
   bool _isLoading = false;
   String? _error;
+  
+  final SaveKahootUseCase _saveKahootUseCase;
+
+  KahootProvider(this._saveKahootUseCase);
 
   Kahoot get currentKahoot => _currentKahoot;
   bool get isLoading => _isLoading;
   String? get error => _error;
 
   void setTitle(String title) {
-    _currentKahoot.title = title;
+    _currentKahoot = _currentKahoot.copyWith(title: title);
     notifyListeners();
   }
 
   void setDescription(String description) {
-    _currentKahoot.description = description;
+    _currentKahoot = _currentKahoot.copyWith(description: description);
     notifyListeners();
   }
 
   void setVisibility(String visibility) {
-    _currentKahoot.visibility = visibility;
+    _currentKahoot = _currentKahoot.copyWith(visibility: visibility);
     notifyListeners();
   }
 
   void setThemeId(String themeId) {
-    _currentKahoot.themeId = themeId;
+    _currentKahoot = _currentKahoot.copyWith(themeId: themeId);
     notifyListeners();
   }
 
   void setCategory(String category) {
-    _currentKahoot.category = category;
+    _currentKahoot = _currentKahoot.copyWith(category: category);
     notifyListeners();
   }
 
   void setCoverImageId(String? coverImageId) {
-    _currentKahoot.coverImageId = coverImageId;
+    _currentKahoot = _currentKahoot.copyWith(coverImageId: coverImageId);
     notifyListeners();
   }
 
   void addQuestion(Question question) {
-    _currentKahoot.questions.add(question);
+    final updatedQuestions = List<Question>.from(_currentKahoot.questions)..add(question);
+    _currentKahoot = _currentKahoot.copyWith(questions: updatedQuestions);
     notifyListeners();
   }
 
   void removeQuestion(int index) {
-    _currentKahoot.questions.removeAt(index);
+    final updatedQuestions = List<Question>.from(_currentKahoot.questions)..removeAt(index);
+    _currentKahoot = _currentKahoot.copyWith(questions: updatedQuestions);
     notifyListeners();
   }
 
   void updateQuestion(int index, Question question) {
-    _currentKahoot.questions[index] = question;
+    final updatedQuestions = List<Question>.from(_currentKahoot.questions);
+    updatedQuestions[index] = question;
+    _currentKahoot = _currentKahoot.copyWith(questions: updatedQuestions);
     notifyListeners();
   }
 
@@ -64,21 +71,10 @@ class KahootProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await http.post(
-        Uri.parse('http://tu-api.com/kahoots'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode(_currentKahoot.toJson()),
-      );
-
-      if (response.statusCode == 201) {
-        final data = json.decode(response.body);
-        _currentKahoot.id = data['id'];
-        _currentKahoot.createdAt = DateTime.parse(data['createdAt']);
-      } else {
-        _error = 'Error al guardar el Kahoot: ${response.statusCode}';
-      }
+      final savedKahoot = await _saveKahootUseCase.execute(_currentKahoot);
+      _currentKahoot = savedKahoot;
     } catch (e) {
-      _error = 'Error de conexión: $e';
+      _error = 'Error al guardar el Kahoot: $e';
     } finally {
       _isLoading = false;
       notifyListeners();

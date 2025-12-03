@@ -41,7 +41,6 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
     final currentTheme = kahootProvider.currentKahoot.themeId.isNotEmpty
         ? 'Tema seleccionado'
         : 'Seleccionar tema';
-
     return Scaffold(
       appBar: AppBar(
         title: Text('Crear Kahoot'),
@@ -49,6 +48,20 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
           IconButton(
             icon: Icon(Icons.save),
             onPressed: () async {
+              if (_titleController.text.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('El título es requerido')),
+                );
+                return;
+              }
+              
+              if (kahootProvider.currentKahoot.questions.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Debe agregar al menos una pregunta')),
+                );
+                return;
+              }
+              
               await kahootProvider.saveKahoot();
               if (kahootProvider.error == null) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -71,7 +84,7 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
             // Portada
             GestureDetector(
               onTap: () {
-                // Aquí se implementaría la selección de imagen de portada
+                // Implementar selección de imagen de portada
               },
               child: Container(
                 height: 150,
@@ -95,7 +108,6 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
               ),
             ),
             SizedBox(height: 24),
-
             // Título
             TextField(
               controller: _titleController,
@@ -107,8 +119,7 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
               onChanged: (value) => kahootProvider.setTitle(value),
             ),
             SizedBox(height: 16),
-
-            // DESCRIPCIÓN AÑADIDA AQUÍ
+            // Descripción
             TextField(
               controller: _descriptionController,
               maxLines: 3,
@@ -120,7 +131,6 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
               onChanged: (value) => kahootProvider.setDescription(value),
             ),
             SizedBox(height: 16),
-
             // Tema
             ListTile(
               contentPadding: EdgeInsets.zero,
@@ -135,7 +145,6 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
               },
             ),
             Divider(),
-
             // Visibilidad
             ListTile(
               contentPadding: EdgeInsets.zero,
@@ -155,7 +164,6 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
               ),
             ),
             Divider(),
-
             // Categoría
             ListTile(
               contentPadding: EdgeInsets.zero,
@@ -177,14 +185,12 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
               ),
             ),
             Divider(),
-
             // Preguntas
             Text(
               'Preguntas (${kahootProvider.currentKahoot.questions.length})',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 16),
-
             ...kahootProvider.currentKahoot.questions.asMap().entries.map((entry) {
               final index = entry.key;
               final question = entry.value;
@@ -217,9 +223,7 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
                 },
               );
             }).toList(),
-
             SizedBox(height: 24),
-
             // Botón para añadir pregunta
             Center(
               child: ElevatedButton.icon(

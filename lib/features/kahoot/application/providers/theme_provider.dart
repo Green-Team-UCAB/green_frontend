@@ -1,18 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-
-class ThemeImage {
-  final String id;
-  final String name;
-  final String imageUrl;
-
-  ThemeImage({
-    required this.id,
-    required this.name,
-    required this.imageUrl,
-  });
-}
+import 'package:kahoot_project/features/kahoot/domain/entities/theme_image.dart';
 
 class ThemeProvider with ChangeNotifier {
   List<ThemeImage> _themes = [];
@@ -29,7 +16,7 @@ class ThemeProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      // Simulación de datos - en producción usarías la API real
+      // Simulación de datos - en producción se usaria la API real
       await Future.delayed(Duration(seconds: 1));
       
       _themes = [

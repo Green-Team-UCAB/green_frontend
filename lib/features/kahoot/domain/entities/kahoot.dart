@@ -5,10 +5,10 @@ class Kahoot {
   String title;
   String? description;
   String? coverImageId;
-  String visibility; // 'public' or 'private'
+  String visibility;
   String themeId;
   String? authorId;
-  String status; // 'draft' or 'published'
+  String status;
   List<Question> questions;
   String? category;
   int? playCount;
@@ -37,16 +37,33 @@ class Kahoot {
         questions: [],
       );
 
-  Map<String, dynamic> toJson() {
-    return {
-      'title': title,
-      'description': description,
-      'coverImageId': coverImageId,
-      'visibility': visibility,
-      'themeId': themeId,
-      'status': status,
-      'questions': questions.map((q) => q.toJson()).toList(),
-      'category': category,
-    };
+  Kahoot copyWith({
+    String? id,
+    String? title,
+    String? description,
+    String? coverImageId,
+    String? visibility,
+    String? themeId,
+    String? authorId,
+    String? status,
+    List<Question>? questions,
+    String? category,
+    int? playCount,
+    DateTime? createdAt,
+  }) {
+    return Kahoot(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      coverImageId: coverImageId ?? this.coverImageId,
+      visibility: visibility ?? this.visibility,
+      themeId: themeId ?? this.themeId,
+      authorId: authorId ?? this.authorId,
+      status: status ?? this.status,
+      questions: questions ?? this.questions,
+      category: category ?? this.category,
+      playCount: playCount ?? this.playCount,
+      createdAt: createdAt ?? this.createdAt,
+    );
   }
 }
