@@ -3,6 +3,7 @@ import 'package:fpdart/fpdart.dart';
 import '../../../../core/error/failures.dart';
 import '../../domain/entities/report_summary.dart';
 import '../../domain/entities/report_detail.dart';
+import '../../domain/entities/session_report.dart'; // Import necesario
 import '../../domain/repositories/reports_repository.dart';
 import '../datasources/reports_remote_data_source.dart';
 
@@ -28,6 +29,19 @@ class ReportsRepositoryImpl implements ReportsRepository {
       return Right(remoteDetail);
     } catch (e) {
       return Left(ServerFailure('Error cargando detalle del informe: $e'));
+    }
+  }
+
+  // ✅ ESTE ES EL MÉTODO QUE FALTABA:
+  @override
+  Future<Either<Failure, SessionReport>> getSessionReport(
+    String sessionId,
+  ) async {
+    try {
+      final remoteReport = await remoteDataSource.getSessionReport(sessionId);
+      return Right(remoteReport);
+    } catch (e) {
+      return Left(ServerFailure('Error cargando reporte de sesión: $e'));
     }
   }
 }

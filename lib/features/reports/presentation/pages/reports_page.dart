@@ -5,9 +5,10 @@ import 'package:intl/intl.dart';
 import '../../../../injection_container.dart';
 import '../../domain/entities/report_summary.dart';
 import '../bloc/reports_bloc.dart';
-import 'report_detail_page.dart'; // Importante: Importar la página de detalle
+import 'report_detail_page.dart';
+import 'host_report_page.dart';
 
-// 1. PAGE: Inyección
+// 1. PAGE
 class ReportsPage extends StatelessWidget {
   const ReportsPage({super.key});
 
@@ -20,7 +21,7 @@ class ReportsPage extends StatelessWidget {
   }
 }
 
-// 2. VIEW: UI Visual
+// 2. VIEW
 class ReportsView extends StatelessWidget {
   const ReportsView({super.key});
 
@@ -33,17 +34,23 @@ class ReportsView extends StatelessWidget {
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
+        // ✅ BOTÓN DE ATRÁS SOLICITADO
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new),
+          onPressed: () {
+            // Aquí iría el Navigator.pop(context) cuando integremos con Biblioteca
+            // Por ahora mostramos feedback visual
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Regresando a la Biblioteca...")),
+            );
+          },
+        ),
       ),
       body: BlocBuilder<ReportsBloc, ReportsState>(
         builder: (context, state) {
           if (state is ReportsLoading) {
             return const Center(child: CircularProgressIndicator());
           } else if (state is ReportsLoaded) {
-            if (state.reports.isEmpty) {
-              return const Center(
-                child: Text('Aún no has jugado ningún Kahoot.'),
-              );
-            }
             return ListView.separated(
               padding: const EdgeInsets.all(16),
               itemCount: state.reports.length,
@@ -51,16 +58,28 @@ class ReportsView extends StatelessWidget {
               itemBuilder: (context, index) {
                 final report = state.reports[index];
 
-                // AQUÍ ESTÁ LA CONEXIÓN: Navegación al detalle
                 return GestureDetector(
                   onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            ReportDetailPage(reportId: report.gameId),
-                      ),
-                    );
+                    // LÓGICA DE NAVEGACIÓN:
+                    // Si es 'Hosted' (Anfitrión) -> HostReportPage
+                    // Si es 'Multiplayer/Singleplayer' -> ReportDetailPage
+                    if (report.gameType == 'Hosted') {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              HostReportPage(sessionId: report.gameId),
+                        ),
+                      );
+                    } else {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              ReportDetailPage(reportId: report.gameId),
+                        ),
+                      );
+                    }
                   },
                   child: _ReportCard(report: report),
                 );
@@ -76,7 +95,7 @@ class ReportsView extends StatelessWidget {
   }
 }
 
-// 3. WIDGET: Tarjeta Morada
+// 3. WIDGET: Tarjeta (Sin cambios, se mantiene igual)
 class _ReportCard extends StatelessWidget {
   final ReportSummary report;
 
@@ -87,6 +106,11 @@ class _ReportCard extends StatelessWidget {
     final dateStr = DateFormat(
       'dd/MM/yyyy, hh:mm a',
     ).format(report.completionDate);
+
+    // Lógica visual para distinguir Anfitrión vs Jugador
+    final isHost = report.gameType == 'Hosted';
+    final badgeColor = isHost ? Colors.orangeAccent : Colors.white24;
+    final badgeTextColor = isHost ? Colors.black : Colors.white;
 
     return Card(
       color: Colors.deepPurple,
@@ -110,13 +134,13 @@ class _ReportCard extends StatelessWidget {
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white24,
+                    color: badgeColor,
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
-                    report.gameType,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    report.gameType, // Hosted, Multiplayer, etc.
+                    style: TextStyle(
+                      color: badgeTextColor,
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
                     ),
@@ -136,16 +160,30 @@ class _ReportCard extends StatelessWidget {
             const SizedBox(height: 16),
             Row(
               children: [
-                const Icon(Icons.stars, color: Colors.amber, size: 20),
-                const SizedBox(width: 4),
-                Text(
-                  '${report.finalScore} pts',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
+                if (isHost) ...[
+                  const Icon(Icons.people, color: Colors.white, size: 20),
+                  const SizedBox(width: 4),
+                  const Text(
+                    '5 Jugadores',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
+                ] else ...[
+                  const Icon(Icons.stars, color: Colors.amber, size: 20),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${report.finalScore} pts',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+
                 const Spacer(),
+
                 if (report.rankingPosition != null) ...[
                   const Icon(Icons.emoji_events, color: Colors.white, size: 20),
                   const SizedBox(width: 4),
@@ -156,11 +194,7 @@ class _ReportCard extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                ] else
-                  const Text(
-                    'Práctica',
-                    style: TextStyle(color: Colors.white70, fontSize: 12),
-                  ),
+                ],
               ],
             ),
           ],

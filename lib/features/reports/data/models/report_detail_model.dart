@@ -5,6 +5,7 @@ part 'report_detail_model.g.dart';
 
 @JsonSerializable(explicitToJson: true)
 class ReportDetailModel extends ReportDetail {
+  // Sobreescribimos la lista para asegurar que use el modelo en la serialización
   @override
   final List<QuestionResultModel> questions;
 
@@ -27,18 +28,34 @@ class ReportDetailModel extends ReportDetail {
 
 @JsonSerializable()
 class QuestionResultModel extends QuestionResult {
+  // Definimos campos locales para aplicar @JsonKey
+  // Estos campos "ocultan" los del padre para efectos de JSON, pero los pasamos al super
+  @JsonKey(name: 'answerText')
+  final List<String>? _answerText;
+
+  @JsonKey(name: 'answerMediaID')
+  final List<String>? _answerImages;
+
   const QuestionResultModel({
     required super.questionIndex,
     required super.questionText,
     required super.isCorrect,
     required super.timeTakenMs,
-    // Mapeo opcional por si vienen nulos del backend
-    @JsonKey(name: 'answerText') List<String>? answerText,
-    @JsonKey(name: 'answerMediaID') List<String>? answerImages,
-  }) : super(answerText: answerText, answerImages: answerImages);
+    List<String>? answerText,
+    List<String>? answerImages,
+  }) : _answerText = answerText,
+       _answerImages = answerImages,
+       super(answerText: answerText, answerImages: answerImages);
 
   factory QuestionResultModel.fromJson(Map<String, dynamic> json) =>
       _$QuestionResultModelFromJson(json);
 
   Map<String, dynamic> toJson() => _$QuestionResultModelToJson(this);
+
+  // Getters para mantener consistencia con json_serializable si fuera necesario
+  @override
+  List<String>? get answerText => _answerText;
+
+  @override
+  List<String>? get answerImages => _answerImages;
 }

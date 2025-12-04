@@ -12,6 +12,7 @@ import 'features/reports/data/repositories/reports_repository_impl.dart';
 import 'features/reports/domain/repositories/reports_repository.dart';
 import 'features/reports/presentation/bloc/reports_bloc.dart';
 import 'features/reports/presentation/bloc/report_detail_bloc.dart';
+import 'features/reports/presentation/bloc/host_report_bloc.dart';
 
 // Instancia global del Service Locator
 final sl = GetIt.instance;
@@ -42,6 +43,7 @@ Future<void> init() async {
   // Bloc
   sl.registerFactory(() => ReportsBloc(repository: sl()));
   sl.registerFactory(() => ReportDetailBloc(repository: sl()));
+  sl.registerFactory(() => HostReportBloc(repository: sl()));
 
   // Repository
   sl.registerLazySingleton<ReportsRepository>(

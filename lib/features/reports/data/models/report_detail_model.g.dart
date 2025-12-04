@@ -41,7 +41,7 @@ QuestionResultModel _$QuestionResultModelFromJson(Map<String, dynamic> json) =>
       answerText: (json['answerText'] as List<dynamic>?)
           ?.map((e) => e as String)
           .toList(),
-      answerImages: (json['answerMediaID'] as List<dynamic>?)
+      answerImages: (json['answerImages'] as List<dynamic>?)
           ?.map((e) => e as String)
           .toList(),
     );
@@ -54,5 +54,5 @@ Map<String, dynamic> _$QuestionResultModelToJson(
   'isCorrect': instance.isCorrect,
   'timeTakenMs': instance.timeTakenMs,
   'answerText': instance.answerText,
-  'answerMediaID': instance.answerImages,
+  'answerImages': instance.answerImages,
 };
