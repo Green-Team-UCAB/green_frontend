@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:green_frontend/core/theme/app_pallete.dart';
 import 'package:green_frontend/features/menu_navegation/presentation/screens/nav_bar_selection_screen.dart';
+import 'package:provider/provider.dart';
+import 'features/menu_navegation/presentation/providers/navigation_provider.dart';
 
 void main() {
   runApp(const MyApp());
@@ -12,7 +14,11 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => NavigationProvider()),  
+      ],
+    child: MaterialApp(
       title: 'Quiz App',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
@@ -20,6 +26,7 @@ class MyApp extends StatelessWidget {
         scaffoldBackgroundColor: AppPallete.backgroundColor,
       ),
       home: const NavBarSelectionScreen(),
+    ),
     );
   }
 }
