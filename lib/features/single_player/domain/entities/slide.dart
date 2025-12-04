@@ -3,6 +3,7 @@ import 'package:green_frontend/features/single_player/domain/entities/option.dar
 enum QuestionType {
   singleChoice,
   multipleChoice,
+  trueFalse,
 }
 
 class Slide {
