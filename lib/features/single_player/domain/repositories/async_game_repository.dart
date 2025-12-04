@@ -3,16 +3,12 @@ import 'package:green_frontend/features/single_player/domain/entities/attempt.da
 import 'package:green_frontend/features/single_player/domain/entities/answer.dart';
 import 'package:green_frontend/features/single_player/domain/entities/answer_result.dart';
 import 'package:green_frontend/features/single_player/domain/entities/summary.dart';
-import 'package:green_frontend/features/single_player/domain/entities/slide.dart';
+import 'package:green_frontend/core/error/failures.dart';
 
 
 abstract interface class AsyncGameRepository {
-  Future<(Attempt attempt, Slide firstSlide)> startAttempt(String kahootId);
-  Future<(Attempt attempt, Slide? nextSlide)> getAttempt(String attemptId);
-  Future<AnswerResult> submitAnswer(String attemptId, Answer answer);
-  Future<Summary> getSummary(String attemptId);
-}
-
-abstract interface class SoloGameRepositoryFpdart {
-  Either<Exception, (Attempt attempt, Slide firstSlide)> startAttempt(String kahootId);
+  Future<Either<Failure,Attempt>> startAttempt({required String kahootId});
+  Future<Either<Failure,Attempt>> getAttempt({required String attemptId});
+  Future<Either<Failure,AnswerResult>> submitAnswer({required String attemptId, required Answer answer});
+  Future<Either<Failure,Summary>> getSummary({required String attemptId});
 }

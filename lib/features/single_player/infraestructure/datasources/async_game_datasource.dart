@@ -20,7 +20,6 @@ class ServerException implements Exception { final String message; ServerExcepti
 class UnauthorizedException implements Exception { final String message; UnauthorizedException([this.message = 'Unauthorized']); }
 
 
-
 class AsyncGameDatasourceImpl implements AsyncGameDataSource{
 
   final Dio dio ;
