@@ -1,8 +1,8 @@
-// CAMBIO: Importamos fpdart
 import 'package:fpdart/fpdart.dart';
 
 import '../../../../core/error/failures.dart';
 import '../../domain/entities/report_summary.dart';
+import '../../domain/entities/report_detail.dart';
 import '../../domain/repositories/reports_repository.dart';
 import '../datasources/reports_remote_data_source.dart';
 
@@ -15,13 +15,19 @@ class ReportsRepositoryImpl implements ReportsRepository {
   Future<Either<Failure, List<ReportSummary>>> getMyResults() async {
     try {
       final remoteReports = await remoteDataSource.getMyResults();
-
-      // EN FPDART:
-      // Right(valor) crea una instancia exitosa del Either
       return Right(remoteReports);
     } catch (e) {
-      // Left(valor) crea una instancia de fallo del Either
-      return Left(ServerFailure('Error cargando informes: $e'));
+      return Left(ServerFailure('Error cargando lista de informes: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, ReportDetail>> getReportDetail(String id) async {
+    try {
+      final remoteDetail = await remoteDataSource.getReportDetail(id);
+      return Right(remoteDetail);
+    } catch (e) {
+      return Left(ServerFailure('Error cargando detalle del informe: $e'));
     }
   }
 }

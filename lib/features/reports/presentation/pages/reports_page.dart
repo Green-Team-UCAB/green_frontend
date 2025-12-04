@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart'; // Librería necesaria para las fechas
+import 'package:intl/intl.dart';
 
 import '../../../../injection_container.dart';
-import '../bloc/reports_bloc.dart';
 import '../../domain/entities/report_summary.dart';
+import '../bloc/reports_bloc.dart';
+import 'report_detail_page.dart'; // Importante: Importar la página de detalle
 
-// 1. PAGE: Inyección de Dependencias
+// 1. PAGE: Inyección
 class ReportsPage extends StatelessWidget {
   const ReportsPage({super.key});
 
@@ -19,7 +20,7 @@ class ReportsPage extends StatelessWidget {
   }
 }
 
-// 2. VIEW: Construcción de la UI
+// 2. VIEW: UI Visual
 class ReportsView extends StatelessWidget {
   const ReportsView({super.key});
 
@@ -48,7 +49,21 @@ class ReportsView extends StatelessWidget {
               itemCount: state.reports.length,
               separatorBuilder: (c, i) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
-                return _ReportCard(report: state.reports[index]);
+                final report = state.reports[index];
+
+                // AQUÍ ESTÁ LA CONEXIÓN: Navegación al detalle
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            ReportDetailPage(reportId: report.gameId),
+                      ),
+                    );
+                  },
+                  child: _ReportCard(report: report),
+                );
               },
             );
           } else if (state is ReportsError) {
@@ -61,7 +76,7 @@ class ReportsView extends StatelessWidget {
   }
 }
 
-// 3. WIDGET: Tarjeta individual
+// 3. WIDGET: Tarjeta Morada
 class _ReportCard extends StatelessWidget {
   final ReportSummary report;
 
@@ -69,7 +84,6 @@ class _ReportCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Uso de intl para formatear la fecha
     final dateStr = DateFormat(
       'dd/MM/yyyy, hh:mm a',
     ).format(report.completionDate);
@@ -83,7 +97,6 @@ class _ReportCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Fila superior: Fecha y Tipo de juego
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -112,8 +125,6 @@ class _ReportCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-
-            // Título del Kahoot
             Text(
               report.title,
               style: const TextStyle(
@@ -123,8 +134,6 @@ class _ReportCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-
-            // Footer: Puntuación y Ranking
             Row(
               children: [
                 const Icon(Icons.stars, color: Colors.amber, size: 20),
