@@ -1,63 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:green_frontend/core/theme/app_pallete.dart';
+import 'package:green_frontend/features/menu_navegation/presentation/screens/create_screen.dart';
+import 'package:green_frontend/features/menu_navegation/presentation/screens/discover_screen.dart';
+import 'package:green_frontend/features/menu_navegation/presentation/screens/home_screen.dart';
+import 'package:green_frontend/features/menu_navegation/presentation/screens/join_sync_game_screen.dart';
+import 'package:green_frontend/features/menu_navegation/presentation/screens/library_screen.dart';
+import 'package:provider/provider.dart';
+import 'package:green_frontend/features/menu_navegation/presentation/providers/navigation_provider.dart';
 
-class NavBarSelectionScreen extends StatefulWidget{
-  final int initialIndex;
-  const NavBarSelectionScreen({super.key, this.initialIndex=0});
 
-  @override
-  State<NavBarSelectionScreen> createState() => _NavBarSelectionScreenState();
+class NavBarSelectionScreen extends StatelessWidget{
+  const NavBarSelectionScreen({super.key});
 
-}
-  class _NavBarSelectionScreenState extends State<NavBarSelectionScreen> {
-  final PageStorageBucket bucket = PageStorageBucket();
-    final pages =[
-      Scaffold(
-        body: Center(
-          child: Text('Inicio'),
-        ),
-      ),
-      Scaffold(
-        body: Center(
-          child: Text('Descubre'),
-        ),
-      ),
-      Scaffold(
-        body: Center(
-          child: Text('Unirse')
-        )
-      ), 
-      Scaffold(
-        body: Center(
-          child: Text('Crear')
-        )
-      ),
-      Scaffold(
-        body: Center(
-          child: Text('Biblioteca')
-        )
-      ),
-    ]; 
-  
-  late int selectedIndex;
-  @override
-  void initState(){
-    selectedIndex = widget.initialIndex;
-    super.initState();
-  }
+  final List<Widget> pages = const [
+    HomeScreen(),      // Pantalla para "Inicio"
+    DiscoverScreen(),  // Pantalla para "Descubre"
+    JoinScreen(),      // Pantalla para "Unirse"
+    CreateScreen(),    // Pantalla para "Crear"
+    LibraryScreen(),   // Pantalla para "Biblioteca"
+  ];
   @override
   Widget build(BuildContext context) {
+    final navigationProvider = Provider.of<NavigationProvider>(context);  // Se accede al Provider
+
     return Scaffold(
-      body: PageStorage(bucket: bucket, child: pages[selectedIndex]),
+      body: pages[navigationProvider.currentIndex],  // Muestra la página basada en el índice del Provider
       backgroundColor: AppPallete.backgroundColor,
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         backgroundColor: AppPallete.backgroundColor,
-        currentIndex: selectedIndex,
+        currentIndex: navigationProvider.currentIndex,  // Usa el índice del Provider
         onTap: (index) {
-          setState(() {
-            selectedIndex = index;
-          });
+          navigationProvider.updateIndex(index);  // Actualiza por el Provider
         },
         selectedItemColor: AppPallete.gradient1,
         unselectedItemColor: AppPallete.greyColor,
@@ -82,7 +56,8 @@ class NavBarSelectionScreen extends StatefulWidget{
             icon: Icon(Icons.library_books_outlined),
             label: 'Biblioteca',
           ),
-        ],),
+        ],
+      ),
     );
   }
 }
