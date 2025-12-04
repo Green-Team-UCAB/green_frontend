@@ -1,7 +1,7 @@
 import 'package:kahoot_project/features/kahoot/domain/entities/answer.dart';
 
 class AnswerMapper {
-  // Convierte un Map (JSON) a una entidad Answer
+  // Convierte un Map (en JSON) a una entidad Answer
   static Answer fromMap(Map<String, dynamic> map) {
     return Answer(
       id: map['id'],
@@ -11,7 +11,7 @@ class AnswerMapper {
     );
   }
 
-  // Convierte una entidad Answer a un Map (JSON)
+  // Convierte una entidad Answer a un Map (a JSON)
   static Map<String, dynamic> toMap(Answer answer) {
     return {
       if (answer.id != null) 'id': answer.id,

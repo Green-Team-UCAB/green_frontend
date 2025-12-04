@@ -2,7 +2,7 @@ import 'package:kahoot_project/features/kahoot/domain/entities/question.dart';
 import 'package:kahoot_project/features/kahoot/infrastructure/repositories/mappers/answer_mapper.dart';
 
 class QuestionMapper {
-  // Convierte un Map (JSON) a una entidad Question
+  // Convierte un Map (en JSON) a una entidad Question
   static Question fromMap(Map<String, dynamic> map) {
     return Question(
       id: map['id'],
@@ -13,10 +13,11 @@ class QuestionMapper {
       answers: List<Map<String, dynamic>>.from(map['answers'] ?? [])
           .map(AnswerMapper.fromMap)
           .toList(),
+      points: map['points'] ?? 1000, // Valor por defecto 1000
     );
   }
 
-  // Convierte una entidad Question a un Map (JSON)
+  // Convierte una entidad Question a un Map ( a JSON)
   static Map<String, dynamic> toMap(Question question) {
     return {
       if (question.id != null) 'id': question.id,
@@ -25,10 +26,11 @@ class QuestionMapper {
       'timeLimitSeconds': question.timeLimitSeconds,
       'type': _questionTypeToString(question.type),
       'answers': question.answers.map(AnswerMapper.toMap).toList(),
+      'points': question.points, // Agregado
     };
   }
 
-  // Helper para convertir string a enum
+  // para convertir string a enum
   static QuestionType _stringToQuestionType(String type) {
     switch (type) {
       case 'trueFalse':
@@ -39,7 +41,7 @@ class QuestionMapper {
     }
   }
 
-  // Helper para convertir enum a string
+  //  para convertir enum a string
   static String _questionTypeToString(QuestionType type) {
     switch (type) {
       case QuestionType.trueFalse:

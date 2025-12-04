@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:kahoot_project/features/kahoot/domain/entities/theme_image.dart';
+import 'package:kahoot_project/features/kahoot/domain/repositories/itheme_repository.dart';
 
 class ThemeProvider with ChangeNotifier {
   List<ThemeImage> _themes = [];
   bool _isLoading = false;
   String? _error;
+
+  final ThemeRepository themeRepository;
+
+  ThemeProvider({required this.themeRepository});
 
   List<ThemeImage> get themes => _themes;
   bool get isLoading => _isLoading;
@@ -16,43 +21,9 @@ class ThemeProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      // Simulación de datos - en producción se usaria la API real
-      await Future.delayed(Duration(seconds: 1));
-      
-      _themes = [
-        ThemeImage(
-          id: '1',
-          name: 'Cosmos',
-          imageUrl: 'https://cdn.eso.org/images/screen/eso1213a.jpg',
-        ),
-        ThemeImage(
-          id: '2',
-          name: 'Winter',
-          imageUrl: 'https://via.placeholder.com/150/1565C0/FFFFFF?text=Winter',
-        ),
-        ThemeImage(
-          id: '3',
-          name: 'Spring',
-          imageUrl: 'https://via.placeholder.com/150/2E7D32/FFFFFF?text=Spring',
-        ),
-        ThemeImage(
-          id: '4',
-          name: 'Summer',
-          imageUrl: 'https://via.placeholder.com/150/FF8F00/FFFFFF?text=Summer',
-        ),
-        ThemeImage(
-          id: '5',
-          name: 'Autumn',
-          imageUrl: 'https://via.placeholder.com/150/D84315/FFFFFF?text=Autumn',
-        ),
-        ThemeImage(
-          id: '6',
-          name: 'Support Ukraine',
-          imageUrl: 'https://via.placeholder.com/150/0057B7/FFD700?text=Ukraine',
-        ),
-      ];
+      _themes = await themeRepository.getThemes();
     } catch (e) {
-      _error = 'Error al cargar temas: $e';
+      _error = e.toString();
     } finally {
       _isLoading = false;
       notifyListeners();

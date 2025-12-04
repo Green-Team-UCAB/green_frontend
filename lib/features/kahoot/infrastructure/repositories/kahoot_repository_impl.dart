@@ -14,12 +14,12 @@ class KahootRepositoryImpl implements KahootRepository {
 
   @override
   Future<List<Kahoot>> getKahoots() async {
-    // Implementar cuando tengas el endpoint
+    // Implementar cuando se tenga  el endpoint
     return [];
   }
 
   @override
   Future<void> deleteKahoot(String id) async {
-    // Implementar cuando tengas el endpoint
+    // Implementar cuando se tenga  el endpoint
   }
 }

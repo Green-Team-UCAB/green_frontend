@@ -3,9 +3,12 @@
 
 
     <application
+        
+
         android:label="kahoot_project"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        
         <activity
             android:name=".MainActivity"
             android:exported="true"

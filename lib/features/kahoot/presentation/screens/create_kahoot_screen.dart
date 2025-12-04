@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:kahoot_project/features/kahoot/domain/entities/theme_image.dart';
 import 'package:kahoot_project/features/kahoot/domain/entities/question.dart';
-import 'package:kahoot_project/features/kahoot/presentation/screens/normal_question_screen.dart';
-import 'package:kahoot_project/features/kahoot/presentation/screens/true_false_question_screen.dart';
-import 'package:provider/provider.dart';
-import 'package:kahoot_project/features/kahoot/application/providers/kahoot_provider.dart';
-import 'theme_selection_screen.dart';
-import 'question_type_selection_screen.dart';
 import 'package:kahoot_project/features/kahoot/presentation/widgets/question_tile.dart';
+import 'package:kahoot_project/features/kahoot/presentation/screens/question_type_selection_screen.dart';
+import 'package:provider/provider.dart';
+import 'theme_selection_screen.dart';
+import '../../application/providers/kahoot_provider.dart';
+import '../../application/providers/theme_provider.dart';
 
 class CreateKahootScreen extends StatefulWidget {
   @override
@@ -18,6 +18,7 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
   final _descriptionController = TextEditingController();
   String? _selectedVisibility = 'private';
   String? _selectedCategory;
+
   List<String> _categories = [
     'Matemáticas',
     'Ciencias',
@@ -38,9 +39,16 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
   @override
   Widget build(BuildContext context) {
     final kahootProvider = Provider.of<KahootProvider>(context);
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    
+    // Obtener el tema actual basado en el themeId
     final currentTheme = kahootProvider.currentKahoot.themeId.isNotEmpty
-        ? 'Tema seleccionado'
+        ? themeProvider.themes.firstWhere(
+            (theme) => theme.id == kahootProvider.currentKahoot.themeId,
+            orElse: () => ThemeImage(id: '', name: 'Tema no encontrado', imageUrl: ''),
+          ).name
         : 'Seleccionar tema';
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Crear Kahoot'),
@@ -54,15 +62,16 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
                 );
                 return;
               }
-              
+
               if (kahootProvider.currentKahoot.questions.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('Debe agregar al menos una pregunta')),
                 );
                 return;
               }
-              
+
               await kahootProvider.saveKahoot();
+
               if (kahootProvider.error == null) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('Kahoot guardado exitosamente')),
@@ -108,6 +117,7 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
               ),
             ),
             SizedBox(height: 24),
+            
             // Título
             TextField(
               controller: _titleController,
@@ -119,6 +129,7 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
               onChanged: (value) => kahootProvider.setTitle(value),
             ),
             SizedBox(height: 16),
+            
             // Descripción
             TextField(
               controller: _descriptionController,
@@ -131,6 +142,7 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
               onChanged: (value) => kahootProvider.setDescription(value),
             ),
             SizedBox(height: 16),
+            
             // Tema
             ListTile(
               contentPadding: EdgeInsets.zero,
@@ -145,6 +157,7 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
               },
             ),
             Divider(),
+            
             // Visibilidad
             ListTile(
               contentPadding: EdgeInsets.zero,
@@ -164,6 +177,7 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
               ),
             ),
             Divider(),
+            
             // Categoría
             ListTile(
               contentPadding: EdgeInsets.zero,
@@ -185,45 +199,64 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
               ),
             ),
             Divider(),
+            
             // Preguntas
             Text(
               'Preguntas (${kahootProvider.currentKahoot.questions.length})',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 16),
-            ...kahootProvider.currentKahoot.questions.asMap().entries.map((entry) {
-              final index = entry.key;
-              final question = entry.value;
-              return QuestionTile(
-                question: question,
-                index: index,
-                onTap: () {
-                  if (question.type == QuestionType.quiz) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => NormalQuestionScreen(
-                          questionIndex: index,
-                        ),
+            
+            // Lista de preguntas
+            if (kahootProvider.currentKahoot.questions.isNotEmpty)
+              ...kahootProvider.currentKahoot.questions.asMap().entries.map((entry) {
+                final index = entry.key;
+                final question = entry.value;
+                
+                return QuestionTile(
+                  question: question,
+                  index: index,
+                  onTap: () {
+                    // Navegar a la pantalla de edición de pregunta
+                    // TODO: Implementar navegación a edición de pregunta
+                  },
+                  onDelete: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: Text('Eliminar pregunta'),
+                        content: Text('¿Estás seguro de que quieres eliminar esta pregunta?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text('Cancelar'),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              kahootProvider.removeQuestion(index);
+                              Navigator.pop(context);
+                            },
+                            child: Text('Eliminar', style: TextStyle(color: Colors.red)),
+                          ),
+                        ],
                       ),
                     );
-                  } else {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => TrueFalseQuestionScreen(
-                          questionIndex: index,
-                        ),
-                      ),
-                    );
-                  }
-                },
-                onDelete: () {
-                  kahootProvider.removeQuestion(index);
-                },
-              );
-            }).toList(),
+                  },
+                );
+              }).toList()
+            else
+              Container(
+                padding: EdgeInsets.symmetric(vertical: 32),
+                child: Center(
+                  child: Text(
+                    'No hay preguntas. Añade una para comenzar.',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ),
+              ),
+            
             SizedBox(height: 24),
+            
             // Botón para añadir pregunta
             Center(
               child: ElevatedButton.icon(

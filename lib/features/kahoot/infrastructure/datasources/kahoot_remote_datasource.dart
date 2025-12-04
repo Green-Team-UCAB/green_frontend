@@ -4,7 +4,7 @@ import 'package:kahoot_project/features/kahoot/infrastructure/repositories/mappe
 import 'package:kahoot_project/features/kahoot/domain/entities/kahoot.dart';
 
 class KahootRemoteDataSource {
-  final String baseUrl = 'http://tu-api.com';
+  final String baseUrl = 'http://10.0.2.2:3000';
 
   // Guarda un Kahoot y devuelve la entidad actualizada
   Future<Kahoot> saveKahoot(Kahoot kahoot) async {

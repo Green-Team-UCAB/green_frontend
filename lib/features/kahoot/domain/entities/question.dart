@@ -9,6 +9,7 @@ class Question {
   int timeLimitSeconds;
   QuestionType type;
   List<Answer> answers;
+  int points; // Nuevo campo para el puntaje
 
   Question({
     this.id,
@@ -17,5 +18,6 @@ class Question {
     required this.timeLimitSeconds,
     required this.type,
     required this.answers,
+    required this.points, // Agregado
   });
 }

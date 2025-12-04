@@ -1,0 +1,140 @@
+{
+  "kahoots": [
+    {
+      "id": "0a99",
+      "title": "kahoot1",
+      "description": "prueba",
+      "visibility": "private",
+      "themeId": "1",
+      "status": "draft",
+      "questions": [
+        {
+          "text": "pregunta1",
+          "timeLimitSeconds": 20,
+          "type": "quiz",
+          "answers": [
+            {
+              "text": "1",
+              "isCorrect": true
+            },
+            {
+              "text": "2",
+              "isCorrect": false
+            },
+            {
+              "text": "3",
+              "isCorrect": false
+            },
+            {
+              "text": "4",
+              "isCorrect": false
+            }
+          ]
+        }
+      ],
+      "category": "Idiomas"
+    },
+    {
+      "id": "0eb3",
+      "title": "kahoot2",
+      "description": "prueba kahoot2 con tema de la api",
+      "visibility": "public",
+      "themeId": "1",
+      "status": "draft",
+      "questions": [
+        {
+          "text": "cuantos planetas hay en El sistema solar?",
+          "timeLimitSeconds": 40,
+          "type": "quiz",
+          "answers": [
+            {
+              "text": "12",
+              "isCorrect": true
+            },
+            {
+              "text": "24",
+              "isCorrect": false
+            },
+            {
+              "text": "8",
+              "isCorrect": false
+            },
+            {
+              "text": "14",
+              "isCorrect": false
+            }
+          ],
+          "points": 2000
+        }
+      ],
+      "category": "Ciencias"
+    },
+    {
+      "id": "a282",
+      "title": "kahoot3",
+      "description": "corrigiendo problema de preguntas",
+      "visibility": "private",
+      "themeId": "6",
+      "status": "draft",
+      "questions": [
+        {
+          "text": "mejor epoca",
+          "timeLimitSeconds": 75,
+          "type": "quiz",
+          "answers": [
+            {
+              "text": "1600",
+              "isCorrect": false
+            },
+            {
+              "text": "1800",
+              "isCorrect": false
+            },
+            {
+              "text": "1900",
+              "isCorrect": true
+            },
+            {
+              "text": "2000",
+              "isCorrect": false
+            }
+          ],
+          "points": 1000
+        }
+      ],
+      "category": "Historia"
+    }
+  ],
+  "themes": [
+    {
+      "id": "1",
+      "name": "Cosmos",
+      "imageUrl": "https://cdn.eso.org/images/screen/eso1213a.jpg"
+    },
+    {
+      "id": "2",
+      "name": "Sports",
+      "imageUrl": "https://i.etsystatic.com/25460158/r/il/41f3b0/3696258950/il_fullxfull.3696258950_9403.jpg"
+    },
+    {
+      "id": "3",
+      "name": "Science",
+      "imageUrl": "https://learningwithmswiltshire.wordpress.com/wp-content/uploads/2013/01/science.png"
+    },
+    {
+      "id": "4",
+      "name": "Sci-fi",
+      "imageUrl": "https://img.resized.co/letstalk-movies/eyJkYXRhIjoie1widXJsXCI6XCJodHRwczpcXFwvXFxcL3N0b3JhZ2UubGV0c3RhbGttb3ZpZXMuY29tXFxcL3Byb2RcXFwvdXBsb2Fkc1xcXC9JWGJ6UlhlMy1Zb3VUdWJlLVRodW1ibmFpbC0xMDI0eDU3Ni5wbmdcIixcIndpZHRoXCI6bnVsbCxcImhlaWdodFwiOm51bGwsXCJkZWZhdWx0XCI6XCJodHRwczpcXFwvXFxcL3N0b3JhZ2UubGV0c3RhbGttb3ZpZXMuY29tXFxcL3Byb2RcXFwvdXBsb2Fkc1xcXC9sb2dvLWxldHN0bGFrLnBuZ1wiLFwib3B0aW9uc1wiOntcIm91dHB1dFwiOlwid2VicFwifX0iLCJoYXNoIjoiMjAwM2YwN2Q4MDU3ODA2ODZhMmQyODE5MTUxOGZjNjljNmNkZWYxYiJ9/ixbzrxe3-youtube-thumbnail-1024x576.png"
+    },
+    {
+      "id": "5",
+      "name": "Movies",
+      "imageUrl": "https://www.wondermind.com/wp-content/uploads/2024/09/20-Feel-Good-Movies-People-Swear-By-For-Your-Next-Bad-Day.jpg?w=960"
+    },
+    {
+      "id": "6",
+      "name": "Politics",
+      "imageUrl": "https://variety.com/wp-content/uploads/2018/10/variety-midterm-election-special-coverage-illustration-politics-placeholder.jpg"
+    }
+  ]
+}

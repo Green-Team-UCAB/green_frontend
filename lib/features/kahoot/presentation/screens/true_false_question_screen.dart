@@ -22,6 +22,7 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
     Answer(text: 'Falso', isCorrect: false),
   ];
   String? _selectedMediaId;
+  int _points = 1000; // Valor inicial del puntaje
 
   @override
   void initState() {
@@ -44,6 +45,7 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
       isCorrect: a.isCorrect,
     )).toList();
     _selectedMediaId = question.mediaId;
+    _points = question.points; // Cargar puntaje
   }
 
   void _saveQuestion() {
@@ -53,19 +55,20 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
       );
       return;
     }
-
+    
     final kahootProvider = Provider.of<KahootProvider>(context, listen: false);
     final question = Question(
-      id: widget.questionIndex != null 
-          ? kahootProvider.currentKahoot.questions[widget.questionIndex!].id 
+      id: widget.questionIndex != null
+          ? kahootProvider.currentKahoot.questions[widget.questionIndex!].id
           : null,
       text: _questionTextController.text,
       mediaId: _selectedMediaId,
       timeLimitSeconds: _timeLimit,
       type: QuestionType.trueFalse,
       answers: _answers,
+      points: _points, // Guardar puntaje
     );
-
+    
     if (widget.questionIndex == null) {
       kahootProvider.addQuestion(question);
     } else {
@@ -101,6 +104,7 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
               ],
             ),
             SizedBox(height: 20),
+            
             // Campo de pregunta
             TextField(
               controller: _questionTextController,
@@ -112,6 +116,7 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
               ),
             ),
             SizedBox(height: 20),
+            
             // Botón para añadir multimedia
             ElevatedButton.icon(
               icon: Icon(Icons.image),
@@ -132,6 +137,7 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
               ),
             ),
             SizedBox(height: 20),
+            
             // Temporizador
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -156,6 +162,79 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
               },
             ),
             SizedBox(height: 20),
+            
+            // Puntaje de la pregunta
+            Text('Puntaje de la pregunta:', style: TextStyle(fontWeight: FontWeight.bold)),
+            SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                // Botón para 0 puntos
+                ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _points = 0;
+                    });
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _points == 0 ? Colors.blue : Colors.grey[300],
+                    foregroundColor: _points == 0 ? Colors.white : Colors.black,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.star_border, size: 30),
+                      SizedBox(height: 5),
+                      Text('0 puntos'),
+                    ],
+                  ),
+                ),
+                
+                // Botón para 1000 puntos
+                ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _points = 1000;
+                    });
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _points == 1000 ? Colors.blue : Colors.grey[300],
+                    foregroundColor: _points == 1000 ? Colors.white : Colors.black,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.star_half, size: 30),
+                      SizedBox(height: 5),
+                      Text('1000 puntos'),
+                    ],
+                  ),
+                ),
+                
+                // Botón para 2000 puntos
+                ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _points = 2000;
+                    });
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _points == 2000 ? Colors.blue : Colors.grey[300],
+                    foregroundColor: _points == 2000 ? Colors.white : Colors.black,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.star, size: 30),
+                      SizedBox(height: 5),
+                      Text('2000 puntos'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 20),
+            
             // Opciones Verdadero/Falso
             Text('Opciones:', style: TextStyle(fontWeight: FontWeight.bold)),
             SizedBox(height: 10),

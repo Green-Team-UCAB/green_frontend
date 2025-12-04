@@ -68,6 +68,7 @@ class KahootProvider with ChangeNotifier {
   Future<void> saveKahoot() async {
     _isLoading = true;
     _error = null;
+    
     notifyListeners();
 
     try {

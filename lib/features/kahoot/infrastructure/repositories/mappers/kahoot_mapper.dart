@@ -2,7 +2,7 @@ import 'package:kahoot_project/features/kahoot/domain/entities/kahoot.dart';
 import 'package:kahoot_project/features/kahoot/infrastructure/repositories/mappers/question_mapper.dart';
 
 class KahootMapper {
-  // Convierte un Map (JSON) a una entidad Kahoot
+  // Convierte un Map (en JSON) a una entidad Kahoot
   static Kahoot fromMap(Map<String, dynamic> map) {
     return Kahoot(
       id: map['id'],
@@ -24,7 +24,7 @@ class KahootMapper {
     );
   }
 
-  // Convierte una entidad Kahoot a un Map (JSON)
+  // Convierte una entidad Kahoot a un Map (a JSON)
   static Map<String, dynamic> toMap(Kahoot kahoot) {
     return {
       if (kahoot.id != null) 'id': kahoot.id,

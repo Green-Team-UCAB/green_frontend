@@ -25,22 +25,27 @@ class MediaSelectionScreen extends StatelessWidget {
                     title: Text('Pegar'),
                     onTap: () {
                       // Implementar pegado
+                      // Por ahora,  regresara null 
+                      Navigator.pop(context, null);
                     },
                   ),
                   Divider(),
                   ListTile(
                     leading: Icon(Icons.photo_library, color: Colors.purple),
                     title: Text('Galería'),
-                    onTap: () {
-                      // Implementar galería
+                    onTap: () async {
+                      // Aquí deberías abrir la galería del dispositivo
+                      
                     },
                   ),
                   Divider(),
                   ListTile(
                     leading: Icon(Icons.camera_alt, color: Colors.purple),
                     title: Text('Cámara'),
-                    onTap: () {
-                      // Implementar cámara
+                    onTap: () async {
+                      // Aquí deberías abrir la cámara
+                     
+                      Navigator.pop(context, null);
                     },
                   ),
                 ],
@@ -72,6 +77,7 @@ class MediaSelectionScreen extends StatelessWidget {
                         final theme = themeProvider.themes[index];
                         return GestureDetector(
                           onTap: () {
+                            // Esto regresará el theme.id a la pantalla que llamó
                             Navigator.pop(context, theme.id);
                           },
                           child: ClipRRect(
