@@ -8,7 +8,7 @@ import '../bloc/reports_bloc.dart';
 import 'report_detail_page.dart';
 import 'host_report_page.dart';
 
-// 1. PAGE
+// 1. PAGE: Inyección
 class ReportsPage extends StatelessWidget {
   const ReportsPage({super.key});
 
@@ -21,7 +21,7 @@ class ReportsPage extends StatelessWidget {
   }
 }
 
-// 2. VIEW
+// 2. VIEW: UI Visual
 class ReportsView extends StatelessWidget {
   const ReportsView({super.key});
 
@@ -34,23 +34,19 @@ class ReportsView extends StatelessWidget {
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
-        // ✅ BOTÓN DE ATRÁS SOLICITADO
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new),
-          onPressed: () {
-            // Aquí iría el Navigator.pop(context) cuando integremos con Biblioteca
-            // Por ahora mostramos feedback visual
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Regresando a la Biblioteca...")),
-            );
-          },
-        ),
+        automaticallyImplyLeading:
+            false, // Esto asegura que no salga botón de atrás automático
       ),
       body: BlocBuilder<ReportsBloc, ReportsState>(
         builder: (context, state) {
           if (state is ReportsLoading) {
             return const Center(child: CircularProgressIndicator());
           } else if (state is ReportsLoaded) {
+            if (state.reports.isEmpty) {
+              return const Center(
+                child: Text('Aún no has jugado ningún Kahoot.'),
+              );
+            }
             return ListView.separated(
               padding: const EdgeInsets.all(16),
               itemCount: state.reports.length,
@@ -60,9 +56,6 @@ class ReportsView extends StatelessWidget {
 
                 return GestureDetector(
                   onTap: () {
-                    // LÓGICA DE NAVEGACIÓN:
-                    // Si es 'Hosted' (Anfitrión) -> HostReportPage
-                    // Si es 'Multiplayer/Singleplayer' -> ReportDetailPage
                     if (report.gameType == 'Hosted') {
                       Navigator.push(
                         context,
@@ -95,7 +88,7 @@ class ReportsView extends StatelessWidget {
   }
 }
 
-// 3. WIDGET: Tarjeta (Sin cambios, se mantiene igual)
+// 3. WIDGET: Tarjeta (Sin cambios)
 class _ReportCard extends StatelessWidget {
   final ReportSummary report;
 
@@ -107,7 +100,6 @@ class _ReportCard extends StatelessWidget {
       'dd/MM/yyyy, hh:mm a',
     ).format(report.completionDate);
 
-    // Lógica visual para distinguir Anfitrión vs Jugador
     final isHost = report.gameType == 'Hosted';
     final badgeColor = isHost ? Colors.orangeAccent : Colors.white24;
     final badgeTextColor = isHost ? Colors.black : Colors.white;
@@ -138,7 +130,7 @@ class _ReportCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
-                    report.gameType, // Hosted, Multiplayer, etc.
+                    report.gameType,
                     style: TextStyle(
                       color: badgeTextColor,
                       fontSize: 10,

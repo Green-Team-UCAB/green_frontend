@@ -14,6 +14,12 @@ import 'features/reports/presentation/bloc/reports_bloc.dart';
 import 'features/reports/presentation/bloc/report_detail_bloc.dart';
 import 'features/reports/presentation/bloc/host_report_bloc.dart';
 
+// Imports de Library
+import 'features/library/data/datasources/library_remote_data_source.dart';
+import 'features/library/data/repositories/library_repository_impl.dart';
+import 'features/library/domain/repositories/library_repository.dart';
+import 'features/library/presentation/bloc/library_bloc.dart';
+
 // Instancia global del Service Locator
 final sl = GetIt.instance;
 
@@ -53,6 +59,15 @@ Future<void> init() async {
   // Data Source
   sl.registerLazySingleton<ReportsRemoteDataSource>(
     () => ReportsRemoteDataSourceImpl(),
+  );
+
+  //! Features - Library (Epica 7)
+  sl.registerFactory(() => LibraryBloc(repository: sl()));
+  sl.registerLazySingleton<LibraryRepository>(
+    () => LibraryRepositoryImpl(remoteDataSource: sl()),
+  );
+  sl.registerLazySingleton<LibraryRemoteDataSource>(
+    () => LibraryRemoteDataSourceImpl(),
   );
 
   //! Core & External
