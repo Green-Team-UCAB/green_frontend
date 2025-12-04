@@ -20,7 +20,7 @@ class DiscoveryRemoteDataSourceImpl implements DiscoveryRemoteDataSource {
     await Future.delayed(const Duration(milliseconds: 300));
 
     // Base de datos fake
-    final List<KahootSummaryModel> _fakeDatabase = [
+    final List<KahootSummaryModel> fakeDatabase = [
       KahootSummaryModel(
         id: '1',
         title: 'Matemáticas Básicas',
@@ -68,7 +68,7 @@ class DiscoveryRemoteDataSourceImpl implements DiscoveryRemoteDataSource {
     ];
 
     // Lógica de filtrado (Simulación)
-    return _fakeDatabase.where((k) {
+    return fakeDatabase.where((k) {
       // 1. Filtro por Texto (Query)
       final matchesQuery =
           query.isEmpty ||
