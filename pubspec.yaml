@@ -23,13 +23,13 @@ dependencies:
   injectable: ^2.4.2
 
   # --- Functional Programming & Utils ---
-  dartz: ^0.10.1
   rxdart: ^0.27.7 # Necesario para debounceTime en el buscador
 
   # --- Networking & Data ---
   dio: ^5.5.0+1
   json_annotation: ^4.9.0
   shared_preferences: ^2.2.3
+  fpdart: ^1.2.0
 
 dev_dependencies:
   flutter_test:
