@@ -5,47 +5,54 @@ import 'package:green_frontend/features/single_player/application/start_attempt.
 import 'package:green_frontend/features/single_player/application/get_attempt.dart';
 import 'package:green_frontend/features/single_player/application/submit_answer.dart';  
 import 'package:green_frontend/features/single_player/application/get_summary.dart';
-import 'package:green_frontend/features/single_player/presentation/provider/single_game_provider.dart'; 
-import 'package:green_frontend/features/single_player/presentation/screens/example.dart';
+import 'package:green_frontend/features/single_player/application/get_kahoot_preview.dart';
 import 'package:green_frontend/features/single_player/infraestructure/datasources/async_game_datasource.dart';
 import 'package:dio/dio.dart';
+import 'package:green_frontend/core/mappers/exception_failure_mapper.dart';
+import 'package:green_frontend/features/single_player/presentation/screens/kahoot_preview_page.dart';
+import 'package:green_frontend/features/single_player/presentation/provider/game_provider.dart';
+
 
 void main() {
-  final dio = Dio(BaseOptions(
-  baseUrl: 'https://backcomun-production.up.railway.app', 
-  connectTimeout: const Duration(seconds: 8),
-  receiveTimeout: const Duration(seconds: 8),
-  headers: {'Content-Type': 'application/json'},
-)); 
-  final dataSource = AsyncGameDatasourceImpl(dio: dio);
-  final repo = AsyncGameRepositoryImpl(dataSource: dataSource);
-  runApp(MyApp(repo: repo));
-}
+  // Cambia aquí según tu entorno:
+  const baseUrl = 'https://quizzy-backend-0wh2.onrender.com/api'; 
+  final dio = Dio(BaseOptions(baseUrl: baseUrl, connectTimeout: const Duration(seconds: 8), receiveTimeout: const Duration(seconds: 8)));
+  final dataSource = AsyncGameDataSourceImpl(dio: dio);
+  final mapper = ExceptionFailureMapper();
+  final repository = AsyncGameRepositoryImpl(dataSource: dataSource, mapper: mapper);
 
-class MyApp extends StatelessWidget {
-  final AsyncGameRepositoryImpl repo;
-  const MyApp({super.key, required this.repo});
+  final startUC = StartAttempt(repository);
+  final getAttemptUC = GetAttempt(repository);
+  final submitUC = SubmitAnswer(repository);
+  final summaryUC = GetSummary(repository);
+  final previewUC = GetKahootPreview(repository);
 
-  @override
-  Widget build(BuildContext context) {
-    return MultiProvider(
+  runApp(
+    MultiProvider(
       providers: [
-        // Proporciona QuizProvider con instancias creadas manualmente
-        ChangeNotifierProvider<QuizProvider>(
-          create: (_) => QuizProvider(
-            startAttemptUseCase: StartAttempt(repo),
-            getAttemptUseCase: GetAttempt(repo),
-            submitAnswerUseCase: SubmitAnswer(repo),
-            getSummaryUseCase: GetSummary(repo),
+        ChangeNotifierProvider(
+          create: (_) => GameController(
+            startAttempt: startUC,
+            getAttempt: getAttemptUC,
+            submitAnswer: submitUC,
+            getSummary: summaryUC,
+            getKahootPreview: previewUC,
           ),
         ),
       ],
-      child: MaterialApp(
-        title: 'Trivia App',
-        theme: ThemeData(primarySwatch: Colors.blue),
-        home: QuizScreen(),  // Pantalla inicial
-        debugShowCheckedModeBanner: false,
-      ),
+      child: const MyApp(),
+    ),
+  );
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Kahoot Demo',
+      theme: ThemeData(useMaterial3: true),
+      home: const KahootPreviewScreen(kahootId: 'k_001'),
     );
   }
 }
