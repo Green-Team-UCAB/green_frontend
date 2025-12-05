@@ -1,14 +1,10 @@
 import 'package:green_frontend/features/single_player/domain/entities/answer.dart';
 
-class AnswerModel {
-  final String slideId;
-  final List<int>? answerIndex;
-  final int? timeElapsedSeconds;
-
+class AnswerModel extends Answer {
   AnswerModel({
-    required this.slideId,
-    this.answerIndex,
-    this.timeElapsedSeconds,
+    required super.slideId,
+    super.answerIndex,
+    super.timeElapsedSeconds,
   });
 
 factory AnswerModel.fromEntity(Answer answer) {
