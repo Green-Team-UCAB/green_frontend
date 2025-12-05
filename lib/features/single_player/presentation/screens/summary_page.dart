@@ -39,7 +39,7 @@ class SummaryPage extends StatelessWidget {
   }
 
   void _repeatKahoot(BuildContext context, GameController controller) {
-    // Asume que tienes kahootId guardado; reinicia y navega a GamePage
+    // TODO:guardar kahoot para poder navegar
     controller.reset();
     // Llama startNewAttempt y navega
   }

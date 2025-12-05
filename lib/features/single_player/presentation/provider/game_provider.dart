@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:green_frontend/features/single_player/application/start_attempt.dart';
 import 'package:green_frontend/features/single_player/application/get_attempt.dart';
 import 'package:green_frontend/features/single_player/application/submit_answer.dart';
@@ -162,16 +161,4 @@ class GameController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Métodos async para compatibilidad
-  Future<Either<Failure, Kahoot>> getKahootPreviewAsync(String kahootId) async {
-    return await getKahootPreview.call(kahootId);
-  }
-
-  Future<Either<Failure, Attempt>> startAttemptAsync(String kahootId) async {
-    return await startAttempt.call(kahootId: kahootId);
-  }
-
-  Future<Either<Failure, Attempt>> getAttemptAsync(String attemptId) async {
-    return await getAttempt.call(attemptId: attemptId);
-  }
 }

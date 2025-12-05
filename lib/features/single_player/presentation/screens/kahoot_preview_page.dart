@@ -136,7 +136,7 @@ class _KahootPreviewScreenState extends State<KahootPreviewScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Primary action: Jugar (nuevo intento)
+        //  Jugar (nuevo intento)
         ElevatedButton(
           onPressed: controller.isLoading || controller.isSubmitting ? null : () => _startNewAttempt(context, controller),
           child: controller.isSubmitting
@@ -188,11 +188,10 @@ class _KahootPreviewScreenState extends State<KahootPreviewScreen> {
   // ---------- Actions ----------
 
   Future<void> _startNewAttempt(BuildContext context, GameController controller) async {
-    // Llamada al provider; tu método en GameController acepta (kahootId, BuildContext) en tu código original.
-    // Aquí llamamos con context para que el provider pueda navegar si lo hace internamente.
+
     await controller.startNewAttempt(widget.kahootId, context);
 
-    // Si el controller guardó el attempt en su estado, navegamos a GamePage usando attemptId
+    // Si el controller guardó el attempt en su estado se navega a GamePage usando attemptId
     final attempt = controller.attempt;
     if (attempt != null) {
       try {
@@ -205,7 +204,7 @@ class _KahootPreviewScreenState extends State<KahootPreviewScreen> {
   }
 
   Future<void> _resumeAttempt(BuildContext context, GameController controller, dynamic preview) async {
-    // Preferimos usar el attemptId que viene en preview.gameState si existe
+
     final attemptId = preview.gameState?.attemptId;
     if (attemptId != null && attemptId.isNotEmpty) {
       await controller.resumeAttempt(attemptId, context);
