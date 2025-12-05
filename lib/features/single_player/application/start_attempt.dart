@@ -9,10 +9,9 @@ class StartAttempt {
 
   Future<Either<Failure,Attempt>> call({required String kahootId}) async {
     if (kahootId.isEmpty) {
-      return Left(Failure('kahootId no puede estar vacío'));
+      return left(InvalidInputFailure('kahootId no puede estar vacío'));
     }
-    final result = await repository.startAttempt(kahootId: kahootId);
-    return result;
+    return await repository.startAttempt(kahootId: kahootId);
   }
   
 }

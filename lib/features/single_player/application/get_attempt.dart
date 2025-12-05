@@ -9,11 +9,9 @@ class GetAttempt {
 
   Future<Either<Failure, Attempt>> call({required String attemptId}) async {
     if (attemptId.isEmpty) {
-      return Left(Failure('El ID del intento no puede estar vacío'));
+      return left(Failure('El ID del intento no puede estar vacío'));
     }
-    final result = await repository.getAttempt(attemptId: attemptId);
-    return result;
-    
+    return await repository.getAttempt(attemptId: attemptId);  
   }
 
 }

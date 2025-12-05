@@ -10,7 +10,7 @@ class GetSummary {
 
   Future<Either<Failure,Summary>> call(String attemptId) async {
     if (attemptId.isEmpty) {
-      return Left(Failure('El ID del intento no puede estar vacío'));
+      return left(InvalidInputFailure('El ID del intento no puede estar vacío'));
     }
     return await repository.getSummary(attemptId: attemptId);
   }
