@@ -4,6 +4,7 @@ import 'package:green_frontend/features/single_player/domain/entities/answer.dar
 import 'package:green_frontend/features/single_player/domain/entities/answer_result.dart';
 import 'package:green_frontend/features/single_player/domain/entities/summary.dart';
 import 'package:green_frontend/core/error/failures.dart';
+import 'package:green_frontend/features/single_player/domain/entities/kahoot.dart';
 
 
 abstract interface class AsyncGameRepository {
@@ -11,4 +12,6 @@ abstract interface class AsyncGameRepository {
   Future<Either<Failure,Attempt>> getAttempt({required String attemptId});
   Future<Either<Failure,AnswerResult>> submitAnswer({required String attemptId, required Answer answer});
   Future<Either<Failure,Summary>> getSummary({required String attemptId});
+  Future<Either<Failure, Kahoot>> getKahootPreview({required String kahootId});
+
 }
