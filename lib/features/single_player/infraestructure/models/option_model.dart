@@ -12,14 +12,13 @@ class OptionModel {
   });
 
   factory OptionModel.fromJson(Map<String, dynamic> json) {
-  final rawIndex = json['index'];
-  final indexValue = rawIndex is int ? rawIndex : int.tryParse(rawIndex?.toString() ?? '') ?? 0;
 
   return OptionModel(
-    index: indexValue,
-    text: json['text'] as String?,
-    mediaId: json['mediaId'] as String?,
-  );
+      index: int.tryParse(json['index'].toString()) ?? 0, 
+      text: json['text'] as String?,
+      mediaId: (json['mediaId'] ?? json['mediaID']) as String?,
+    );
+  
 }
   
   Option toEntity() {

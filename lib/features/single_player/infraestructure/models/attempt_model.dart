@@ -3,7 +3,7 @@ import 'package:green_frontend/features/single_player/domain/entities/attempt.da
 
 class AttemptModel {
   final String attemptId;
-  final String state;
+  final String? state;
   final int currentScore;
   final SlideModel? nextSlide;
 
@@ -17,10 +17,10 @@ class AttemptModel {
 factory AttemptModel.fromJson(Map<String, dynamic> json) {
     return AttemptModel(
       attemptId: json['attemptId'],
-      state: json['state'],
+      state: json['state'] as String?,
       currentScore: json['currentScore'] ?? 0,
-      nextSlide: json['nextSlide'] != null
-          ? SlideModel.fromJson(json['nextSlide'])
+      nextSlide: json['firstSlide'] != null
+          ? SlideModel.fromJson(json['firstSlide'])
           : null,
     );
   }

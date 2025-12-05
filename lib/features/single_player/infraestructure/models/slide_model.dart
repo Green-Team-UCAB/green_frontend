@@ -18,13 +18,26 @@ class SlideModel {
     required this.options,
   });
 
+  static QuestionType _mapQuestionType(String raw) {
+    switch (raw.toUpperCase()) {
+      case 'SINGLE':
+        return QuestionType.singleChoice;
+      case 'MULTIPLE':
+        return QuestionType.multipleChoice;
+      case 'TRUE_FALSE':
+        return QuestionType.trueFalse;
+      default:
+        return QuestionType.singleChoice;
+    }
+  }
+
   factory SlideModel.fromJson(Map<String, dynamic> json) {
     return SlideModel(
       slideId: json['slideId'],
       questionText: json['questionText'],
-      questionType: json['questionType'],
-      timeLimitSeconds: json['timeLimitSeconds'],
-      mediaId: json['mediaId'],
+      questionType: _mapQuestionType(json['questionType'] as String),
+      timeLimitSeconds: (json['timeLimitSeconds']as num).toInt(),
+      mediaId: (json['mediaId']?? json['mediaID']) as String?,
       options: (json['options'] as List)
           .map((optionJson) => OptionModel.fromJson(optionJson))
           .toList(),

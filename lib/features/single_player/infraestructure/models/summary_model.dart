@@ -19,9 +19,9 @@ class SummaryModel {
     return SummaryModel(
       attemptId: json['attemptId'],
       finalScore: json['finalScore'],
-      totalCorrectAnswers: json['totalCorrectAnswers'],
+      totalCorrectAnswers: (json['totalCorrectAnswers'] ?? 0) as int,
       totalQuestions: json['totalQuestions'],
-      accuracyPercentage: json['accuracyPercentage'],
+      accuracyPercentage: (json['accuracyPercentage'] as num?)?.toDouble() ?? 0.0,
     );
   }
 

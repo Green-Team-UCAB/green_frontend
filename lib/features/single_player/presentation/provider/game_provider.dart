@@ -24,9 +24,10 @@ class GameController extends ChangeNotifier {
 
   // Estados principales
   Attempt? attempt;
-  Slide? currentSlide;  // Cambia a Slide? si nextSlide es Slide
+  Slide? currentSlide;  
   Summary? summary;
   Kahoot? preview;
+  DateTime? startTime;
 
   // Estados de UI
   bool isLoading = false;
@@ -68,7 +69,8 @@ class GameController extends ChangeNotifier {
       (f) => lastFailure = f,
       (a) {
         attempt = a;
-        currentSlide = a.nextSlide;  // Asume que startAttempt devuelve nextSlide como primera
+        currentSlide = a.nextSlide;  
+        startTime = DateTime.now();
         GameStorage.saveAttempt(a.attemptId, kahootId);
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => GamePage(attemptId: a.attemptId)));
       },
@@ -109,8 +111,8 @@ class GameController extends ChangeNotifier {
   },
   (result) {
     showFeedback = true;
-    wasCorrect = result.wasCorrect;  // Asume que result tiene wasCorrect
-    pointsEarned = result.pointsEarned;  // Asume que result tiene pointsEarned
+    wasCorrect = result.wasCorrect;  
+    pointsEarned = result.pointsEarned; 
     attempt = attempt!.copyWith(currentScore: result.updatedScore);
     if (result.attemptState == AttemptState.completed) {
       isSubmitting = false;
@@ -118,6 +120,7 @@ class GameController extends ChangeNotifier {
       loadSummary(attempt!.attemptId, context);
     } else {
       currentSlide = result.nextSlide ?? currentSlide;
+      startTime = DateTime.now(); 
       Future.delayed(const Duration(milliseconds: 900), () {
         showFeedback = false;
         wasCorrect = false;  // Reset

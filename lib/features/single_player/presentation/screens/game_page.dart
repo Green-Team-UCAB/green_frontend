@@ -14,7 +14,7 @@ class GamePage extends StatefulWidget {
 
 class _GamePageState extends State<GamePage> {
   Set<int> selectedIndices = {};  // Para selección múltiple
-
+  DateTime? startTime;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -58,9 +58,11 @@ class _GamePageState extends State<GamePage> {
                 Expanded(
                   child: ListView(
                     children: (controller.currentSlide!.options as List).asMap().entries.map((entry) {
-                      final index = entry.key;  // Índice (0, 1, 2, ...)
+                      final index = entry.key;  
                       final option = entry.value;
-                      final optionText = option.text ?? option.label ?? option.toString();  // Texto de la opción
+                      final optionText = option.text ?? option.mediaId;
+
+
                       return CheckboxListTile(
                         title: Text(optionText, style: const TextStyle(fontSize: 16)),
                         value: selectedIndices.contains(index),
@@ -115,12 +117,16 @@ class _GamePageState extends State<GamePage> {
   }
 
   void _submitAnswer(BuildContext context, GameController controller) async {
-    final answerEntity = Answer(
-      slideId: controller.currentSlide!.slideId,
-      answerIndex: selectedIndices.toList(),  // Lista de índices seleccionados
-      timeElapsedSeconds: null,
-    );
+    final elapsedSeconds = startTime != null
+      ? DateTime.now().difference(startTime!).inSeconds
+      : 0;
+
+  final answerEntity = Answer(
+    slideId: controller.currentSlide!.slideId,
+    answerIndex: selectedIndices.toList(),
+    timeElapsedSeconds: elapsedSeconds,
+  );
     await controller.submitAnswerResult(answerEntity, context);
-    setState(() => selectedIndices.clear());  // Limpia para la siguiente pregunta
+    setState(() => selectedIndices.clear());  
   }
 }

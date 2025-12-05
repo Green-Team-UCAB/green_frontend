@@ -15,15 +15,10 @@ factory AnswerModel.fromEntity(Answer answer) {
     );
   }
 
-  Map<String, dynamic> toJson() {
-    final map = <String, dynamic>{'slideId': slideId};
-    if (answerIndex != null) {
-      map['answerIndex'] = answerIndex;
-    }
-    if (timeElapsedSeconds != null) {
-      map['timeElapsedSeconds'] = timeElapsedSeconds;
-    } 
-    return map;
-  }
+    Map<String, dynamic> toJson() => {
+    'slideId': slideId,
+    'answerIndex': answerIndex ?? [],
+    'timeElapsedSeconds': timeElapsedSeconds ?? 0,
+  };
 
 }

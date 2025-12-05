@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:green_frontend/features/single_player/presentation/provider/game_provider.dart';
 
 class SummaryPage extends StatelessWidget {
+  const SummaryPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

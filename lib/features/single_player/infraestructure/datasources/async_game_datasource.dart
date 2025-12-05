@@ -71,7 +71,6 @@ class AsyncGameDataSourceImpl implements AsyncGameDataSource {
     final response = await client.get<Map<String, dynamic>>(
       path: '$_attemptsPath/$attemptId',
     );
-    
     if (response.statusCode == 200) {
       return AttemptModel.fromJson(response.data);
     }
@@ -87,7 +86,7 @@ class AsyncGameDataSourceImpl implements AsyncGameDataSource {
     InputValidator.validateNotEmpty(attemptId, 'attemptId');
     
     final response = await client.post<Map<String, dynamic>>(
-      path: '$_attemptsPath/$attemptId/answers',
+      path: '$_attemptsPath/$attemptId/answer',
       data: answer.toJson(),
     );
     
@@ -122,7 +121,7 @@ class AsyncGameDataSourceImpl implements AsyncGameDataSource {
     InputValidator.validateNotEmpty(kahootId, 'kahootId');
     
     final resp = await client.get<Map<String, dynamic>>(
-      path: '/kahoots/inspect/$kahootId'
+      path: '/kahoots/$kahootId'
     );
     if (resp.statusCode == 200) {
       return KahootModel.fromJson(resp.data);

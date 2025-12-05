@@ -14,9 +14,9 @@ import 'package:green_frontend/features/single_player/presentation/provider/game
 
 
 void main() {
-  // Cambia aquí según tu entorno:
+  
   const baseUrl = 'https://quizzy-backend-0wh2.onrender.com/api'; 
-  final dio = Dio(BaseOptions(baseUrl: baseUrl, connectTimeout: const Duration(seconds: 8), receiveTimeout: const Duration(seconds: 8)));
+  final dio = Dio(BaseOptions(baseUrl: baseUrl, connectTimeout: const Duration(seconds: 30), receiveTimeout: const Duration(seconds: 30)));
   final dataSource = AsyncGameDataSourceImpl(dio: dio);
   final mapper = ExceptionFailureMapper();
   final repository = AsyncGameRepositoryImpl(dataSource: dataSource, mapper: mapper);
@@ -52,7 +52,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Kahoot Demo',
       theme: ThemeData(useMaterial3: true),
-      home: const KahootPreviewScreen(kahootId: 'k_001'),
+      home: const KahootPreviewScreen(kahootId: '1c7ebd51-ab08-4f29-b0b3-14ad7429f83f'),
     );
   }
 }
