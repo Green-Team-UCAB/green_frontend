@@ -1,28 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
 
-// 1. TUS IMPORTS (Inyección de dependencias)
+// --- Core & Dependency Injection ---
 import 'injection_container.dart' as di;
+import 'package:green_frontend/core/theme/app_pallete.dart';
 
-// 2. IMPORTS DEL EQUIPO (Navegación)
-// Asegúrate que estas rutas existan. Si te salen rojas, verifica la carpeta.
+// --- Feature: Navigation ---
 import 'features/menu_navegation/presentation/screens/nav_bar_selection_screen.dart';
 import 'features/menu_navegation/presentation/providers/navigation_provider.dart';
 
-// 3. IMPORT DE TEMA (Opcional)
-// Si tienes este archivo, descoméntalo. Si no, usa colores por defecto.
-// import 'core/theme/app_pallete.dart';
+// --- Feature: Kahoot (Creation & Logic) ---
+import 'package:green_frontend/features/kahoot/application/providers/kahoot_provider.dart';
+import 'package:green_frontend/features/kahoot/application/use_cases/save_kahoot_use_case.dart';
+import 'package:green_frontend/features/kahoot/infrastructure/datasources/kahoot_remote_datasource.dart';
+import 'package:green_frontend/features/kahoot/infrastructure/repositories/kahoot_repository_impl.dart';
+
+// --- Feature: Theming ---
+import 'package:green_frontend/features/kahoot/application/providers/theme_provider.dart';
+import 'package:green_frontend/features/kahoot/infrastructure/datasources/theme_remote_datasource.dart';
+import 'package:green_frontend/features/kahoot/infrastructure/repositories/theme_repository_impl.dart';
 
 void main() async {
-  // Aseguramos que el motor de Flutter esté listo
+  // Asegurar inicialización del motor de Flutter
   WidgetsFlutterBinding.ensureInitialized();
 
-  // ✅ VITAL: Inicializamos TUS dependencias (GetIt)
-  // Sin esto, tus pantallas de Discovery y Library fallarán al buscar los Blocs.
+  // Inicializar Service Locator (Clean Architecture Dependencies)
   await di.init();
 
-  // Configuración de logs para Bloc
+  // Configuración de observador para BLoC
   Bloc.observer = AppBlocObserver();
 
   runApp(const MyApp());
@@ -35,44 +42,75 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        // ✅ PROVIDER DE NAVEGACIÓN (Del equipo)
-        // Es necesario para que funcione el NavBarSelectionScreen
+        // ---------------------------------------------------
+        // Feature: Navigation
+        // ---------------------------------------------------
         ChangeNotifierProvider(create: (_) => NavigationProvider()),
 
-        // NOTA: Aquí irían los providers de Kahoot/Theme del equipo.
-        // Los he omitido para que te compile AHORA.
-        // Cuando tengas esos archivos, agrégalos aquí.
+        // ---------------------------------------------------
+        // Feature: Kahoot (Management & Creation)
+        // ---------------------------------------------------
+        Provider<KahootRemoteDataSource>(
+          create: (_) => KahootRemoteDataSource(),
+        ),
+        Provider<KahootRepositoryImpl>(
+          create: (context) =>
+              KahootRepositoryImpl(context.read<KahootRemoteDataSource>()),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => KahootProvider(
+            SaveKahootUseCase(context.read<KahootRepositoryImpl>()),
+          ),
+        ),
+
+        // ---------------------------------------------------
+        // Feature: Themes
+        // ---------------------------------------------------
+        Provider<ThemeRemoteDataSource>(
+          create: (_) => ThemeRemoteDataSource(client: http.Client()),
+        ),
+        Provider<ThemeRepositoryImpl>(
+          create: (context) => ThemeRepositoryImpl(
+            remoteDataSource: context.read<ThemeRemoteDataSource>(),
+          ),
+        ),
+        ChangeNotifierProvider<ThemeProvider>(
+          create: (context) => ThemeProvider(
+            themeRepository: context.read<ThemeRepositoryImpl>(),
+          ),
+        ),
       ],
+
       child: MaterialApp(
         title: 'Kahoot Clone',
         debugShowCheckedModeBanner: false,
 
-        // Configuración del Tema
+        // Configuración Global de Tema
         theme: ThemeData(
+          // Paleta de colores principal
+          scaffoldBackgroundColor: AppPallete.backgroundColor,
           colorScheme: ColorScheme.fromSeed(
             seedColor: Colors.deepPurple,
             brightness: Brightness.light,
           ),
           useMaterial3: true,
-          // Configuración global de inputs (opcional, para que se vea bien)
+
+          // Estilos de Inputs
           inputDecorationTheme: const InputDecorationTheme(
             border: OutlineInputBorder(),
             filled: true,
             fillColor: Colors.white,
           ),
-          // Si tienes AppPallete, puedes usar: scaffoldBackgroundColor: AppPallete.backgroundColor,
         ),
 
-        // 🚀 PUNTO DE ENTRADA
-        // Arrancamos con la pantalla de menú de tu equipo.
-        // Dentro de esta pantalla, ellos deben estar llamando a tus páginas (LibraryPage, DiscoveryPage)
+        // Pantalla Inicial (Barra de Navegación)
         home: const NavBarSelectionScreen(),
       ),
     );
   }
 }
 
-// Tu observador de Bloc para ver los logs en consola
+/// Observador global para monitorear cambios de estado en BLoC
 class AppBlocObserver extends BlocObserver {
   @override
   void onChange(BlocBase bloc, Change change) {
