@@ -22,3 +22,6 @@ class ServerFailure extends Failure {
 class UnauthorizedFailure extends Failure { 
   UnauthorizedFailure([super.message = 'Unauthorized']); 
 }
+class UnknownFailure extends Failure{
+  UnknownFailure ([super.message = 'Unknown error']);
+}
