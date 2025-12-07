@@ -1,27 +1,41 @@
-class Failure{
+import 'package:equatable/equatable.dart';
+
+abstract class Failure extends Equatable {
   final String message;
-  Failure(this.message );
+  const Failure(this.message);
+
+  @override
+  List<Object> get props => [message];
 }
 
+class ServerFailure extends Failure {
+  const ServerFailure([super.message = 'Server error']);
+}
+
+class CacheFailure extends Failure {
+  const CacheFailure([super.message = 'Cache error']);
+}
 
 class NotFoundFailure extends Failure {
-  NotFoundFailure([super.message= 'Not found']);
+  const NotFoundFailure([super.message = 'Not found']);
 }
+
 class BadRequestFailure extends Failure {
-  BadRequestFailure([super.message = 'Bad request']);
+  const BadRequestFailure([super.message = 'Bad request']);
 }
+
 class InvalidInputFailure extends Failure {
-  InvalidInputFailure([super.message= 'Invalid input']);
+  const InvalidInputFailure([super.message = 'Invalid input']);
 }
-class NetworkFailure extends Failure { 
-  NetworkFailure([super.message = 'Network error']) ; 
+
+class NetworkFailure extends Failure {
+  const NetworkFailure([super.message = 'Network error']);
 }
-class ServerFailure extends Failure { 
-  ServerFailure([super.message = 'Server error']); 
+
+class UnauthorizedFailure extends Failure {
+  const UnauthorizedFailure([super.message = 'Unauthorized']);
 }
-class UnauthorizedFailure extends Failure { 
-  UnauthorizedFailure([super.message = 'Unauthorized']); 
-}
-class UnknownFailure extends Failure{
-  UnknownFailure ([super.message = 'Unknown error']);
+
+class UnknownFailure extends Failure {
+  const UnknownFailure([super.message = 'Unknown error']);
 }
