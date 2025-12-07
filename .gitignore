@@ -43,3 +43,6 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Ignorar archivos generados de registro de plugins nativos (macOS)
+macos/Flutter/GeneratedPluginRegistrant.swift
