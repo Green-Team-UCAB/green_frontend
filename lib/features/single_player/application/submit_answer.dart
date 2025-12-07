@@ -11,7 +11,7 @@ class SubmitAnswer {
 
   Future<Either<Failure,AnswerResult>> call(String attemptId, Answer userAnswer) async {
     if (attemptId.isEmpty) {
-      return left(Failure('El ID del intento no puede estar vacío'));
+      return left(InvalidInputFailure('El ID del intento no puede estar vacío'));
     }
     return await repository.submitAnswer(attemptId:attemptId, answer: userAnswer);
   }

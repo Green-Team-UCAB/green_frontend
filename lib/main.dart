@@ -82,7 +82,7 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         
-        ChangeNotifierProvider(create: (_) => NavigationProvider())
+        ChangeNotifierProvider(create: (_) => NavigationProvider()),
         
         Provider<KahootRemoteDataSource>(
           create: (_) => KahootRemoteDataSource(),
