@@ -8,11 +8,12 @@ import 'package:green_frontend/features/single_player/domain/entities/answer.dar
 import 'package:green_frontend/core/error/failures.dart';
 import 'package:green_frontend/features/single_player/domain/entities/kahoot.dart';
 import 'package:green_frontend/features/single_player/domain/entities/attempt.dart';
-import 'package:green_frontend/features/single_player/domain/entities/slide.dart';  // Cambia a Slide si es diferente
+import 'package:green_frontend/features/single_player/domain/entities/slide.dart';  
 import 'package:green_frontend/features/single_player/domain/entities/summary.dart';
 import 'package:green_frontend/core/storage/local_storage.dart';
 import 'package:green_frontend/features/single_player/presentation/screens/game_page.dart';
 import 'package:green_frontend/features/single_player/presentation/screens/summary_page.dart';
+import 'package:fpdart/fpdart.dart';
 
 class GameController extends ChangeNotifier {
   final StartAttempt startAttempt;
@@ -148,6 +149,10 @@ class GameController extends ChangeNotifier {
     isLoading = false;
     notifyListeners();
   }
+
+  Future<Either<Failure, Kahoot>> getKahootPreviewAsync(String kahootId) async {
+    return await getKahootPreview.call(kahootId);
+}
 
   void reset() {
     attempt = null;
