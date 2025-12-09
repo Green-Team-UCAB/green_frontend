@@ -34,6 +34,7 @@ class GameController extends ChangeNotifier {
   // Variables locales para seguimiento (sin modificar entidades)
   int _answeredQuestions = 0;
   int _estimatedTotalSlides = 10; // Valor por defecto
+  int _correctAnswersCount = 0;
   
   // Estados de UI
   bool isLoading = false;
@@ -204,6 +205,10 @@ class GameController extends ChangeNotifier {
         showFeedback = true;
         wasCorrect = result.wasCorrect;  
         pointsEarned = result.pointsEarned; 
+         // INCREMENTA EL CONTADOR SI LA RESPUESTA FUE CORRECTA
+      if (result.wasCorrect) {
+        _correctAnswersCount++;
+      }
         attempt = attempt!.copyWith(currentScore: result.updatedScore);
         
         _answeredQuestions++;
@@ -280,8 +285,11 @@ class GameController extends ChangeNotifier {
     }
   }
 
+  int get correctAnswersCount => _correctAnswersCount;
+
   void resetQuestionCounter() {
     _answeredQuestions = 0;
+     _correctAnswersCount = 0;
     _estimatedTotalSlides = 10;
     notifyListeners();
   }

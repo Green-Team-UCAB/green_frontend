@@ -39,10 +39,23 @@ class _GamePageState extends State<GamePage> {
     return Scaffold(
       backgroundColor: Colors.white, // Fondo blanco
       appBar: AppBar(
-        title: const Text('Juego'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
+        title: const Text(
+          'Quiz',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        backgroundColor: Colors.purple, // Color morado para el banner
+        foregroundColor: Colors.white,
+        elevation: 4,
+        centerTitle: true,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            bottom: Radius.circular(16),
+          ),
+        ),
       ),
       body: Consumer<GameController>(
         builder: (context, controller, child) {
@@ -65,34 +78,35 @@ class _GamePageState extends State<GamePage> {
           return Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Progreso como en la imagen
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      "1/10 Quiz", // Cambiar esto por datos dinámicos si los tienes
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                // Puntuación dentro de un card decorativo
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                  decoration: BoxDecoration(
+                    color: Colors.purple.shade50, // Fondo morado claro
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.purple.shade200, width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.purple.withOpacity(0.1),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
                       ),
-                    ),
-                    Text(
+                    ],
+                  ),
+                  child: Center(
+                    child: Text(
                       'Puntuación: ${controller.attempt?.currentScore ?? 0}',
                       style: const TextStyle(
                         fontSize: 16,
-                        color: Colors.black87,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.purple,
                       ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                LinearProgressIndicator(
-                  value: 0.1, // Cambiar por progreso real
-                  backgroundColor: Colors.grey.shade300,
-                  color: Colors.purple,
+                  ),
                 ),
                 const SizedBox(height: 16),
 
@@ -118,15 +132,24 @@ class _GamePageState extends State<GamePage> {
                 const SizedBox(height: 20),
 
                 // Pregunta
-                Text(
-                  controller.currentSlide!.questionText,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: Text(
+                    controller.currentSlide!.questionText,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
 
                 // Opciones como botones de colores (2 columnas)
                 Expanded(

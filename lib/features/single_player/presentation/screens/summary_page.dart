@@ -3,9 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:green_frontend/features/single_player/domain/entities/summary.dart';
 import 'package:green_frontend/features/single_player/presentation/provider/game_provider.dart';
 import 'package:green_frontend/features/single_player/presentation/screens/game_page.dart';
-import 'package:green_frontend/features/menu_navegation/presentation/screens/home_screen.dart';
 import 'package:green_frontend/features/menu_navegation/presentation/screens/nav_bar_selection_screen.dart';
-
 
 class SummaryPage extends StatelessWidget {
   const SummaryPage({super.key});
@@ -123,20 +121,16 @@ class SummaryPage extends StatelessWidget {
                           ),
                           const SizedBox(height: 24),
 
-                          // Estadísticas detalladas
+                          // SOLO Correct Answers (sin total y sin accuracy)
                           _buildStatRow(
                             icon: Icons.check_circle,
                             iconColor: Colors.green,
-                            label: 'Correct Answers',
-                            value: '${summary.totalCorrectAnswers}/${summary.totalQuestions}',
+                            label: 'Respuestas Correctas',
+                            value: '${controller.correctAnswersCount}', // Solo el número
                           ),
-                          const SizedBox(height: 16),
-                          _buildStatRow(
-                            icon: Icons.percent,
-                            iconColor: Colors.blue,
-                            label: 'Accuracy',
-                            value: '${_calculateAccuracy(summary)}%',
-                          ),
+                          
+                          // Quitado el accuracy
+                          
                           if (kahoot != null) ...[
                             const SizedBox(height: 16),
                             _buildStatRow(
@@ -180,7 +174,7 @@ class SummaryPage extends StatelessWidget {
                     Icon(
                       Icons.celebration,
                       size: 60,
-                      color: Colors.amber.withValues(),
+                      color: Colors.amber.withOpacity(0.8), // Corregido
                     ),
                   ],
                 ),
@@ -241,12 +235,6 @@ class SummaryPage extends StatelessWidget {
     );
   }
 
-  String _calculateAccuracy(Summary summary) {
-    if (summary.totalQuestions == 0) return '0.0';
-    final accuracy = (summary.totalCorrectAnswers / summary.totalQuestions) * 100;
-    return accuracy.toStringAsFixed(1);
-  }
-
   Widget _buildActionButton({
     required String text,
     required IconData icon,
@@ -293,9 +281,9 @@ class SummaryPage extends StatelessWidget {
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(
-        builder: (_) => NavBarSelectionScreen(), // O KahootLibraryScreen si esa es tu home
+        builder: (_) => const NavBarSelectionScreen(),
       ),
-      (route) => false, // Elimina todas las rutas anteriores
+      (route) => false,
     );
   }
 
@@ -307,7 +295,6 @@ class SummaryPage extends StatelessWidget {
       controller.reset();
       
       // Iniciar nuevo intento directamente
-      // Usamos pushReplacement para reemplazar el SummaryPage por GamePage
       controller.startNewAttempt(kahootId, context);
     } else {
       // Si no hay kahootId, ir al home
