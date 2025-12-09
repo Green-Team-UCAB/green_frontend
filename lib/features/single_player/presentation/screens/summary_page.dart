@@ -4,6 +4,7 @@ import 'package:green_frontend/features/single_player/domain/entities/summary.da
 import 'package:green_frontend/features/single_player/presentation/provider/game_provider.dart';
 import 'package:green_frontend/features/single_player/presentation/screens/game_page.dart';
 import 'package:green_frontend/features/menu_navegation/presentation/screens/home_screen.dart';
+import 'package:green_frontend/features/menu_navegation/presentation/screens/nav_bar_selection_screen.dart';
 
 
 class SummaryPage extends StatelessWidget {
@@ -155,7 +156,7 @@ class SummaryPage extends StatelessWidget {
                       children: [
                         // Botón "Home" (volver a pantalla principal)
                         _buildActionButton(
-                          text: 'Home',
+                          text: 'Volver a Home',
                           icon: Icons.home,
                           color: Colors.blue,
                           onPressed: () => _goToHomeScreen(context, controller),
@@ -165,7 +166,7 @@ class SummaryPage extends StatelessWidget {
                         
                         // Botón "Play Again" (repetir el mismo kahoot)
                         _buildActionButton(
-                          text: 'Play Again',
+                          text: 'Jugar de nuevo',
                           icon: Icons.replay,
                           color: Colors.purple,
                           onPressed: () => _repeatKahoot(context, controller),
@@ -179,7 +180,7 @@ class SummaryPage extends StatelessWidget {
                     Icon(
                       Icons.celebration,
                       size: 60,
-                      color: Colors.amber.withOpacity(0.3),
+                      color: Colors.amber.withValues(),
                     ),
                   ],
                 ),
@@ -292,7 +293,7 @@ class SummaryPage extends StatelessWidget {
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(
-        builder: (_) => KahootLibraryScreen(), // O KahootLibraryScreen si esa es tu home
+        builder: (_) => NavBarSelectionScreen(), // O KahootLibraryScreen si esa es tu home
       ),
       (route) => false, // Elimina todas las rutas anteriores
     );

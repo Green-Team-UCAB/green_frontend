@@ -5,14 +5,24 @@ import 'package:green_frontend/features/single_player/domain/entities/kahoot.dar
 import 'package:green_frontend/core/storage/local_storage.dart';
 
 
-/// Colors centralizados para mantener consistencia visual
-class _AppColors {
-  static const primary = Color(0xFF7C4DFF); // Morado de acento
-  static const background = Colors.white;
-  static const textPrimary = Color(0xFF1A1A1A);
-  static const textSecondary = Color(0xFF6B6B6B);
-  static const border = Color(0xFFE6E6E6);
-  static const chip = Color(0xFFF5F5F5);
+/// Colors para las tarjetas
+class _CardColors {
+  static const List<Color> cardColors = [
+    Color(0xFF7C4DFF), // Morado
+    Color(0xFF2196F3), // Azul
+    Color(0xFF4CAF50), // Verde
+    Color(0xFFFF9800), // Naranja
+    Color(0xFFE91E63), // Rosa
+    Color(0xFF009688), // Turquesa
+    Color(0xFF9C27B0), // Púrpura
+    Color(0xFF3F51B5), // Índigo
+    Color(0xFF00BCD4), // Cian
+    Color(0xFF8BC34A), // Verde claro
+  ];
+
+  static const Color textOnDark = Colors.white;
+  static const Color textOnLight = Color(0xFF1A1A1A);
+  static const Color subtitleColor = Color(0xCCFFFFFF); // Blanco con 80% opacidad
 }
 
 /// IDs de los kahoots reales de tu API
@@ -34,12 +44,12 @@ class KahootLibraryScreen extends StatefulWidget {
 }
 
 class _KahootLibraryScreenState extends State<KahootLibraryScreen> {
-  int _segmentIndex = 0; // 0: Quizzo, 1: Collections
-  String _sortLabel = 'Newest';
-  
   // Mapa para guardar los previews cargados por ID
   final Map<String, Kahoot?> _kahootPreviews = {};
   final Set<String> _loadingKahoots = {};
+  
+  // Variable para controlar si debemos continuar con las peticiones
+  bool _shouldContinue = true;
 
   @override
   void initState() {
@@ -50,213 +60,151 @@ class _KahootLibraryScreenState extends State<KahootLibraryScreen> {
     });
   }
 
+  @override
+  void dispose() {
+    _shouldContinue = false; // Detener todas las peticiones futuras
+    super.dispose();
+  }
+
   Future<void> _loadAllKahootPreviews() async {
+    // Verificar si debemos continuar antes de empezar
+    if (!_shouldContinue || !mounted) return;
+    
     for (final kahootId in KahootIds.allKahootIds) {
+      // Verificar después de cada kahoot si debemos continuar
+      if (!_shouldContinue || !mounted) break;
       await _loadKahootPreview(kahootId);
     }
   }
 
   Future<void> _loadKahootPreview(String kahootId) async {
-    if (_loadingKahoots.contains(kahootId)) return;
+    // Verificar múltiples condiciones antes de continuar
+    if (_loadingKahoots.contains(kahootId) || !mounted || !_shouldContinue) return;
     
     _loadingKahoots.add(kahootId);
     if (mounted) setState(() {});
     
-    final controller = context.read<GameController>();
-    
-    final result = await controller.getKahootPreviewAsync(kahootId);
-    
-    result.match(
-      (failure) {
-        // Error - dejar null en el mapa
-        if (mounted) {
-          setState(() {
-            _kahootPreviews[kahootId] = null;
-          });
-        }
-      },
-      (kahoot) {
-        // Éxito - guardar en el mapa
-        if (mounted) {
-          setState(() {
-            _kahootPreviews[kahootId] = kahoot;
-          });
-        }
-      },
-    );
-    
-    _loadingKahoots.remove(kahootId);
-    if (mounted) setState(() {});
+    try {
+      // OBTENER EL PROVIDER USANDO UN BUILD CONTEXT VÁLIDO
+      final controller = Provider.of<GameController>(context, listen: false);
+      
+      final result = await controller.getKahootPreviewAsync(kahootId);
+      
+      // Verificar si el widget sigue montado y debemos continuar
+      if (!mounted || !_shouldContinue) {
+        _loadingKahoots.remove(kahootId);
+        return;
+      }
+      
+      result.match(
+        (failure) {
+          if (mounted && _shouldContinue) {
+            setState(() {
+              _kahootPreviews[kahootId] = null;
+            });
+          }
+        },
+        (kahoot) {
+          if (mounted && _shouldContinue) {
+            setState(() {
+              _kahootPreviews[kahootId] = kahoot;
+            });
+          }
+        },
+      );
+    } catch (e) {
+      // Manejar cualquier excepción
+      if (mounted && _shouldContinue) {
+        setState(() {
+          _kahootPreviews[kahootId] = null;
+        });
+      }
+    } finally {
+      _loadingKahoots.remove(kahootId);
+      if (mounted && _shouldContinue) setState(() {});
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 3, // My Quizzo, Favorites, Collaboration
-      child: Scaffold(
-        backgroundColor: _AppColors.background,
-        appBar: AppBar(
-          backgroundColor: _AppColors.background,
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.search, color: Colors.black),
-            onPressed: () {},
-          ),
-          title: const Text('Mis kahoots', style: TextStyle(color: _AppColors.textPrimary, fontWeight: FontWeight.w700)),
-          centerTitle: true,
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.search, color: Colors.black),
-              onPressed: () {},
-            ),
-          ],
-          bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(56),
-            child: Column(
-              children: [
-                // Tab bar: My Quizzo | Favorites | Collaboration
-                TabBar(
-                  labelColor: _AppColors.primary,
-                  unselectedLabelColor: _AppColors.textSecondary,
-                  indicatorColor: _AppColors.primary,
-                  labelStyle: const TextStyle(fontWeight: FontWeight.w700),
-                  tabs: const [
-                    Tab(text: 'My Quizzo'),
-                    Tab(text: 'Favorites'),
-                    Tab(text: 'Collaboration'),
-                  ],
-                ),
-                const SizedBox(height: 8),
-              ],
-            ),
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        title: const Text(
+          'Mis kahoots', 
+          style: TextStyle(
+            color: Color(0xFF1A1A1A), 
+            fontWeight: FontWeight.w700,
+            fontSize: 20,
           ),
         ),
-        body: TabBarView(
-          children: [
-            _buildTabContent(context, 'My Quizzo'),
-            _buildTabContent(context, 'Favorites'),
-            _buildTabContent(context, 'Collaboration'),
-          ],
-        ),
+        centerTitle: true,
       ),
+      body: _buildMainContent(context),
     );
   }
 
-  /// Contenido principal por pestaña
-  Widget _buildTabContent(BuildContext context, String tabName) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isCompact = constraints.maxWidth < 360;
-        final horizontalPadding = isCompact ? 12.0 : 16.0;
-
-        return Column(
-          children: [
-            const SizedBox(height: 12),
-            // Segment control: Quizzo | Collections
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-              child: _SegmentedControl(
-                segments: const ['Quizzo', 'Collections'],
-                selectedIndex: _segmentIndex,
-                onChanged: (i) => setState(() => _segmentIndex = i),
-              ),
+  /// Contenido principal
+  Widget _buildMainContent(BuildContext context) {
+    return Column(
+      children: [
+        const SizedBox(height: 16),
+        
+        // Título simple
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Text(
+            '${KahootIds.allKahootIds.length} Kahoots disponibles',
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF6B6B6B),
             ),
-            const SizedBox(height: 12),
-            // Header row: "X Quizzo" | Sort "Newest"
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: RichText(
-                      text: TextSpan(
-                        children: [
-                          TextSpan(
-                            text: '${KahootIds.allKahootIds.length} ',
-                            style: const TextStyle(
-                              color: _AppColors.textPrimary,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 16,
-                            ),
-                          ),
-                          TextSpan(
-                            text: _segmentIndex == 0 ? 'Quizzo' : 'Collections',
-                            style: const TextStyle(
-                              color: _AppColors.textPrimary,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  InkWell(
-                    onTap: () {
-                      // Cambiar orden
-                      setState(() {
-                        _sortLabel = _sortLabel == 'Newest' ? 'Oldest' : 'Newest';
-                      });
-                    },
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          _sortLabel,
-                          style: const TextStyle(
-                            color: _AppColors.primary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Icon(
-                          _sortLabel == 'Newest' ? Icons.arrow_downward : Icons.arrow_upward,
-                          size: 18,
-                          color: _AppColors.primary,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Divider(height: 1, color: _AppColors.border),
-            // Lista de Kahoots desde la API
-            Expanded(
-              child: Consumer<GameController>(
-                builder: (context, controller, child) {
-                  // Si está cargando por primera vez
-                  if (_kahootPreviews.isEmpty && _loadingKahoots.isNotEmpty) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
+          ),
+        ),
+        
+        const SizedBox(height: 8),
+        const Divider(height: 1, color: Color(0xFFE6E6E6)),
+        
+        // Lista de Kahoots desde la API
+        Expanded(
+          child: Consumer<GameController>(
+            builder: (context, controller, child) {
+              // Si está cargando por primera vez
+              if (_kahootPreviews.isEmpty && _loadingKahoots.isNotEmpty) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-                  return ListView.separated(
-                    padding: EdgeInsets.fromLTRB(
-                      horizontalPadding, 12, horizontalPadding, 12
-                    ),
-                    itemCount: KahootIds.allKahootIds.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
-                    itemBuilder: (context, index) {
-                      final kahootId = KahootIds.allKahootIds[index];
-                      final kahoot = _kahootPreviews[kahootId];
-                      final isLoading = _loadingKahoots.contains(kahootId);
-                      
-                      return _KahootCard(
-                        kahootId: kahootId,
-                        kahoot: kahoot,
-                        isLoading: isLoading,
-                        controller: controller,
-                        onRefresh: () => _loadKahootPreview(kahootId),
-                      );
-                    },
+              return GridView.builder(
+                padding: const EdgeInsets.all(16),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2, // 2 columnas
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  childAspectRatio: 0.8, // Relación ancho/alto
+                ),
+                itemCount: KahootIds.allKahootIds.length,
+                itemBuilder: (context, index) {
+                  final kahootId = KahootIds.allKahootIds[index];
+                  final kahoot = _kahootPreviews[kahootId];
+                  final isLoading = _loadingKahoots.contains(kahootId);
+                  
+                  return _KahootCard(
+                    kahootId: kahootId,
+                    kahoot: kahoot,
+                    isLoading: isLoading,
+                    controller: controller,
+                    cardColor: _CardColors.cardColors[index % _CardColors.cardColors.length],
+                    onRefresh: () => _loadKahootPreview(kahootId),
                   );
                 },
-              ),
-            ),
-          ],
-        );
-      },
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }
@@ -267,6 +215,7 @@ class _KahootCard extends StatelessWidget {
   final Kahoot? kahoot;
   final bool isLoading;
   final GameController controller;
+  final Color cardColor;
   final VoidCallback onRefresh;
 
   const _KahootCard({
@@ -274,306 +223,226 @@ class _KahootCard extends StatelessWidget {
     required this.kahoot,
     required this.isLoading,
     required this.controller,
+    required this.cardColor,
     required this.onRefresh,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    
     // Datos del kahoot (si ya se cargó) o valores por defecto
     final title = kahoot?.title ?? 'Cargando...';
     final description = kahoot?.description ?? '';
-    final thumbnailUrl = kahoot?.thumbnailUrl;
-    final isFavorite = kahoot?.isFavorite ?? false;
     final isInProgress = kahoot?.isInProgress ?? false;
     final isCompleted = kahoot?.isCompleted ?? false;
     final gameState = kahoot?.gameState;
 
-    return Card(
-      elevation: 0,
-      color: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: _AppColors.border),
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: isLoading ? null : () {
-          _showKahootPreview(context, kahootId, controller);
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              // Thumbnail
-              _buildThumbnail(
-                thumbnailUrl, 
-                isLoading, 
-                isInProgress, 
-                isCompleted
-              ),
-              
-              const SizedBox(width: 12),
-              
-              // Contenido de texto y acciones
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Título
-                    Text(
-                      title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: _AppColors.textPrimary,
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 6),
-                    
-                    // Descripción (si existe)
-                    if (description.isNotEmpty)
-                      Text(
-                        description,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodySmall,
-                      ),
-                    
-                    const SizedBox(height: 10),
-                    
-                    // Estado y acciones
-                    _buildStatusAndActions(
-                      context,
-                      isInProgress,
-                      isCompleted,
-                      gameState,
-                      isLoading,
-                    ),
-                  ],
-                ),
-              ),
-              
-              // Botón de favorito
-              if (!isLoading)
-                IconButton(
-                  icon: Icon(
-                    isFavorite ? Icons.favorite : Icons.favorite_border,
-                    color: isFavorite ? Colors.red : _AppColors.textSecondary,
-                  ),
-                  onPressed: () {
-                    // TODO: Implementar toggle favorite
-                  },
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+    // Determinar si el color es claro u oscuro para ajustar el texto
+    final brightness = ThemeData.estimateBrightnessForColor(cardColor);
+    final textColor = brightness == Brightness.dark 
+        ? _CardColors.textOnDark 
+        : _CardColors.textOnLight;
 
-  Widget _buildThumbnail(
-    String? thumbnailUrl, 
-    bool isLoading,
-    bool isInProgress,
-    bool isCompleted
-  ) {
-    if (isLoading) {
-      return Container(
-        width: 96,
-        height: 72,
+    return GestureDetector(
+      onTap: isLoading ? null : () {
+        _showKahootPreview(context, kahootId, controller);
+      },
+      child: Container(
         decoration: BoxDecoration(
-          color: _AppColors.border,
-          borderRadius: BorderRadius.circular(12),
+          color: cardColor,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: cardColor.withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
-        child: const Center(
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
-      );
-    }
-
-    Color statusColor = Colors.grey;
-    if (isInProgress) statusColor = Colors.orange;
-    if (isCompleted) statusColor = Colors.green;
-
-    return Stack(
-      children: [
-        // Imagen del thumbnail
-        Container(
-          width: 96,
-          height: 72,
-          decoration: BoxDecoration(
-            color: thumbnailUrl != null ? null : _AppColors.chip,
-            borderRadius: BorderRadius.circular(12),
-            image: thumbnailUrl != null
-                ? DecorationImage(
-                    image: NetworkImage(thumbnailUrl),
-                    fit: BoxFit.cover,
-                  )
-                : null,
-          ),
-          child: thumbnailUrl == null
-              ? const Icon(Icons.quiz, color: _AppColors.primary, size: 28)
-              : null,
-        ),
-        
-        // Indicador de estado (solo si hay estado)
-        if (isInProgress || isCompleted)
-          Positioned(
-            top: 6,
-            left: 6,
-            child: Container(
-              width: 10,
-              height: 10,
-              decoration: BoxDecoration(
-                color: statusColor,
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 1),
+        child: Stack(
+          children: [
+            // Contenido principal
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Icono de quiz
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Center(
+                      child: Icon(
+                        Icons.quiz,
+                        color: textColor,
+                        size: 28,
+                      ),
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 16),
+                  
+                  // Título
+                  Text(
+                    title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: textColor,
+                      height: 1.2,
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 8),
+                  
+                  // Descripción (si existe)
+                  if (description.isNotEmpty)
+                    Expanded(
+                      child: Text(
+                        description,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: textColor.withOpacity(0.9),
+                        ),
+                      ),
+                    ),
+                  
+                  const SizedBox(height: 12),
+                  
+                  // Estado
+                  if (!isLoading)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        isInProgress ? 'En progreso' : 
+                        isCompleted ? 'Completado' : 'Nuevo',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: textColor,
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildStatusAndActions(
-    BuildContext context,
-    bool isInProgress,
-    bool isCompleted,
-    dynamic gameState,
-    bool isLoading,
-  ) {
-    if (isLoading) {
-      return const SizedBox.shrink();
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Estado
-        Row(
-          children: [
-            if (isInProgress)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.orange.shade100,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Text(
-                  'En progreso',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.orange,
-                  ),
+            
+            // Botón de acción en la esquina inferior derecha
+            if (!isLoading)
+              Positioned(
+                bottom: 12,
+                right: 12,
+                child: _buildActionButton(
+                  context,
+                  isInProgress,
+                  isCompleted,
+                  textColor,
                 ),
               ),
             
-            if (isCompleted)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.green.shade100,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Text(
-                  'Completado',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.green,
+            // Indicador de carga
+            if (isLoading)
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                ),
-              ),
-            
-            if (!isInProgress && !isCompleted)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Text(
-                  'No iniciado',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey,
+                  child: const Center(
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
           ],
         ),
-        
-        const SizedBox(height: 8),
-        
-        // Botones de acción rápida
-        if (isInProgress || isCompleted)
-          Wrap(
-            spacing: 8,
-            children: [
-              if (isInProgress)
-                ElevatedButton(
-                  onPressed: () => _resumeGame(context, controller, kahootId, gameState),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    backgroundColor: Colors.orange,
-                    minimumSize: const Size(0, 32),
-                  ),
-                  child: const Text(
-                    'Reanudar',
-                    style: TextStyle(fontSize: 12),
-                  ),
-                ),
-              
-              if (isInProgress)
-                OutlinedButton(
-                  onPressed: () => _confirmRestart(context, controller, kahootId),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    side: const BorderSide(color: Colors.orange),
-                    minimumSize: const Size(0, 32),
-                  ),
-                  child: const Text(
-                    'Reiniciar',
-                    style: TextStyle(fontSize: 12, color: Colors.orange),
-                  ),
-                ),
-              
-              if (isCompleted)
-                OutlinedButton(
-                  onPressed: () => _viewSummary(context, controller, kahootId, gameState),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    side: const BorderSide(color: Colors.green),
-                    minimumSize: const Size(0, 32),
-                  ),
-                  child: const Text(
-                    'Ver resumen',
-                    style: TextStyle(fontSize: 12, color: Colors.green),
-                  ),
-                ),
-            ],
-          ),
-        
-        // Botón principal de juego
-        if (!isInProgress && !isCompleted)
-          ElevatedButton(
-            onPressed: () => _startNewGame(context, controller, kahootId),
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              minimumSize: const Size(0, 32),
-            ),
-            child: const Text(
-              'Jugar ahora',
-              style: TextStyle(fontSize: 12),
-            ),
-          ),
-      ],
+      ),
     );
+  }
+
+  Widget _buildActionButton(
+    BuildContext context,
+    bool isInProgress,
+    bool isCompleted,
+    Color textColor,
+  ) {
+    if (isInProgress) {
+      return Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.9),
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: IconButton(
+          icon: const Icon(Icons.play_arrow, color: Colors.orange, size: 20),
+          onPressed: () => _resumeGame(context, controller, kahootId, null),
+          padding: EdgeInsets.zero,
+        ),
+      );
+    } else if (isCompleted) {
+      return Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.9),
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: IconButton(
+          icon: const Icon(Icons.replay, color: Colors.green, size: 20),
+          onPressed: () => _startNewGame(context, controller, kahootId),
+          padding: EdgeInsets.zero,
+        ),
+      );
+    } else {
+      return Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.9),
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: IconButton(
+          icon: Icon(Icons.play_arrow, color: cardColor, size: 20),
+          onPressed: () => _startNewGame(context, controller, kahootId),
+          padding: EdgeInsets.zero,
+        ),
+      );
+    }
   }
 
   // Métodos de acción
@@ -607,30 +476,6 @@ class _KahootCard extends StatelessWidget {
       return;
     }
     await controller.loadSummary(attemptId, context);
-  }
-
-  Future<void> _confirmRestart(BuildContext context, GameController controller, String kahootId) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Reiniciar intento'),
-        content: const Text('¿Deseas reiniciar el intento y perder el progreso actual?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Reiniciar'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true) {
-      await _startNewGame(context, controller, kahootId);
-    }
   }
 
   void _showKahootPreview(BuildContext context, String kahootId, GameController controller) {
@@ -702,24 +547,12 @@ class _KahootPreviewModal extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Thumbnail grande
-              if (kahoot.thumbnailUrl != null && kahoot.thumbnailUrl!.isNotEmpty)
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.network(
-                    kahoot.thumbnailUrl!,
-                    height: 180,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              
-              const SizedBox(height: 16),
-              
-              // Título y descripción
+              // Título
               Text(
                 kahoot.title,
-                style: Theme.of(context).textTheme.titleLarge,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               
               const SizedBox(height: 8),
@@ -727,27 +560,38 @@ class _KahootPreviewModal extends StatelessWidget {
               if (kahoot.description != null && kahoot.description!.isNotEmpty)
                 Text(
                   kahoot.description!,
-                  style: Theme.of(context).textTheme.bodyMedium,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: const Color(0xFF6B6B6B),
+                  ),
                 ),
               
               const SizedBox(height: 16),
               
-              // Estadísticas básicas
-              Row(
-                children: [
-                  _StatItem(
-                    icon: Icons.gamepad,
-                    label: 'Estado',
-                    value: kahoot.isInProgress ? 'En progreso' : 
-                           kahoot.isCompleted ? 'Completado' : 'No iniciado',
-                  ),
-                  const SizedBox(width: 20),
-                  _StatItem(
-                    icon: Icons.favorite,
-                    label: 'Favorito',
-                    value: kahoot.isFavorite ? 'Sí' : 'No',
-                  ),
-                ],
+              // Estado
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF5F5F5),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.info,
+                      color: const Color(0xFF7C4DFF),
+                      size: 18,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      kahoot.isInProgress ? 'En progreso' : 
+                      kahoot.isCompleted ? 'Completado' : 'No iniciado',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
               ),
               
               const SizedBox(height: 24),
@@ -760,101 +604,27 @@ class _KahootPreviewModal extends StatelessWidget {
                     Navigator.pop(context);
                     controller.startNewAttempt(kahootId, context);
                   },
-                  child: const Text('Comenzar juego'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF7C4DFF),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Comenzar juego',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
         );
       },
-    );
-  }
-}
-
-class _StatItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-
-  const _StatItem({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Icon(icon, color: _AppColors.primary, size: 24),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12,
-            color: _AppColors.textSecondary,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: _AppColors.textPrimary,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// Segmented control estilo "pills"
-class _SegmentedControl extends StatelessWidget {
-  final List<String> segments;
-  final int selectedIndex;
-  final ValueChanged<int> onChanged;
-
-  const _SegmentedControl({
-    required this.segments,
-    required this.selectedIndex,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 40,
-      decoration: BoxDecoration(
-        border: Border.all(color: _AppColors.border),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        children: List.generate(segments.length, (i) {
-          final selected = i == selectedIndex;
-          return Expanded(
-            child: InkWell(
-              borderRadius: BorderRadius.circular(999),
-              onTap: () => onChanged(i),
-              child: Container(
-                height: 40,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: selected ? _AppColors.primary : Colors.transparent,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  segments[i],
-                  style: TextStyle(
-                    color: selected ? Colors.white : _AppColors.primary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ),
-          );
-        }),
-      ),
     );
   }
 }
