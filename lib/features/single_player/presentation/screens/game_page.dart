@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:green_frontend/features/single_player/presentation/provider/game_provider.dart';
 import 'package:green_frontend/features/single_player/domain/entities/answer.dart';
 
-
 class GamePage extends StatefulWidget {
   final String attemptId;
   const GamePage({required this.attemptId, super.key});
@@ -13,12 +12,51 @@ class GamePage extends StatefulWidget {
 }
 
 class _GamePageState extends State<GamePage> {
-  Set<int> selectedIndices = {};  // Para selección múltiple
+  Set<int> selectedIndices = {}; // Para selección múltiple
   DateTime? startTime;
+
+  // Colores para las opciones como en la imagen
+  final List<Color> optionColors = [
+    Colors.blue,
+    Colors.red,
+    Colors.orange,
+    Colors.green,
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final controller = context.read<GameController>();
+      if (controller.currentSlide != null) {
+        startTime = DateTime.now();
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Juego')),
+      backgroundColor: Colors.white, // Fondo blanco
+      appBar: AppBar(
+        title: const Text(
+          'Quiz',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        backgroundColor: Colors.purple, // Color morado para el banner
+        foregroundColor: Colors.white,
+        elevation: 4,
+        centerTitle: true,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            bottom: Radius.circular(16),
+          ),
+        ),
+      ),
       body: Consumer<GameController>(
         builder: (context, controller, child) {
           if (controller.isLoading) {
@@ -27,7 +65,8 @@ class _GamePageState extends State<GamePage> {
           if (controller.lastFailure != null) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Error: ${controller.lastFailure!.message}')),
+                SnackBar(
+                    content: Text('Error: ${controller.lastFailure!.message}')),
               );
             });
             return const Center(child: Text('Ocurrió un error. Reintenta.'));
@@ -39,73 +78,145 @@ class _GamePageState extends State<GamePage> {
           return Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
+                // Puntuación dentro de un card decorativo
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                  decoration: BoxDecoration(
+                    color: Colors.purple.shade50, // Fondo morado claro
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.purple.shade200, width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.purple.withOpacity(0.1),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Text(
+                      'Puntuación: ${controller.attempt?.currentScore ?? 0}',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.purple,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Imagen del autobús (si hay mediaId)
+                if (controller.currentSlide!.mediaId != null &&
+                    controller.currentSlide!.mediaId!.isNotEmpty)
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.network(
+                      controller.currentSlide!.mediaId!,
+                      height: 180,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        height: 180,
+                        color: Colors.grey.shade200,
+                        child: const Center(
+                            child: Icon(Icons.image_not_supported)),
+                      ),
+                    ),
+                  ),
+
+                const SizedBox(height: 20),
+
                 // Pregunta
-                Text(
-                  controller.currentSlide!.questionText,
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 20),
-                // Puntuación
-                Text(
-                  'Puntuación: ${controller.attempt?.currentScore ?? 0}',
-                  style: const TextStyle(fontSize: 16),
-                ),
-                const SizedBox(height: 20),
-                // Opciones como checkboxes (selección múltiple)
-                Expanded(
-                  child: ListView(
-                    children: (controller.currentSlide!.options as List).asMap().entries.map((entry) {
-                      final index = entry.key;  
-                      final option = entry.value;
-                      final optionText = option.text ?? option.mediaId;
-
-
-                      return CheckboxListTile(
-                        title: Text(optionText, style: const TextStyle(fontSize: 16)),
-                        value: selectedIndices.contains(index),
-                        onChanged: controller.isSubmitting
-                            ? null
-                            : (bool? selected) {
-                                setState(() {
-                                  if (selected == true) {
-                                    selectedIndices.add(index);
-                                  } else {
-                                    selectedIndices.remove(index);
-                                  }
-                                });
-                              },
-                      );
-                    }).toList(),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: Text(
+                    controller.currentSlide!.questionText,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
                 ),
                 const SizedBox(height: 20),
+
+                // Opciones como botones de colores (2 columnas)
+                Expanded(
+                  child: _buildOptionsGrid(controller, context),
+                ),
+                const SizedBox(height: 20),
+
                 // Botón para enviar respuesta
                 ElevatedButton(
                   onPressed: controller.isSubmitting || selectedIndices.isEmpty
                       ? null
                       : () => _submitAnswer(context, controller),
                   style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.purple,
+                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.all(16.0),
                     minimumSize: const Size(double.infinity, 50),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                  child: const Text('Enviar Respuesta', style: TextStyle(fontSize: 16)),
+                  child: controller.isSubmitting
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text(
+                          'Enviar Respuesta',
+                          style: TextStyle(fontSize: 16),
+                        ),
                 ),
                 const SizedBox(height: 20),
+
                 // Feedback
                 if (controller.showFeedback)
                   AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
-                    color: controller.wasCorrect ? Colors.green : Colors.red,
+                    decoration: BoxDecoration(
+                      color: controller.wasCorrect ? Colors.green : Colors.red,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     padding: const EdgeInsets.all(16.0),
-                    child: Text(
-                      controller.wasCorrect
-                          ? '¡Correcto! +${controller.pointsEarned} puntos'
-                          : 'Incorrecto. +${controller.pointsEarned} puntos',
-                      style: const TextStyle(color: Colors.white, fontSize: 18),
-                      textAlign: TextAlign.center,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          controller.wasCorrect
+                              ? Icons.check_circle
+                              : Icons.error,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          controller.wasCorrect
+                              ? '¡Correcto! +${controller.pointsEarned} puntos'
+                              : 'Incorrecto. +${controller.pointsEarned} puntos',
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold),
+                        ),
+                      ],
                     ),
                   ),
               ],
@@ -116,17 +227,116 @@ class _GamePageState extends State<GamePage> {
     );
   }
 
+  Widget _buildOptionsGrid(GameController controller, BuildContext context) {
+    final options = controller.currentSlide!.options as List;
+    
+    // Si hay 4 opciones, mostramos en grid de 2x2
+    if (options.length == 4) {
+      return GridView.count(
+        crossAxisCount: 2,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 1.5, // Relación ancho/alto
+        children: options.asMap().entries.map((entry) {
+          final index = entry.key;
+          final option = entry.value;
+          final optionText = option.text ?? option.mediaId ?? 'Opción $index';
+          final isSelected = selectedIndices.contains(index);
+          final colorIndex = index % optionColors.length;
+
+          return _buildOptionButton(
+            index: index,
+            text: optionText,
+            color: optionColors[colorIndex],
+            isSelected: isSelected,
+            controller: controller,
+          );
+        }).toList(),
+      );
+    } else {
+      // Si no hay exactamente 4 opciones, mostrar en lista
+      return ListView.separated(
+        itemCount: options.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 12),
+        itemBuilder: (context, index) {
+          final option = options[index];
+          final optionText = option.text ?? option.mediaId ?? 'Opción $index';
+          final isSelected = selectedIndices.contains(index);
+          final colorIndex = index % optionColors.length;
+
+          return _buildOptionButton(
+            index: index,
+            text: optionText,
+            color: optionColors[colorIndex],
+            isSelected: isSelected,
+            controller: controller,
+          );
+        },
+      );
+    }
+  }
+
+  Widget _buildOptionButton({
+    required int index,
+    required String text,
+    required Color color,
+    required bool isSelected,
+    required GameController controller,
+  }) {
+    return ElevatedButton(
+      onPressed: controller.isSubmitting
+          ? null
+          : () {
+              setState(() {
+                if (selectedIndices.contains(index)) {
+                  selectedIndices.remove(index);
+                } else {
+                  selectedIndices.add(index);
+                }
+              });
+            },
+      style: ElevatedButton.styleFrom(
+        backgroundColor: isSelected ? color.withOpacity(0.9) : color,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(
+            color: isSelected ? Colors.black : Colors.transparent,
+            width: isSelected ? 3 : 0,
+          ),
+        ),
+        elevation: isSelected ? 4 : 2,
+        shadowColor: Colors.black.withOpacity(0.2),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+        ),
+        textAlign: TextAlign.center,
+      ),
+    );
+  }
+
   void _submitAnswer(BuildContext context, GameController controller) async {
     final elapsedSeconds = startTime != null
-      ? DateTime.now().difference(startTime!).inSeconds
-      : 0;
+        ? DateTime.now().difference(startTime!).inSeconds
+        : 0;
 
-  final answerEntity = Answer(
-    slideId: controller.currentSlide!.slideId,
-    answerIndex: selectedIndices.toList(),
-    timeElapsedSeconds: elapsedSeconds,
-  );
+    final answerEntity = Answer(
+      slideId: controller.currentSlide!.slideId,
+      answerIndex: selectedIndices.toList(),
+      timeElapsedSeconds: elapsedSeconds,
+    );
+    
     await controller.submitAnswerResult(answerEntity, context);
-    setState(() => selectedIndices.clear());  
+    
+    // Resetear para la siguiente pregunta
+    setState(() {
+      selectedIndices.clear();
+      startTime = DateTime.now();
+    });
   }
 }

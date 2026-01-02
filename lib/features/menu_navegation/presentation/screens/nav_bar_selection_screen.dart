@@ -13,7 +13,7 @@ class NavBarSelectionScreen extends StatelessWidget{
   const NavBarSelectionScreen({super.key});
 
   final List<Widget> pages = const [
-    HomeScreen(),      // Pantalla para "Inicio"
+    KahootLibraryScreen(),      // Pantalla para "Inicio"
     DiscoverScreen(),  // Pantalla para "Descubre"
     JoinScreen(),      // Pantalla para "Unirse"
     CreateScreen(),    // Pantalla para "Crear"
