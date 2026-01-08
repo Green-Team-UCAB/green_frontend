@@ -1,4 +1,6 @@
 import 'package:get_it/get_it.dart';
+import 'package:http/http.dart' as http; // <--- 1. IMPORTANTE: Importar http
+import 'core/network/api_client.dart'; // Importar ApiClient
 
 // Imports de la Feature Discovery (H6.1)
 import 'features/discovery/data/datasources/discovery_remote_data_source.dart';
@@ -27,19 +29,16 @@ Future<void> init() async {
   //! Features - Discovery (H6.1)
 
   // 1. Bloc
-  // Usamos registerFactory para que se cree una nueva instancia
-  // cada vez que la UI lo solicite (por ejemplo, al cerrar y abrir la pantalla).
   sl.registerFactory(() => DiscoveryBloc(repository: sl()));
 
   // 2. Repository
-  // Usamos registerLazySingleton para mantener una única instancia en memoria.
   sl.registerLazySingleton<DiscoveryRepository>(
     () => DiscoveryRepositoryImpl(remoteDataSource: sl()),
   );
 
   // 3. Data Source
-  // Usamos registerLazySingleton. Aquí es donde pondríamos el cliente HTTP (Dio)
-  // en el futuro.
+  // Nota: Si Discovery aún usa datos falsos sin HTTP, déjalo así.
+  // Si ya lo actualizaste para usar http, agrégale (client: sl()).
   sl.registerLazySingleton<DiscoveryRemoteDataSource>(
     () => DiscoveryRemoteDataSourceImpl(),
   );
@@ -57,20 +56,34 @@ Future<void> init() async {
   );
 
   // Data Source
+  // ✅ CORREGIDO: Inyectamos el cliente HTTP
   sl.registerLazySingleton<ReportsRemoteDataSource>(
-    () => ReportsRemoteDataSourceImpl(),
+    () => ReportsRemoteDataSourceImpl(client: sl()),
   );
 
   //! Features - Library (Epica 7)
+
+  // Bloc
   sl.registerFactory(() => LibraryBloc(repository: sl()));
+
+  // Repository
   sl.registerLazySingleton<LibraryRepository>(
     () => LibraryRepositoryImpl(remoteDataSource: sl()),
   );
+
+  // Data Source
+  // ✅ Inyectamos ApiClient
   sl.registerLazySingleton<LibraryRemoteDataSource>(
-    () => LibraryRemoteDataSourceImpl(),
+    () => LibraryRemoteDataSourceImpl(apiClient: sl()),
   );
 
   //! Core & External
-  // Aquí registraríamos cosas como SharedPreferences, Dio, Connectivity, etc.
-  // Por ahora lo dejamos vacío hasta que lo necesitemos.
+
+  // Registramos ApiClient
+  sl.registerLazySingleton<ApiClient>(
+    () => ApiClient.withBaseUrl('https://quizzy-backend-0wh2.onrender.com/api'),
+  );
+
+  // Registramos el cliente HTTP (usado por Reports)
+  sl.registerLazySingleton(() => http.Client());
 }

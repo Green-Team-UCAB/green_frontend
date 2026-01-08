@@ -1,56 +1,123 @@
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../core/network/api_client.dart';
 import '../../../shared/data/models/kahoot_summary_model.dart';
 
 abstract class LibraryRemoteDataSource {
-  Future<List<KahootSummaryModel>> getMyKahoots();
-  Future<List<KahootSummaryModel>> getFavorites();
+  Future<List<KahootSummaryModel>> getMyKahoots({int page = 1});
+  Future<List<KahootSummaryModel>> getFavorites({int page = 1});
+  Future<List<KahootSummaryModel>> getInProgress({int page = 1});
+  Future<List<KahootSummaryModel>> getCompleted({int page = 1});
+
+  Future<void> addToFavorites(String kahootId);
+  Future<void> removeFromFavorites(String kahootId);
 }
 
 class LibraryRemoteDataSourceImpl implements LibraryRemoteDataSource {
+  final ApiClient apiClient;
+
+  LibraryRemoteDataSourceImpl({required this.apiClient});
+
+  // Helper para obtener Headers como Map
+  Future<Map<String, dynamic>> _getAuthHeaders() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('accessToken') ?? '';
+
+    if (token.isNotEmpty) {
+      print('🔑 [Library] Token encontrado: ${token.substring(0, 15)}...');
+    } else {
+      print('⚠️ [Library] Token NO encontrado o vacío');
+    }
+
+    return {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    };
+  }
+
+  // --- CONSULTAS GET ---
+
   @override
-  Future<List<KahootSummaryModel>> getMyKahoots() async {
-    await Future.delayed(const Duration(milliseconds: 800));
-    return [
-      KahootSummaryModel(
-        id: '101',
-        title: 'Mi Primer Kahoot',
-        description: 'Prueba de creación',
-        authorName: 'Yo (Tú)',
-        status: 'published',
-        playCount: 5,
-        createdAt: DateTime.now(),
-        visibility: 'public',
-        coverImageUrl:
-            'https://via.placeholder.com/150/0000FF/808080?text=My+Quiz',
-      ),
-      KahootSummaryModel(
-        id: '102',
-        title: 'Borrador de Matemáticas',
-        description: 'Sin terminar',
-        authorName: 'Yo (Tú)',
-        status: 'draft',
-        playCount: 0,
-        createdAt: DateTime.now(),
-        visibility: 'private',
-      ),
-    ];
+  Future<List<KahootSummaryModel>> getMyKahoots({int page = 1}) async {
+    return _fetchList('/library/my-creations', page: page);
   }
 
   @override
-  Future<List<KahootSummaryModel>> getFavorites() async {
-    await Future.delayed(const Duration(milliseconds: 800));
-    return [
-      KahootSummaryModel(
-        id: '201',
-        title: 'Química Avanzada',
-        description: 'Tabla periódica',
-        authorName: 'Profe. Walter',
-        status: 'published',
-        playCount: 5000,
-        createdAt: DateTime.now(),
-        visibility: 'public',
-        coverImageUrl:
-            'https://via.placeholder.com/150/FF0000/FFFFFF?text=Chem',
-      ),
-    ];
+  Future<List<KahootSummaryModel>> getFavorites({int page = 1}) async {
+    return _fetchList('/library/favorites', page: page);
+  }
+
+  @override
+  Future<List<KahootSummaryModel>> getInProgress({int page = 1}) async {
+    return _fetchList('/library/in-progress', page: page);
+  }
+
+  @override
+  Future<List<KahootSummaryModel>> getCompleted({int page = 1}) async {
+    return _fetchList('/library/completed', page: page);
+  }
+
+  // --- ACCIONES POST/DELETE ---
+
+  @override
+  Future<void> addToFavorites(String kahootId) async {
+    final headers = await _getAuthHeaders();
+
+    await apiClient.post(
+      path: '/library/favorites/$kahootId',
+      headers: headers,
+    );
+  }
+
+  @override
+  Future<void> removeFromFavorites(String kahootId) async {
+    final headers = await _getAuthHeaders();
+
+    await apiClient.delete(
+      path: '/library/favorites/$kahootId',
+      headers: headers,
+    );
+  }
+
+  // --- MÉTODO PRIVADO ---
+  Future<List<KahootSummaryModel>> _fetchList(
+    String endpoint, {
+    required int page,
+  }) async {
+    try {
+      final headers = await _getAuthHeaders();
+
+      print(
+        '🚀 [Library] Fetching: $endpoint',
+      ); // Log para verificar versión nueva
+
+      final response = await apiClient.get(
+        path: endpoint,
+        queryParameters: {'page': page, 'limit': 20},
+        headers: headers,
+      );
+
+      final responseData = response.data;
+
+      // Validamos la estructura { "data": [...] }
+      if (responseData is Map && responseData['data'] != null) {
+        final List<dynamic> list = responseData['data'];
+        return list.map((item) => KahootSummaryModel.fromJson(item)).toList();
+      }
+
+      return [];
+    } catch (e) {
+      // Manejo provisional: El backend devuelve 400/404 cuando no hay datos o el usuario es nuevo.
+      // Lo interpretamos como lista vacía para no romper la UI.
+      final msg = e.toString();
+      if (msg.contains('400') ||
+          msg.contains('404') ||
+          msg.contains('orchestration error')) {
+        print(
+          '⚠️ [Library] Backend reportó error ($msg). Retornando lista vacía.',
+        );
+        return [];
+      }
+      rethrow;
+    }
   }
 }

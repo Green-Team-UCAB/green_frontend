@@ -1,6 +1,7 @@
 import '../models/report_summary_model.dart';
 import '../models/report_detail_model.dart';
 import '../models/session_report_model.dart';
+import 'package:http/http.dart' as http;
 
 abstract class ReportsRemoteDataSource {
   Future<List<ReportSummaryModel>> getMyResults();
@@ -9,6 +10,10 @@ abstract class ReportsRemoteDataSource {
 }
 
 class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
+  final http.Client client;
+
+  ReportsRemoteDataSourceImpl({required this.client});
+
   @override
   Future<List<ReportSummaryModel>> getMyResults() async {
     await Future.delayed(const Duration(milliseconds: 800));

@@ -1,9 +1,5 @@
-import 'package:json_annotation/json_annotation.dart';
 import '../../domain/entities/kahoot_summary.dart';
 
-part 'kahoot_summary_model.g.dart';
-
-@JsonSerializable()
 class KahootSummaryModel extends KahootSummary {
   const KahootSummaryModel({
     required super.id,
@@ -15,38 +11,37 @@ class KahootSummaryModel extends KahootSummary {
     required super.playCount,
     required super.createdAt,
     required super.visibility,
+    super.gameId,
+    super.gameType,
   });
 
   factory KahootSummaryModel.fromJson(Map<String, dynamic> json) {
-    // Manejo manual para aplanar el objeto 'author' del API
-    final authorJson = json['author'] as Map<String, dynamic>?;
-    final authorName = authorJson?['name'] as String? ?? 'Unknown';
+    // Manejo seguro del autor
+    String parsedAuthor = 'Desconocido';
+    if (json['author'] != null && json['author'] is Map) {
+      parsedAuthor = json['author']['name'] ?? 'Desconocido';
+    } else if (json['authorName'] != null) {
+      parsedAuthor = json['authorName'];
+    }
+
+    // Manejo seguro del status
+    final parsedStatus =
+        json['Status'] as String? ?? json['status'] as String? ?? 'draft';
 
     return KahootSummaryModel(
-      id: json['id'] as String,
-      title: json['title'] as String? ?? '',
+      id: json['id'] as String? ?? '',
+      title: json['title'] as String? ?? 'Sin título',
       description: json['description'] as String? ?? '',
-      // El API dice 'coverImageId' pero devuelve una URL string según doc
       coverImageUrl: json['coverImageId'] as String?,
-      authorName: authorName,
-      status: json['status'] as String? ?? 'draft',
-      playCount: json['playCount'] as int? ?? 0,
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      authorName: parsedAuthor,
+      status: parsedStatus,
+      playCount: (json['playCount'] as num?)?.toInt() ?? 0,
+      createdAt: json['createdAt'] != null
+          ? DateTime.tryParse(json['createdAt'].toString()) ?? DateTime.now()
+          : DateTime.now(),
       visibility: json['visibility'] as String? ?? 'private',
+      gameId: json['gameId'] as String?,
+      gameType: json['gameType'] as String?,
     );
   }
-
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'title': title,
-    'description': description,
-    'coverImageId': coverImageUrl,
-    'author': {
-      'name': authorName,
-    }, // Reconstruimos estructura API si fuera necesario enviar
-    'status': status,
-    'playCount': playCount,
-    'createdAt': createdAt.toIso8601String(),
-    'visibility': visibility,
-  };
 }

@@ -4,12 +4,16 @@ class KahootSummary extends Equatable {
   final String id;
   final String title;
   final String description;
-  final String? coverImageUrl; // Mapeado desde 'coverImageId'
-  final String authorName; // Mapeado desde 'author.name'
-  final String status; // 'draft' | 'published'
+  final String? coverImageUrl;
+  final String authorName;
+  final String status;
   final int playCount;
   final DateTime createdAt;
-  final String visibility; // 'public' | 'private'
+  final String visibility;
+
+  // Campos nuevos para la biblioteca
+  final String? gameId;
+  final String? gameType;
 
   const KahootSummary({
     required this.id,
@@ -21,18 +25,10 @@ class KahootSummary extends Equatable {
     required this.playCount,
     required this.createdAt,
     required this.visibility,
+    this.gameId,
+    this.gameType,
   });
 
   @override
-  List<Object?> get props => [
-    id,
-    title,
-    description,
-    coverImageUrl,
-    authorName,
-    status,
-    playCount,
-    createdAt,
-    visibility,
-  ];
+  List<Object?> get props => [id, title, status, gameId, gameType];
 }
