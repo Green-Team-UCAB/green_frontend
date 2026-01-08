@@ -17,6 +17,7 @@ class ApiResponse<T> {
 
 class ApiClient {
   final Dio _dio;
+  String? _authToken;
   
   ApiClient(this._dio);
   
@@ -31,7 +32,12 @@ class ApiClient {
     );
     return ApiClient(dio);
   }
-  
+
+  void setAuthToken(String token) { 
+    _authToken = token;
+    _dio.options.headers['Authorization'] = 'Bearer $token'; 
+  }
+
   Future<ApiResponse<T>> request<T>({
     required String method,
     required String path,

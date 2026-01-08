@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:dio/dio.dart';
+import 'package:green_frontend/features/auth/presentation/screens/singup_page.dart';
 
 // --- Core & Dependency Injection ---
 import 'injection_container.dart' as di;
@@ -140,7 +141,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
         
-        home: const NavBarSelectionScreen(),
+        home: const SignUpPage(),
       ),
     );
   }

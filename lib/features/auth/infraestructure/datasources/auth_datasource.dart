@@ -3,7 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:green_frontend/core/error/exceptions.dart';
 import 'package:green_frontend/core/network/api_client.dart';
 import 'package:green_frontend/core/network/input_validator.dart';
-
+import 'package:green_frontend/core/storage/token_storage.dart';
 
 //Contrato del DataSource para la autenticación
 
@@ -85,7 +85,15 @@ class AuthRemoteDataSourceImpl implements AuthDataSource {
     );
 
     if (response.statusCode == 200) {
-      return UserModel.fromJson(response.data);
+      final data = response.data;
+
+      final userJson = data['user'] as Map<String, dynamic>;
+      final token = data['token'] as String;
+
+      client.setAuthToken(token);
+      await TokenStorage.saveToken(token);
+
+      return UserModel.fromJson(userJson);
     }
     throw AuthException('Login failed: ${response.statusCode}');
   }
