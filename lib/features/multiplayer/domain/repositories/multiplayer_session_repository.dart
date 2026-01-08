@@ -5,6 +5,6 @@ import 'package:green_frontend/features/multiplayer/domain/value_objects/qr_toke
 import 'package:green_frontend/features/multiplayer/domain/value_objects/session_pin.dart';
 
 abstract interface class MultiplayerSessionRepository{
-  Future<Either<Failure, GameSession>> createSession({required String kahootId, required String userId, required String jwt});
+  Future<Either<Failure, GameSession>> createSession({required String kahootId, required String jwt});
   Future<Either<Failure, SessionPin>> getPinByQrToken({required QrToken qrToken});
 }

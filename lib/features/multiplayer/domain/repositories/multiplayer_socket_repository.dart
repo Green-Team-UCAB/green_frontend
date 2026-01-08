@@ -7,26 +7,28 @@ import 'package:green_frontend/features/multiplayer/domain/entities/slide.dart';
 import 'package:green_frontend/features/multiplayer/domain/entities/host_result.dart';
 import 'package:green_frontend/features/multiplayer/domain/entities/player_results.dart';
 import 'package:green_frontend/features/multiplayer/domain/entities/summary.dart';
+import 'package:green_frontend/core/error/failures.dart';
+import 'package:fpdart/fpdart.dart';
 
 enum SessionState { lobby, question, results, end }
 enum ClientRole { host, player }
 
 
 abstract interface class MultiplayerSocketRepository {
-/// conxión al namespace del juego  
-  Future<void> connectToGameSession({required Uri wsBaseUrl, required ClientRole role, required SessionPin pin, required String jwt});
+// conxión al namespace del juego  
+  Future<Either<Failure, Unit>> connectToGameSession({required Uri wsBaseUrl, required ClientRole role, required SessionPin pin, required String jwt});
   
 /// Señal de sincronización inicial 
-  void emitClientReady();
+  Either<Failure, Unit> emitClientReady();
   
 /// --- Eventos que puede emitir el HOST --- 
-  void emitHostStartGame(); 
-  void emitHostNextPhase(); 
-  void emitHostEndSession();
+  Either<Failure, Unit> emitHostStartGame();
+  Either<Failure, Unit> emitHostNextPhase(); 
+  Either<Failure, Unit> emitHostEndSession();
 
 /// --- Eventos que puede emitir el JUGADOR --- 
-  void emitPlayerJoin(Nickname nickname); 
-  void emitPlayerSubmitAnswer({ required String questionId, required AnswerIds answerIds, required TimeElapsedMs timeElapsedMs, });
+  Either<Failure, Unit> emitPlayerJoin(Nickname nickname); 
+  Either<Failure, Unit> emitPlayerSubmitAnswer({ required String questionId, required AnswerIds answerIds, required TimeElapsedMs timeElapsedMs, });
 
 /// --- Streams de eventos recibidos del servidor --- 
   Stream<HostLobby> onHostLobbyUpdate(); 
@@ -49,5 +51,5 @@ abstract interface class MultiplayerSocketRepository {
   Stream<String> onSyncError();
 
 /// Desconexión del socket
-  Future<void> disconnectFromGameSession();
+  Future<Either<Failure, Unit>> disconnectFromGameSession();
 }
