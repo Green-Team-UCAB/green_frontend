@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../injection_container.dart';
 import '../bloc/library_bloc.dart';
 import '../../domain/entities/kahoot_summary.dart';
+// ✅ Importamos la página de detalle unificada
+import 'quiz_detail_page.dart';
 
 class PersonalKahootsPage extends StatelessWidget {
   const PersonalKahootsPage({super.key});
@@ -59,21 +61,23 @@ class _PersonalKahootsView extends StatelessWidget {
             } else if (state is LibraryLoaded) {
               return TabBarView(
                 children: [
-                  // Tab 1: Mis Creaciones
+                  // Tab 1: Mis Creaciones (MODO ADMIN)
                   _LibraryListTab(
                     kahoots: state.myCreations,
                     emptyMessage: "Aún no has creado ningún Kahoot.",
                     icon: Icons.create,
+                    isMyCreation: true, // ✅ Activa botones de edición
                   ),
 
-                  // Tab 2: Favoritos
+                  // Tab 2: Favoritos (MODO JUGADOR)
                   _LibraryListTab(
                     kahoots: state.favorites,
                     emptyMessage: "No tienes favoritos guardados.",
                     icon: Icons.favorite_border,
+                    isMyCreation: false, // ✅ Solo jugar
                   ),
 
-                  // Tab 3: Actividad (En Progreso + Completados)
+                  // Tab 3: Actividad (MODO JUGADOR)
                   _ActivityTab(
                     inProgress: state.inProgress,
                     completed: state.completed,
@@ -113,11 +117,13 @@ class _LibraryListTab extends StatelessWidget {
   final List<KahootSummary> kahoots;
   final String emptyMessage;
   final IconData icon;
+  final bool isMyCreation; // ✅ Bandera para saber si soy dueño
 
   const _LibraryListTab({
     required this.kahoots,
     required this.emptyMessage,
     required this.icon,
+    required this.isMyCreation,
   });
 
   @override
@@ -130,7 +136,6 @@ class _LibraryListTab extends StatelessWidget {
       },
       child: kahoots.isEmpty
           ? ListView(
-              // ListView para permitir Pull-to-refresh aunque esté vacío
               physics: const AlwaysScrollableScrollPhysics(),
               children: [
                 SizedBox(
@@ -155,7 +160,10 @@ class _LibraryListTab extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               itemCount: kahoots.length,
               itemBuilder: (context, index) {
-                return _LibraryKahootCard(kahoot: kahoots[index]);
+                return _LibraryKahootCard(
+                  kahoot: kahoots[index],
+                  isMyCreation: isMyCreation, // Pasamos la bandera a la tarjeta
+                );
               },
             ),
     );
@@ -202,7 +210,11 @@ class _ActivityTab extends StatelessWidget {
               ),
             ),
             ...inProgress.map(
-              (k) => _LibraryKahootCard(kahoot: k, isProgress: true),
+              (k) => _LibraryKahootCard(
+                kahoot: k,
+                isProgress: true,
+                isMyCreation: false, // Actividad implica jugar, no editar
+              ),
             ),
           ],
 
@@ -218,7 +230,9 @@ class _ActivityTab extends StatelessWidget {
                 ),
               ),
             ),
-            ...completed.map((k) => _LibraryKahootCard(kahoot: k)),
+            ...completed.map(
+              (k) => _LibraryKahootCard(kahoot: k, isMyCreation: false),
+            ),
           ],
         ],
       ),
@@ -227,13 +241,18 @@ class _ActivityTab extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// 🔴 AQUÍ ESTÁ LA MAGIA: TARJETA CON LÓGICA DE CORAZÓN
+// 🔴 TARJETA CON NAVEGACIÓN INTELIGENTE Y CORAZÓN
 // ---------------------------------------------------------------------------
 class _LibraryKahootCard extends StatelessWidget {
   final KahootSummary kahoot;
   final bool isProgress;
+  final bool isMyCreation; // ✅ Define a dónde navega el onTap
 
-  const _LibraryKahootCard({required this.kahoot, this.isProgress = false});
+  const _LibraryKahootCard({
+    required this.kahoot,
+    this.isProgress = false,
+    this.isMyCreation = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -244,8 +263,17 @@ class _LibraryKahootCard extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () {
-          // Aquí iría la navegación al detalle del quiz
-          // Navigator.push(...);
+          // ✅ NAVEGACIÓN AL DETALLE
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => QuizDetailPage(
+                quiz: kahoot,
+                isAdmin:
+                    isMyCreation, // Si es mío = true (Editar/QR), si no = false (Jugar)
+              ),
+            ),
+          );
         },
         child: Padding(
           padding: const EdgeInsets.all(12.0),
@@ -328,14 +356,13 @@ class _LibraryKahootCard extends StatelessWidget {
                 ),
               ),
 
-              // 3. ❤️ BOTÓN FAVORITO CON LÓGICA DEL BLOC ❤️
+              // 3. ❤️ BOTÓN FAVORITO
               IconButton(
                 icon: Icon(
                   kahoot.isFavorite ? Icons.favorite : Icons.favorite_border,
                   color: kahoot.isFavorite ? Colors.red : Colors.grey,
                 ),
                 onPressed: () {
-                  // Enviamos el evento al LibraryBloc para marcar/desmarcar
                   context.read<LibraryBloc>().add(
                     ToggleFavoriteInLibraryEvent(
                       kahootId: kahoot.id,
