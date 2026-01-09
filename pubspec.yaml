@@ -26,6 +26,9 @@ dependencies:
   get_it: ^7.7.0
   injectable: ^2.4.2
 
+  # --- Stream Transform ---
+  stream_transform: ^2.1.0
+
   # --- Functional Programming & Utils ---
   rxdart: ^0.27.7
 

@@ -1,142 +1,163 @@
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:equatable/equatable.dart';
-import 'package:fpdart/fpdart.dart';
-import 'package:rxdart/rxdart.dart';
-import '../../../../core/error/failures.dart';
+import 'package:bloc/bloc.dart';
 import '../../domain/repositories/discovery_repository.dart';
-import '../../../shared/domain/entities/kahoot_summary.dart';
-import '../../../shared/domain/entities/category.dart';
+import 'discovery_event.dart';
+import 'discovery_state.dart';
+// Importamos stream_transform para el debounce (evitar mil peticiones al escribir)
+import 'package:stream_transform/stream_transform.dart';
 
-part 'discovery_event.dart';
-part 'discovery_state.dart';
+// Tiempo de espera para dejar de escribir antes de buscar (Debounce)
+const _duration = Duration(milliseconds: 500);
+
+EventTransformer<Event> debounce<Event>(Duration duration) {
+  return (events, mapper) => events.debounce(duration).switchMap(mapper);
+}
 
 class DiscoveryBloc extends Bloc<DiscoveryEvent, DiscoveryState> {
   final DiscoveryRepository repository;
 
-  DiscoveryBloc({required this.repository}) : super(const DiscoveryState()) {
-    on<DiscoveryStarted>(_onDiscoveryStarted);
-    on<SearchQueryChanged>(
-      _onSearchQueryChanged,
-      transformer: (events, mapper) => events
-          .debounceTime(const Duration(milliseconds: 500))
-          .switchMap(mapper),
-    );
-    on<CategorySelected>(_onCategorySelected);
-    on<DiscoveryFilterCleared>(_onDiscoveryFilterCleared);
+  DiscoveryBloc({required this.repository}) : super(DiscoveryInitial()) {
+    // 1. Carga Inicial (Destacados y Categorías)
+    on<LoadDiscoveryDataEvent>((event, emit) async {
+      emit(DiscoveryLoading());
+
+      // Hacemos las dos peticiones en paralelo para ganar tiempo
+      final results = await Future.wait([
+        repository.getFeaturedQuizzes(),
+        repository.getCategories(),
+      ]);
+
+      final featuredResult =
+          results[0] as dynamic; // Either<Failure, List<dynamic>>
+      final categoriesResult =
+          results[1] as dynamic; // Either<Failure, List<String>>
+
+      List<dynamic> featured = [];
+      List<String> categories = [];
+
+      featuredResult.fold((l) => null, (r) => featured = r);
+      categoriesResult.fold((l) => null, (r) => categories = r);
+
+      // Si fallan ambas cosas críticas, mostramos error, sino mostramos lo que haya
+      if (featured.isEmpty && categories.isEmpty && featuredResult.isLeft()) {
+        emit(
+          const DiscoveryError(
+            "No se pudo cargar el contenido. Revisa tu conexión.",
+          ),
+        );
+      } else {
+        emit(
+          DiscoveryLoaded(featuredQuizzes: featured, categories: categories),
+        );
+      }
+    });
+
+    // 2. Búsqueda por Texto (Con Debounce para no saturar API)
+    on<SearchQuizzesEvent>(_onSearchChanged, transformer: debounce(_duration));
+
+    // 3. Filtrar por Categoría
+    on<ToggleCategoryEvent>(_onCategoryChanged);
+
+    // 4. Limpiar
+    on<ClearSearchEvent>((event, emit) {
+      if (state is DiscoveryLoaded) {
+        final currentState = state as DiscoveryLoaded;
+        emit(
+          currentState.copyWith(
+            searchQuery: '',
+            searchResults: [],
+            isSearching: false,
+          ),
+        );
+      }
+    });
   }
 
-  Future<void> _onDiscoveryStarted(
-    DiscoveryStarted event,
+  Future<void> _onSearchChanged(
+    SearchQuizzesEvent event,
     Emitter<DiscoveryState> emit,
   ) async {
-    emit(state.copyWith(status: DiscoveryStatus.loading));
+    if (state is DiscoveryLoaded) {
+      final currentState = state as DiscoveryLoaded;
 
-    final results = await Future.wait([
-      repository.getFeaturedKahoots(),
-      repository.getCategories(),
-    ]);
+      // Si el texto está vacío, limpiamos resultados de búsqueda pero mantenemos categoría
+      if (event.query.isEmpty) {
+        emit(
+          currentState.copyWith(
+            searchQuery: '',
+            searchResults: [],
+            isSearching: false,
+          ),
+        );
+        // Si hay categoría seleccionada, deberíamos buscar solo por categoría
+        if (currentState.activeCategory.isNotEmpty) {
+          add(ToggleCategoryEvent(currentState.activeCategory));
+        }
+        return;
+      }
 
-    final featuredResult = results[0] as Either<Failure, List<KahootSummary>>;
-    final categoriesResult = results[1] as Either<Failure, List<Category>>;
+      emit(currentState.copyWith(searchQuery: event.query, isSearching: true));
 
-    List<KahootSummary> featured = [];
-    List<Category> cats = [];
-    String? error;
-
-    featuredResult.fold((l) => error = l.message, (r) => featured = r);
-    categoriesResult.fold((l) => error = l.message, (r) => cats = r);
-
-    if (error != null) {
-      emit(
-        state.copyWith(status: DiscoveryStatus.failure, errorMessage: error),
-      );
-    } else {
-      emit(
-        state.copyWith(
-          status: DiscoveryStatus.success,
-          featuredKahoots: featured,
-          categories: cats,
-        ),
-      );
+      await _performSearch(emit, currentState.activeCategory, event.query);
     }
   }
 
-  Future<void> _onSearchQueryChanged(
-    SearchQueryChanged event,
+  Future<void> _onCategoryChanged(
+    ToggleCategoryEvent event,
     Emitter<DiscoveryState> emit,
   ) async {
-    if (event.query.isEmpty) {
+    if (state is DiscoveryLoaded) {
+      final currentState = state as DiscoveryLoaded;
+
+      // Lógica de Toggle: Si toco la misma categoría, la desactivo.
+      final newCategory = (currentState.activeCategory == event.category)
+          ? ''
+          : event.category;
+
       emit(
-        state.copyWith(
-          status: DiscoveryStatus.success,
-          searchResults: [],
-          selectedCategoryName: () => null, // Limpiamos categoría si borra
+        currentState.copyWith(activeCategory: newCategory, isSearching: true),
+      );
+
+      // Si no hay texto ni categoría, limpiamos resultados
+      if (newCategory.isEmpty && currentState.searchQuery.isEmpty) {
+        emit(
+          currentState.copyWith(
+            activeCategory: '',
+            searchResults: [],
+            isSearching: false,
+          ),
+        );
+        return;
+      }
+
+      await _performSearch(emit, newCategory, currentState.searchQuery);
+    }
+  }
+
+  // Helper para ejecutar la búsqueda en el repositorio
+  Future<void> _performSearch(
+    Emitter<DiscoveryState> emit,
+    String category,
+    String query,
+  ) async {
+    if (state is DiscoveryLoaded) {
+      final currentState = state as DiscoveryLoaded;
+
+      // Preparamos lista de categorías (la API espera lista, aunque aquí enviamos una)
+      final categoriesList = category.isNotEmpty ? [category] : null;
+
+      final result = await repository.searchQuizzes(
+        query: query,
+        categories: categoriesList,
+      );
+
+      result.fold(
+        (failure) => emit(
+          currentState.copyWith(isSearching: false, searchResults: []),
+        ), // O manejar error
+        (quizzes) => emit(
+          currentState.copyWith(isSearching: false, searchResults: quizzes),
         ),
       );
-      return;
     }
-
-    emit(
-      state.copyWith(
-        status: DiscoveryStatus.loading,
-        selectedCategoryName: () => null, // Búsqueda manual anula categoría
-      ),
-    );
-
-    final result = await repository.searchKahoots(event.query);
-
-    result.fold(
-      (l) => emit(
-        state.copyWith(
-          status: DiscoveryStatus.failure,
-          errorMessage: l.message,
-        ),
-      ),
-      (r) => emit(
-        state.copyWith(status: DiscoveryStatus.success, searchResults: r),
-      ),
-    );
-  }
-
-  Future<void> _onCategorySelected(
-    CategorySelected event,
-    Emitter<DiscoveryState> emit,
-  ) async {
-    emit(
-      state.copyWith(
-        status: DiscoveryStatus.loading,
-        selectedCategoryName: () => event.categoryName, // Guardamos el nombre
-      ),
-    );
-
-    final result = await repository.searchKahoots(
-      '',
-      categoryId: event.categoryName,
-    );
-
-    result.fold(
-      (l) => emit(
-        state.copyWith(
-          status: DiscoveryStatus.failure,
-          errorMessage: l.message,
-        ),
-      ),
-      (r) => emit(
-        state.copyWith(status: DiscoveryStatus.success, searchResults: r),
-      ),
-    );
-  }
-
-  void _onDiscoveryFilterCleared(
-    DiscoveryFilterCleared event,
-    Emitter<DiscoveryState> emit,
-  ) {
-    emit(
-      state.copyWith(
-        status: DiscoveryStatus.success,
-        searchResults: [], // Ocultar lista
-        selectedCategoryName: () => null, // Quitar nombre de categoría
-      ),
-    );
   }
 }

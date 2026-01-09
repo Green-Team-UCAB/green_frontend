@@ -52,7 +52,7 @@ Future<void> init() async {
   // Usamos registerLazySingleton. Aquí es donde pondríamos el cliente HTTP (Dio)
   // en el futuro.
   sl.registerLazySingleton<DiscoveryRemoteDataSource>(
-    () => DiscoveryRemoteDataSourceImpl(),
+    () => DiscoveryRemoteDataSourceImpl(apiClient: sl()),
   );
 
   //! Features - Reports (Epica 10)

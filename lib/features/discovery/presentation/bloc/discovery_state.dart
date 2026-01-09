@@ -1,54 +1,70 @@
-part of 'discovery_bloc.dart';
+import 'package:equatable/equatable.dart';
 
-enum DiscoveryStatus { initial, loading, success, failure }
+abstract class DiscoveryState extends Equatable {
+  const DiscoveryState();
 
-class DiscoveryState extends Equatable {
-  final DiscoveryStatus status;
-  final List<KahootSummary> featuredKahoots;
-  final List<Category> categories;
-  final List<KahootSummary> searchResults;
-  final String errorMessage;
-  // NUEVO CAMPO: Para saber qué filtro está activo
-  final String? selectedCategoryName;
+  @override
+  List<Object?> get props => [];
+}
 
-  const DiscoveryState({
-    this.status = DiscoveryStatus.initial,
-    this.featuredKahoots = const [],
-    this.categories = const [],
+class DiscoveryInitial extends DiscoveryState {}
+
+class DiscoveryLoading extends DiscoveryState {}
+
+class DiscoveryLoaded extends DiscoveryState {
+  // Datos Fijos (Cargados al inicio)
+  final List<dynamic> featuredQuizzes;
+  final List<String> categories;
+
+  // Estado de Búsqueda
+  final List<dynamic> searchResults; // Resultados de la búsqueda actual
+  final String activeCategory; // Categoría seleccionada (vacío = todas)
+  final String searchQuery; // Texto actual del buscador
+  final bool isSearching; // True si estamos esperando respuesta del back
+
+  const DiscoveryLoaded({
+    required this.featuredQuizzes,
+    required this.categories,
     this.searchResults = const [],
-    this.errorMessage = '',
-    this.selectedCategoryName, // Null significa que no hay categoría seleccionada
+    this.activeCategory = '',
+    this.searchQuery = '',
+    this.isSearching = false,
   });
 
-  DiscoveryState copyWith({
-    DiscoveryStatus? status,
-    List<KahootSummary>? featuredKahoots,
-    List<Category>? categories,
-    List<KahootSummary>? searchResults,
-    String? errorMessage,
-    String? Function()?
-    selectedCategoryName, // Truco para permitir asignar null
+  /// Método helper para actualizar el estado parcialmente (copyWith)
+  DiscoveryLoaded copyWith({
+    List<dynamic>? featuredQuizzes,
+    List<String>? categories,
+    List<dynamic>? searchResults,
+    String? activeCategory,
+    String? searchQuery,
+    bool? isSearching,
   }) {
-    return DiscoveryState(
-      status: status ?? this.status,
-      featuredKahoots: featuredKahoots ?? this.featuredKahoots,
+    return DiscoveryLoaded(
+      featuredQuizzes: featuredQuizzes ?? this.featuredQuizzes,
       categories: categories ?? this.categories,
       searchResults: searchResults ?? this.searchResults,
-      errorMessage: errorMessage ?? this.errorMessage,
-      // Si pasan la función, la ejecutan (permite null), si no, mantienen el valor actual
-      selectedCategoryName: selectedCategoryName != null
-          ? selectedCategoryName()
-          : this.selectedCategoryName,
+      activeCategory: activeCategory ?? this.activeCategory,
+      searchQuery: searchQuery ?? this.searchQuery,
+      isSearching: isSearching ?? this.isSearching,
     );
   }
 
   @override
   List<Object?> get props => [
-    status,
-    featuredKahoots,
+    featuredQuizzes,
     categories,
     searchResults,
-    errorMessage,
-    selectedCategoryName,
+    activeCategory,
+    searchQuery,
+    isSearching,
   ];
+}
+
+class DiscoveryError extends DiscoveryState {
+  final String message;
+  const DiscoveryError(this.message);
+
+  @override
+  List<Object> get props => [message];
 }
