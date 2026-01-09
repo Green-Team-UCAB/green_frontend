@@ -1,4 +1,6 @@
+import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
+import 'core/network/api_client.dart';
 
 // Imports de la Feature Discovery (H6.1)
 import 'features/discovery/data/datasources/discovery_remote_data_source.dart';
@@ -19,6 +21,12 @@ import 'features/library/data/datasources/library_remote_data_source.dart';
 import 'features/library/data/repositories/library_repository_impl.dart';
 import 'features/library/domain/repositories/library_repository.dart';
 import 'features/library/presentation/bloc/library_bloc.dart';
+
+// Imports de Groups
+import 'features/groups/data/datasources/groups_remote_data_source.dart';
+import 'features/groups/data/repositories/groups_repository_impl.dart';
+import 'features/groups/domain/repositories/groups_repository.dart';
+import 'features/groups/presentation/bloc/groups_bloc.dart';
 
 // Instancia global del Service Locator
 final sl = GetIt.instance;
@@ -70,7 +78,28 @@ Future<void> init() async {
     () => LibraryRemoteDataSourceImpl(),
   );
 
+  //! Features - Groups (Epica 8)
+  sl.registerFactory(() => GroupsBloc(repository: sl()));
+
+  // Repository
+  sl.registerLazySingleton<GroupsRepository>(
+    () => GroupsRepositoryImpl(remoteDataSource: sl()),
+  );
+
+  // Data Source (Con ApiClient)
+  sl.registerLazySingleton<GroupsRemoteDataSource>(
+    () => GroupsRemoteDataSourceImpl(apiClient: sl()),
+  );
+
   //! Core & External
-  // Aquí registraríamos cosas como SharedPreferences, Dio, Connectivity, etc.
-  // Por ahora lo dejamos vacío hasta que lo necesitemos.
+  sl.registerLazySingleton(
+    () => Dio(
+      BaseOptions(
+        baseUrl: 'https://quizzy-backend-0wh2.onrender.com/api',
+        connectTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(seconds: 30),
+      ),
+    ),
+  );
+  sl.registerLazySingleton(() => ApiClient(sl()));
 }
