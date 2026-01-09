@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:green_frontend/features/single_player/presentation/bloc/game_bloc.dart';
+import 'package:green_frontend/features/single_player/presentation/screens/single_player_game.dart';
+import 'package:green_frontend/features/single_player/presentation/bloc/game_event.dart';
+
 
 class PublicQuizDetailPage extends StatelessWidget {
   final dynamic quiz;
@@ -191,12 +196,19 @@ class PublicQuizDetailPage extends StatelessWidget {
             ),
           ),
           onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text("Funcionalidad 'Jugar' próximamente..."),
-              ),
-            );
-          },
+            context.read<GameBloc>().add(StartGame(quiz['id']));
+
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => BlocProvider.value(
+                  value: context.read<GameBloc>(),
+                  child: SinglePlayerGameScreen(),
+      ),
+    ),
+  );
+},
+
           child: const Text(
             "JUGAR AHORA",
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
