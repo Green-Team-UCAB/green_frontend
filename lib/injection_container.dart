@@ -28,6 +28,7 @@ import 'features/groups/data/datasources/groups_remote_data_source.dart';
 import 'features/groups/data/repositories/groups_repository_impl.dart';
 import 'features/groups/domain/repositories/groups_repository.dart';
 import 'features/groups/presentation/bloc/groups_bloc.dart';
+import 'features/groups/presentation/bloc/settings/group_settings_bloc.dart';
 
 // Instancia global del Service Locator
 final sl = GetIt.instance;
@@ -93,6 +94,8 @@ Future<void> init() async {
   );
 
   sl.registerFactory(() => GroupDetailBloc(repository: sl()));
+  // Feature Groups - Settings Bloc
+  sl.registerFactory(() => GroupSettingsBloc(repository: sl()));
 
   //! Core & External
   sl.registerLazySingleton(

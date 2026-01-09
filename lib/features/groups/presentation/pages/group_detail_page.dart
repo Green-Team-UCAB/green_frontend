@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../injection_container.dart';
 import '../../domain/entities/group.dart';
 import '../bloc/detail/group_detail_bloc.dart';
+import 'group_settings_page.dart'; // Import de la página de ajustes
 
 class GroupDetailPage extends StatelessWidget {
   final Group group;
@@ -40,10 +41,8 @@ class _GroupDetailView extends StatelessWidget {
       child: DefaultTabController(
         length: 2,
         child: Scaffold(
-          // Fondo claro estilo Kahoot (HostReportView)
           backgroundColor: Colors.grey[50],
           appBar: AppBar(
-            // Morado característico
             backgroundColor: Colors.deepPurple,
             foregroundColor: Colors.white,
             elevation: 0,
@@ -53,6 +52,7 @@ class _GroupDetailView extends StatelessWidget {
             ),
             centerTitle: true,
             actions: [
+              // 1. Invitar (Solo Admin)
               if (group.isAdmin)
                 IconButton(
                   icon: const Icon(Icons.person_add),
@@ -63,10 +63,56 @@ class _GroupDetailView extends StatelessWidget {
                     );
                   },
                 ),
+
+              // 2. Ajustes (Solo Admin) - ✅ Lógica de retorno integrada
+              if (group.isAdmin)
+                IconButton(
+                  icon: const Icon(Icons.settings),
+                  tooltip: 'Configuración del Grupo',
+                  onPressed: () async {
+                    // Obtenemos miembros para pasarlos a la pantalla de edición
+                    final state = context.read<GroupDetailBloc>().state;
+                    List<dynamic> currentMembers = [];
+                    if (state is GroupDetailLoaded) {
+                      currentMembers = state.leaderboard;
+                    } else if (state is InvitationGenerated) {
+                      currentMembers = state.leaderboard;
+                    }
+
+                    // Navegamos y esperamos resultado
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => GroupSettingsPage(
+                          group: group,
+                          members: currentMembers,
+                        ),
+                      ),
+                    );
+
+                    // Si se eliminó el grupo (result map con action: delete)
+                    if (result != null &&
+                        result is Map &&
+                        result['action'] == 'delete') {
+                      if (context.mounted) {
+                        Navigator.pop(
+                          context,
+                          true,
+                        ); // Cerramos detalle y avisamos a lista
+                      }
+                    } else if (result == true) {
+                      // Si hubo cambios menores (nombre/descripción), recargamos
+                      if (context.mounted) {
+                        context.read<GroupDetailBloc>().add(
+                          LoadGroupDetailsEvent(group.id),
+                        );
+                      }
+                    }
+                  },
+                ),
             ],
             bottom: const TabBar(
-              indicatorColor:
-                  Colors.white, // Línea blanca debajo de la tab activa
+              indicatorColor: Colors.white,
               indicatorWeight: 3,
               labelColor: Colors.white,
               labelStyle: TextStyle(fontWeight: FontWeight.bold),
@@ -208,13 +254,12 @@ class _QuizzesTab extends StatelessWidget {
             : 0;
         final date = quiz['availableUntil'] ?? '';
 
-        // Estilo basado en tu _ReportCard
         return Card(
           elevation: 2,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          color: Colors.white, // Tarjeta blanca limpia
+          color: Colors.white,
           child: InkWell(
             borderRadius: BorderRadius.circular(12),
             onTap: () {
@@ -272,7 +317,6 @@ class _QuizzesTab extends StatelessWidget {
                   const SizedBox(height: 16),
                   Row(
                     children: [
-                      // Icono y Texto de puntuación estilo Kahoot
                       if (isCompleted) ...[
                         const Icon(
                           Icons.emoji_events,
@@ -351,7 +395,6 @@ class _LeaderboardTab extends StatelessWidget {
         final points = user['totalPoints'] ?? 0;
         final position = index + 1;
 
-        // Similar a tu _LeaderboardCard de reports
         return Card(
           margin: const EdgeInsets.only(bottom: 8),
           elevation: 2,
@@ -390,9 +433,9 @@ class _LeaderboardTab extends StatelessWidget {
   }
 
   Color _getRankColor(int position) {
-    if (position == 1) return const Color(0xFFFFD700); // Oro
-    if (position == 2) return const Color(0xFFC0C0C0); // Plata
-    if (position == 3) return const Color(0xFFCD7F32); // Bronce
+    if (position == 1) return const Color(0xFFFFD700);
+    if (position == 2) return const Color(0xFFC0C0C0);
+    if (position == 3) return const Color(0xFFCD7F32);
     return Colors.grey[200]!;
   }
 }

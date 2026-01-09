@@ -12,8 +12,6 @@ class GroupsRepositoryImpl implements GroupsRepository {
   @override
   Future<Either<Failure, List<Group>>> getMyGroups() async {
     try {
-      // El DataSource ya maneja el try/catch del mock, así que aquí
-      // confiamos en que siempre devolverá una lista (real o falsa)
       final result = await remoteDataSource.getMyGroups();
       return Right(result);
     } catch (e) {
@@ -71,6 +69,47 @@ class GroupsRepositoryImpl implements GroupsRepository {
     try {
       final result = await remoteDataSource.generateInvitationLink(groupId);
       return Right(result);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Group>> editGroup(
+    String groupId,
+    String name,
+    String description,
+  ) async {
+    try {
+      final result = await remoteDataSource.editGroup(
+        groupId,
+        name,
+        description,
+      );
+      return Right(result);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> removeMember(
+    String groupId,
+    String memberId,
+  ) async {
+    try {
+      await remoteDataSource.removeMember(groupId, memberId);
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> deleteGroup(String groupId) async {
+    try {
+      await remoteDataSource.deleteGroup(groupId);
+      return const Right(null);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }

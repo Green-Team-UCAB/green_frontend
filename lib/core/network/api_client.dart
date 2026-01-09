@@ -82,4 +82,34 @@ class ApiClient {
       options: options,
     );
   }
+
+  Future<ApiResponse<T>> patch<T>({
+    required String path,
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) async {
+    return request<T>(
+      method: 'PATCH',
+      path: path,
+      data: data,
+      queryParameters: queryParameters,
+      options: options,
+    );
+  }
+
+  Future<ApiResponse<T>> delete<T>({
+    required String path,
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) async {
+    return request<T>(
+      method: 'DELETE',
+      path: path,
+      data: data,
+      queryParameters: queryParameters,
+      options: options,
+    );
+  }
 }

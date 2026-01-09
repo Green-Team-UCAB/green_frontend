@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../injection_container.dart';
 import '../../domain/entities/group.dart';
 import '../bloc/groups_bloc.dart';
-import 'group_detail_page.dart';
+import 'group_detail_page.dart'; // Importante para la navegación
 
 class GroupsListPage extends StatelessWidget {
   const GroupsListPage({super.key});
@@ -35,39 +35,46 @@ class GroupsListView extends StatelessWidget {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.message), backgroundColor: Colors.red),
           );
+          // Intentamos recargar si hubo un error crítico
           context.read<GroupsBloc>().add(LoadGroupsEvent());
         }
       },
       child: Scaffold(
-        // Fondo claro consistente con ReportsView
-        backgroundColor: Colors.grey[50],
+        backgroundColor: Colors.grey[50], // Fondo limpio estilo Kahoot
         appBar: AppBar(
           title: const Text(
             'Mis Grupos de Estudio',
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
-          // Estilo limpio: Fondo blanco, texto negro
+          centerTitle: true,
           backgroundColor: Colors.white,
           foregroundColor: Colors.black,
           elevation: 0,
-          centerTitle: true,
         ),
         body: BlocBuilder<GroupsBloc, GroupsState>(
           builder: (context, state) {
             if (state is GroupsLoading) {
               return const Center(child: CircularProgressIndicator());
             } else if (state is GroupsLoaded) {
-              if (state.groups.isEmpty) {
-                return _buildEmptyState();
-              }
-              return ListView.separated(
-                // Usamos separated para espacio limpio
-                padding: const EdgeInsets.all(16),
-                itemCount: state.groups.length,
-                separatorBuilder: (c, i) => const SizedBox(height: 12),
-                itemBuilder: (context, index) {
-                  return _GroupCard(group: state.groups[index]);
+              // ✅ PULL TO REFRESH INTEGRADO
+              return RefreshIndicator(
+                color: Colors.deepPurple,
+                backgroundColor: Colors.white,
+                onRefresh: () async {
+                  context.read<GroupsBloc>().add(LoadGroupsEvent());
+                  await Future.delayed(const Duration(seconds: 1)); // UX
                 },
+                child: state.groups.isEmpty
+                    ? _buildEmptyStateScrollable() // Scrollable para permitir refresh
+                    : ListView.separated(
+                        padding: const EdgeInsets.all(16),
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        itemCount: state.groups.length,
+                        separatorBuilder: (c, i) => const SizedBox(height: 12),
+                        itemBuilder: (context, index) {
+                          return _GroupCard(group: state.groups[index]);
+                        },
+                      ),
               );
             }
             return const Center(child: Text("Cargando..."));
@@ -77,25 +84,37 @@ class GroupsListView extends StatelessWidget {
           onPressed: () => _showOptionsModal(context),
           label: const Text("Nuevo", style: TextStyle(color: Colors.white)),
           icon: const Icon(Icons.add, color: Colors.white),
-          backgroundColor: Colors.deepPurple, // Color de marca
+          backgroundColor: Colors.deepPurple,
         ),
       ),
     );
   }
 
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.group_off_outlined, size: 80, color: Colors.grey[300]),
-          const SizedBox(height: 16),
-          Text(
-            "No perteneces a ningún grupo aún.",
-            style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+  // Widget vacío que permite scroll para el refresh
+  Widget _buildEmptyStateScrollable() {
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      children: [
+        SizedBox(height: 200), // Espacio para centrar visualmente
+        const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.group_off_outlined, size: 80, color: Colors.grey),
+              SizedBox(height: 16),
+              Text(
+                "No perteneces a ningún grupo aún.",
+                style: TextStyle(fontSize: 16, color: Colors.grey),
+              ),
+              SizedBox(height: 8),
+              Text(
+                "Desliza hacia abajo para actualizar",
+                style: TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -244,28 +263,32 @@ class _GroupCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ESTILOS DE MARCA
-    // Admin = DeepPurple (Líder)
-    // Member = Teal/Verde (Participante)
     final bool isAdmin = group.isAdmin;
     final Color roleColor = isAdmin ? Colors.deepPurple : Colors.teal;
 
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
+      onTap: () async {
+        // ✅ NAVEGACIÓN INTELIGENTE: Esperamos resultado
+        final result = await Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => GroupDetailPage(group: group)),
         );
+
+        // Si devuelve true (significa que se borró o modificó drásticamente), recargamos
+        if (result == true) {
+          if (context.mounted) {
+            context.read<GroupsBloc>().add(LoadGroupsEvent());
+          }
+        }
       },
       child: Card(
-        elevation: 2, // Elevación sutil como en Reports
-        margin: EdgeInsets.zero, // El margen lo maneja el ListView.separated
+        elevation: 2,
+        margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         color: Colors.white,
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            // Mantenemos el borde izquierdo de color para identificar rol rápidamente
             border: Border(left: BorderSide(color: roleColor, width: 6)),
           ),
           child: Padding(
