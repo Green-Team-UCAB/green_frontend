@@ -4,6 +4,10 @@ import '../../../../injection_container.dart';
 
 // Importamos el BLoC de la Épica 7 (Biblioteca) para reutilizar la lógica de Favoritos
 import '../../../library/presentation/bloc/library_bloc.dart';
+import '../../../library/domain/entities/kahoot_summary.dart';
+import 'package:green_frontend/features/single_player/presentation/bloc/game_bloc.dart';
+import 'package:green_frontend/features/single_player/presentation/screens/single_player_game.dart';
+import 'package:green_frontend/features/single_player/presentation/bloc/game_event.dart';
 
 class PublicQuizDetailPage extends StatelessWidget {
   final dynamic quiz;
@@ -242,13 +246,21 @@ class _QuizDetailView extends StatelessWidget {
             ),
           ),
           onPressed: () {
-            // Aquí conectarás la Épica 5 (Jugar) en el futuro
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text("Funcionalidad 'Jugar' próximamente..."),
+            // Disparamos el evento al GameBloc
+            context.read<GameBloc>().add(StartGame(quiz['id']));
+
+            // Navegamos a la pantalla del juego
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => BlocProvider.value(
+                  value: context.read<GameBloc>(),
+                  child: SinglePlayerGameScreen(),
+                ),
               ),
             );
           },
+
           child: const Text(
             "JUGAR AHORA",
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),

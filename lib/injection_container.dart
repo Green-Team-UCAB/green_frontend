@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
 import 'package:http/http.dart' as http;
-import 'package:flutter/foundation.dart'; // Para debugPrint
+import 'package:flutter/foundation.dart';
 
 // Core
 import 'core/network/api_client.dart';
@@ -35,13 +35,24 @@ import 'features/library/application/get_completed_use_case.dart';
 import 'features/library/application/toggle_favorite_use_case.dart';
 
 // --- Feature: Groups (Épica 8) ---
-import 'features/groups/data/datasources/groups_remote_data_source.dart';
-import 'features/groups/data/repositories/groups_repository_impl.dart';
+import 'features/groups/infrastructure/datasources/groups_remote_data_source.dart';
+import 'features/groups/infrastructure/repositories/groups_repository_impl.dart';
 import 'features/groups/domain/repositories/groups_repository.dart';
 import 'features/groups/presentation/bloc/groups_bloc.dart';
-import 'features/groups/presentation/bloc/detail/group_detail_bloc.dart';
-import 'features/groups/presentation/bloc/settings/group_settings_bloc.dart';
-import 'features/groups/presentation/bloc/selection/kahoot_selection_bloc.dart';
+import 'features/groups/presentation/bloc/group_detail_bloc.dart';
+import 'features/groups/presentation/bloc/group_settings_bloc.dart';
+import 'features/groups/presentation/bloc/kahoot_selection_bloc.dart';
+
+// Groups Use Cases
+import 'features/groups/application/get_my_groups_use_case.dart';
+import 'features/groups/application/create_group_use_case.dart';
+import 'features/groups/application/join_group_use_case.dart';
+import 'features/groups/application/get_group_details_use_case.dart';
+import 'features/groups/application/generate_invitation_use_case.dart';
+import 'features/groups/application/assign_quiz_use_case.dart';
+import 'features/groups/application/update_group_use_case.dart';
+import 'features/groups/application/kick_member_use_case.dart';
+import 'features/groups/application/delete_group_use_case.dart';
 
 // Instancia global del Service Locator
 final sl = GetIt.instance;
@@ -119,10 +130,36 @@ Future<void> init() async {
   );
 
   // --- Groups (Épica 8) ---
-  sl.registerFactory(() => GroupsBloc(repository: sl()));
-  sl.registerFactory(() => GroupDetailBloc(repository: sl()));
-  sl.registerFactory(() => GroupSettingsBloc(repository: sl()));
-  sl.registerFactory(() => KahootSelectionBloc(repository: sl()));
+  // Use Cases
+  sl.registerLazySingleton(() => GetMyGroupsUseCase(sl()));
+  sl.registerLazySingleton(() => CreateGroupUseCase(sl()));
+  sl.registerLazySingleton(() => JoinGroupUseCase(sl()));
+  sl.registerLazySingleton(() => GetGroupDetailsUseCase(sl()));
+  sl.registerLazySingleton(() => GenerateInvitationUseCase(sl()));
+  sl.registerLazySingleton(() => AssignQuizUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateGroupUseCase(sl()));
+  sl.registerLazySingleton(() => KickMemberUseCase(sl()));
+  sl.registerLazySingleton(() => DeleteGroupUseCase(sl()));
+
+  // Blocs
+  sl.registerFactory(
+    () => GroupsBloc(getMyGroups: sl(), createGroup: sl(), joinGroup: sl()),
+  );
+  sl.registerFactory(
+    () => GroupDetailBloc(
+      getDetails: sl(),
+      generateInvite: sl(),
+      assignQuiz: sl(),
+    ),
+  );
+  sl.registerFactory(
+    () => GroupSettingsBloc(
+      updateGroup: sl(),
+      kickMember: sl(),
+      deleteGroup: sl(),
+    ),
+  );
+  sl.registerFactory(() => KahootSelectionBloc(getMyKahoots: sl()));
 
   // Repository
   sl.registerLazySingleton<GroupsRepository>(
@@ -152,26 +189,22 @@ Future<void> init() async {
   // ApiClient Wrapper (Singleton)
   sl.registerLazySingleton<ApiClient>(() => ApiClient(sl()));
 
-  // Http Client (usado por themes, si aplica)
+  // Http Client
   sl.registerLazySingleton<http.Client>(() => http.Client());
 
   // ================================================================
-  // 3. INICIALIZACIÓN DE SESIÓN (SOLUCIÓN 401)
+  // 3. INICIALIZACIÓN DE SESIÓN
   // ================================================================
   try {
-    // Leemos el token usando el Helper que configuramos (busca 'auth_token' o 'accessToken')
     final token = await TokenStorage.getToken();
 
     if (token != null && token.isNotEmpty) {
-      // ✅ Inyectamos el token en ApiClient para que TODAS las features lo usen automáticamente
       sl<ApiClient>().setAuthToken(token);
       debugPrint(
         "✅ INJECTION: Token cargado y seteado en ApiClient globalmente.",
       );
     } else {
-      debugPrint(
-        "⚠️ INJECTION: No hay token guardado. El usuario iniciará como Guest o deberá hacer Login.",
-      );
+      debugPrint("⚠️ INJECTION: No hay token guardado.");
     }
   } catch (e) {
     debugPrint(

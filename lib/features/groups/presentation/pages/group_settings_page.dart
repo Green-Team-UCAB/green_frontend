@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../injection_container.dart';
-import '../../domain/entities/group.dart';
-import '../bloc/settings/group_settings_bloc.dart';
+import '../../domain/entities/group_entity.dart';
+import '../bloc/group_settings_bloc.dart';
 
 class GroupSettingsPage extends StatelessWidget {
-  final Group group;
+  final GroupEntity group;
   final List<dynamic> members;
 
   const GroupSettingsPage({
@@ -24,7 +24,7 @@ class GroupSettingsPage extends StatelessWidget {
 }
 
 class _GroupSettingsView extends StatefulWidget {
-  final Group group;
+  final GroupEntity group;
   final List<dynamic> members;
 
   const _GroupSettingsView({required this.group, required this.members});

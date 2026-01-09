@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../injection_container.dart';
-import '../../domain/entities/group.dart';
-import '../bloc/detail/group_detail_bloc.dart';
+import '../../domain/entities/group_entity.dart';
+import '../bloc/group_detail_bloc.dart';
 import 'group_settings_page.dart';
 import 'kahoot_selection_page.dart';
 
 class GroupDetailPage extends StatelessWidget {
-  final Group group;
+  final GroupEntity group;
 
   const GroupDetailPage({super.key, required this.group});
 
@@ -23,7 +23,7 @@ class GroupDetailPage extends StatelessWidget {
 }
 
 class _GroupDetailView extends StatelessWidget {
-  final Group group;
+  final GroupEntity group;
 
   const _GroupDetailView({required this.group});
 
@@ -122,7 +122,7 @@ class _GroupDetailView extends StatelessWidget {
           ),
           body: BlocBuilder<GroupDetailBloc, GroupDetailState>(
             builder: (context, state) {
-              if (state is GroupDetailLoading) {
+              if (state is GroupDetailLoading || state is QuizAssignedSuccess) {
                 return const Center(child: CircularProgressIndicator());
               } else if (state is GroupDetailLoaded ||
                   state is InvitationGenerated) {
