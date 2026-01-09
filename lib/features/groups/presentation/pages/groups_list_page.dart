@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../injection_container.dart';
-import '../../domain/entities/group.dart';
+import '../../domain/entities/group_entity.dart';
 import '../bloc/groups_bloc.dart';
 import 'group_detail_page.dart'; // Importante para la navegación
 
@@ -53,7 +53,7 @@ class GroupsListView extends StatelessWidget {
         ),
         body: BlocBuilder<GroupsBloc, GroupsState>(
           builder: (context, state) {
-            if (state is GroupsLoading) {
+            if (state is GroupsLoading || state is GroupOperationSuccess) {
               return const Center(child: CircularProgressIndicator());
             } else if (state is GroupsLoaded) {
               // ✅ PULL TO REFRESH INTEGRADO
@@ -257,7 +257,7 @@ class GroupsListView extends StatelessWidget {
 }
 
 class _GroupCard extends StatelessWidget {
-  final Group group;
+  final GroupEntity group;
 
   const _GroupCard({required this.group});
 

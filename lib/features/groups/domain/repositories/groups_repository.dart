@@ -1,31 +1,31 @@
-import 'package:fpdart/fpdart.dart' hide Group;
+import 'package:dartz/dartz.dart';
 import '../../../../core/error/failures.dart';
-import '../entities/group.dart';
+import '../entities/group_entity.dart';
 
 abstract class GroupsRepository {
-  Future<Either<Failure, List<Group>>> getMyGroups();
-  Future<Either<Failure, Group>> createGroup(String name, String description);
-  Future<Either<Failure, Group>> joinGroup(String token);
-
-  // Detalle
-  Future<Either<Failure, List<dynamic>>> getGroupQuizzes(String groupId);
-  Future<Either<Failure, List<dynamic>>> getGroupLeaderboard(String groupId);
-  Future<Either<Failure, String>> generateInvitation(String groupId);
-
-  // Gestión
-  Future<Either<Failure, Group>> editGroup(
-    String groupId,
+  // Lista y Creación
+  Future<Either<Failure, List<GroupEntity>>> getMyGroups();
+  Future<Either<Failure, GroupEntity>> createGroup(
     String name,
     String description,
   );
-  Future<Either<Failure, void>> removeMember(String groupId, String memberId);
-  Future<Either<Failure, void>> deleteGroup(String groupId);
+  Future<Either<Failure, GroupEntity>> joinGroup(String token);
 
-  // Asignación
-  Future<Either<Failure, List<dynamic>>> getMyKahoots();
+  // Detalles (Devuelve un Mapa con info del grupo, miembros, quizes y ranking)
+  Future<Either<Failure, Map<String, dynamic>>> getGroupDetails(String groupId);
+
+  // Acciones Administrativas
+  Future<Either<Failure, String>> generateInvitationLink(String groupId);
   Future<Either<Failure, void>> assignQuiz(
     String groupId,
     String quizId,
     String availableUntil,
   );
+  Future<Either<Failure, void>> updateGroup(
+    String groupId,
+    String name,
+    String description,
+  );
+  Future<Either<Failure, void>> kickMember(String groupId, String memberId);
+  Future<Either<Failure, void>> deleteGroup(String groupId);
 }

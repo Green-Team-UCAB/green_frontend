@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
 import '../../../../injection_container.dart';
 import '../../domain/entities/session_report.dart';
-import '../bloc/host_report_bloc.dart';
+import '../bloc/reports_bloc.dart'; // Usamos el BLoC unificado
 
 // PAGE
 class HostReportPage extends StatelessWidget {
@@ -15,7 +14,8 @@ class HostReportPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) =>
-          sl<HostReportBloc>()..add(LoadHostReportEvent(sessionId)),
+          sl<ReportsBloc>()
+            ..add(LoadReportDetailEvent(gameId: sessionId, gameType: 'Host')),
       child: const HostReportView(),
     );
   }
@@ -35,11 +35,11 @@ class HostReportView extends StatelessWidget {
         foregroundColor: Colors.white,
         elevation: 0,
       ),
-      body: BlocBuilder<HostReportBloc, HostReportState>(
+      body: BlocBuilder<ReportsBloc, ReportsState>(
         builder: (context, state) {
-          if (state is HostReportLoading) {
+          if (state is ReportDetailLoading) {
             return const Center(child: CircularProgressIndicator());
-          } else if (state is HostReportLoaded) {
+          } else if (state is SessionReportLoaded) {
             return SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -55,8 +55,7 @@ class HostReportView extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    // Manejo seguro de fechas
-                    "Jugado el ${state.report.executionDate.day}/${state.report.executionDate.month}",
+                    "Jugado el ${state.report.executionDate.day}/${state.report.executionDate.month}/${state.report.executionDate.year}",
                     style: TextStyle(color: Colors.grey[600]),
                   ),
                   const SizedBox(height: 24),
@@ -84,7 +83,7 @@ class HostReportView extends StatelessWidget {
                 ],
               ),
             );
-          } else if (state is HostReportError) {
+          } else if (state is ReportDetailError) {
             return Center(child: Text(state.message));
           }
           return const SizedBox.shrink();
@@ -95,12 +94,21 @@ class HostReportView extends StatelessWidget {
 }
 
 class _LeaderboardCard extends StatelessWidget {
-  final List<PlayerRanking> players;
+  final List<PlayerRankingItem> players; // Usamos la entidad definida en domain
 
   const _LeaderboardCard({required this.players});
 
   @override
   Widget build(BuildContext context) {
+    if (players.isEmpty) {
+      return const Card(
+        child: Padding(
+          padding: EdgeInsets.all(16.0),
+          child: Text("No hay jugadores en el ranking."),
+        ),
+      );
+    }
+
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -140,12 +148,16 @@ class _LeaderboardCard extends StatelessWidget {
 }
 
 class _QuestionAnalysisList extends StatelessWidget {
-  final List<QuestionAnalysis> questions;
+  final List<QuestionAnalysisItem> questions;
 
   const _QuestionAnalysisList({required this.questions});
 
   @override
   Widget build(BuildContext context) {
+    if (questions.isEmpty) {
+      return const Text("No hay datos de preguntas disponibles.");
+    }
+
     return Column(
       children: questions.map((q) {
         final percentage = (q.correctPercentage * 100).toInt();

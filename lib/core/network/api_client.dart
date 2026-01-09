@@ -101,6 +101,21 @@ class ApiClient {
     );
   }
 
+  Future<ApiResponse<T>> put<T>({
+    required String path,
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) async {
+    return request<T>(
+      method: 'PUT',
+      path: path,
+      data: data,
+      queryParameters: queryParameters,
+      options: options,
+    );
+  }
+
   Future<ApiResponse<T>> delete<T>({
     required String path,
     Map<String, dynamic>? queryParameters,

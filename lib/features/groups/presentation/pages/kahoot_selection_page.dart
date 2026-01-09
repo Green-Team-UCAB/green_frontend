@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../injection_container.dart';
-import '../bloc/selection/kahoot_selection_bloc.dart';
-import '../bloc/selection/kahoot_selection_event.dart';
-import '../bloc/selection/kahoot_selection_state.dart';
+import '../bloc/kahoot_selection_bloc.dart';
 
 class KahootSelectionPage extends StatelessWidget {
   const KahootSelectionPage({super.key});

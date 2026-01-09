@@ -1,12 +1,10 @@
-import 'package:equatable/equatable.dart';
-
-class SessionReport extends Equatable {
+class SessionReport {
   final String reportId;
   final String sessionId;
   final String title;
   final DateTime executionDate;
-  final List<PlayerRanking> playerRanking;
-  final List<QuestionAnalysis> questionAnalysis;
+  final List<PlayerRankingItem> playerRanking;
+  final List<QuestionAnalysisItem> questionAnalysis;
 
   const SessionReport({
     required this.reportId,
@@ -16,46 +14,31 @@ class SessionReport extends Equatable {
     required this.playerRanking,
     required this.questionAnalysis,
   });
-
-  @override
-  List<Object?> get props => [
-    reportId,
-    sessionId,
-    title,
-    executionDate,
-    playerRanking,
-    questionAnalysis,
-  ];
 }
 
-class PlayerRanking extends Equatable {
+class PlayerRankingItem {
   final int position;
   final String username;
   final int score;
   final int correctAnswers;
 
-  const PlayerRanking({
+  const PlayerRankingItem({
     required this.position,
     required this.username,
     required this.score,
     required this.correctAnswers,
   });
-
-  @override
-  List<Object?> get props => [position, username, score, correctAnswers];
 }
 
-class QuestionAnalysis extends Equatable {
+class QuestionAnalysisItem {
   final int questionIndex;
   final String questionText;
-  final double correctPercentage; // 0.0 a 1.0
+  final double
+  correctPercentage; // Del 0.0 al 1.0 (o 0 a 100 según decidas visualizar)
 
-  const QuestionAnalysis({
+  const QuestionAnalysisItem({
     required this.questionIndex,
     required this.questionText,
     required this.correctPercentage,
   });
-
-  @override
-  List<Object?> get props => [questionIndex, questionText, correctPercentage];
 }

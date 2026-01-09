@@ -9,7 +9,6 @@ import 'package:green_frontend/features/single_player/presentation/bloc/game_blo
 import 'package:green_frontend/features/single_player/presentation/screens/single_player_game.dart';
 import 'package:green_frontend/features/single_player/presentation/bloc/game_event.dart';
 
-
 class PublicQuizDetailPage extends StatelessWidget {
   final dynamic quiz;
 
@@ -247,20 +246,20 @@ class _QuizDetailView extends StatelessWidget {
             ),
           ),
           onPressed: () {
-  // Disparamos el evento al GameBloc
-  context.read<GameBloc>().add(StartGame(quiz['id']));
+            // Disparamos el evento al GameBloc
+            context.read<GameBloc>().add(StartGame(quiz['id']));
 
-  // Navegamos a la pantalla del juego
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => BlocProvider.value(
-        value: context.read<GameBloc>(),
-        child: SinglePlayerGameScreen(),
-      ),
-    ),
-  );
-},
+            // Navegamos a la pantalla del juego
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => BlocProvider.value(
+                  value: context.read<GameBloc>(),
+                  child: SinglePlayerGameScreen(),
+                ),
+              ),
+            );
+          },
 
           child: const Text(
             "JUGAR AHORA",

@@ -1,72 +1,94 @@
 import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
 import 'package:http/http.dart' as http;
-import 'package:green_frontend/features/groups/presentation/bloc/detail/group_detail_bloc.dart';
-import 'package:green_frontend/core/storage/token_storage.dart';
-import 'package:flutter/foundation.dart'; // Para debugPrint
-import 'core/network/api_client.dart';
+import 'package:flutter/foundation.dart';
 
-// Imports de la Feature Discovery (H6.1)
+// Core
+import 'core/network/api_client.dart';
+import 'core/storage/token_storage.dart';
+
+// --- Feature: Discovery (H6.1) ---
 import 'features/discovery/data/datasources/discovery_remote_data_source.dart';
 import 'features/discovery/data/repositories/discovery_repository_impl.dart';
 import 'features/discovery/domain/repositories/discovery_repository.dart';
 import 'features/discovery/presentation/bloc/discovery_bloc.dart';
 
-// Imports de la Feature Reports (H6.2)
-import 'features/reports/data/datasources/reports_remote_data_source.dart';
-import 'features/reports/data/repositories/reports_repository_impl.dart';
+// --- Feature: Reports (Épica 10) ---
+import 'features/reports/infrastructure/datasources/reports_remote_data_source.dart';
+import 'features/reports/infrastructure/repositories/reports_repository_impl.dart';
 import 'features/reports/domain/repositories/reports_repository.dart';
 import 'features/reports/presentation/bloc/reports_bloc.dart';
-import 'features/reports/presentation/bloc/report_detail_bloc.dart';
-import 'features/reports/presentation/bloc/host_report_bloc.dart';
+import 'features/reports/application/get_my_reports_use_case.dart';
+import 'features/reports/application/get_session_report_use_case.dart';
+import 'features/reports/application/get_multiplayer_result_use_case.dart';
+import 'features/reports/application/get_singleplayer_result_use_case.dart';
 
-// Imports de Library
+// --- Feature: Library (Épica 7) ---
 import 'features/library/infrastructure/datasources/library_remote_datasource.dart';
 import 'features/library/infrastructure/datasources/library_repository_impl.dart';
 import 'features/library/domain/repositories/library_repository.dart';
 import 'features/library/presentation/bloc/library_bloc.dart';
-// Use Cases
 import 'features/library/application/get_my_kahoots_use_case.dart';
 import 'features/library/application/get_favorites_use_case.dart';
 import 'features/library/application/get_in_progress_use_case.dart';
 import 'features/library/application/get_completed_use_case.dart';
 import 'features/library/application/toggle_favorite_use_case.dart';
 
-// Imports de Groups
-import 'features/groups/data/datasources/groups_remote_data_source.dart';
-import 'features/groups/data/repositories/groups_repository_impl.dart';
+// --- Feature: Groups (Épica 8) ---
+import 'features/groups/infrastructure/datasources/groups_remote_data_source.dart';
+import 'features/groups/infrastructure/repositories/groups_repository_impl.dart';
 import 'features/groups/domain/repositories/groups_repository.dart';
 import 'features/groups/presentation/bloc/groups_bloc.dart';
-import 'features/groups/presentation/bloc/settings/group_settings_bloc.dart';
-import 'features/groups/presentation/bloc/selection/kahoot_selection_bloc.dart';
+import 'features/groups/presentation/bloc/group_detail_bloc.dart';
+import 'features/groups/presentation/bloc/group_settings_bloc.dart';
+import 'features/groups/presentation/bloc/kahoot_selection_bloc.dart';
+
+// Groups Use Cases
+import 'features/groups/application/get_my_groups_use_case.dart';
+import 'features/groups/application/create_group_use_case.dart';
+import 'features/groups/application/join_group_use_case.dart';
+import 'features/groups/application/get_group_details_use_case.dart';
+import 'features/groups/application/generate_invitation_use_case.dart';
+import 'features/groups/application/assign_quiz_use_case.dart';
+import 'features/groups/application/update_group_use_case.dart';
+import 'features/groups/application/kick_member_use_case.dart';
+import 'features/groups/application/delete_group_use_case.dart';
 
 // Instancia global del Service Locator
 final sl = GetIt.instance;
 
 Future<void> init() async {
-  //! Features - Discovery (H6.1)
+  // ================================================================
+  // 1. FEATURES
+  // ================================================================
 
-  // 1. Bloc
+  // --- Discovery (H6.1) ---
   sl.registerFactory(() => DiscoveryBloc(repository: sl()));
 
-  // 2. Repository
   sl.registerLazySingleton<DiscoveryRepository>(
     () => DiscoveryRepositoryImpl(remoteDataSource: sl()),
   );
 
-  // 3. Data Source
-  // Nota: Si Discovery aún usa datos falsos sin HTTP, déjalo así.
-  // Si ya lo actualizaste para usar http, agrégale (client: sl()).
   sl.registerLazySingleton<DiscoveryRemoteDataSource>(
     () => DiscoveryRemoteDataSourceImpl(apiClient: sl()),
   );
 
-  //! Features - Reports (Epica 10)
+  // --- Reports (Épica 10) ---
+  // Use Cases
+  sl.registerLazySingleton(() => GetMyReportSummariesUseCase(sl()));
+  sl.registerLazySingleton(() => GetSessionReportUseCase(sl()));
+  sl.registerLazySingleton(() => GetMultiplayerResultUseCase(sl()));
+  sl.registerLazySingleton(() => GetSingleplayerResultUseCase(sl()));
 
   // Bloc
-  sl.registerFactory(() => ReportsBloc(repository: sl()));
-  sl.registerFactory(() => ReportDetailBloc(repository: sl()));
-  sl.registerFactory(() => HostReportBloc(repository: sl()));
+  sl.registerFactory(
+    () => ReportsBloc(
+      getMyReportSummariesUseCase: sl(),
+      getSessionReportUseCase: sl(),
+      getMultiplayerResultUseCase: sl(),
+      getSingleplayerResultUseCase: sl(),
+    ),
+  );
 
   // Repository
   sl.registerLazySingleton<ReportsRepository>(
@@ -74,13 +96,11 @@ Future<void> init() async {
   );
 
   // Data Source
-  // ✅ CORREGIDO: Inyectamos el cliente HTTP
   sl.registerLazySingleton<ReportsRemoteDataSource>(
-    () => ReportsRemoteDataSourceImpl(client: sl()),
+    () => ReportsRemoteDataSourceImpl(apiClient: sl()),
   );
 
-  //! Features - Library (Epica 7)
-
+  // --- Library (Épica 7) ---
   // Use Cases
   sl.registerLazySingleton(() => GetMyKahootsUseCase(sl()));
   sl.registerLazySingleton(() => GetFavoritesUseCase(sl()));
@@ -105,31 +125,57 @@ Future<void> init() async {
   );
 
   // Data Source
-  // ✅ Inyectamos ApiClient
   sl.registerLazySingleton<LibraryRemoteDataSource>(
     () => LibraryRemoteDataSourceImpl(apiClient: sl()),
   );
 
-  //! Features - Groups (Epica 8)
-  sl.registerFactory(() => GroupsBloc(repository: sl()));
+  // --- Groups (Épica 8) ---
+  // Use Cases
+  sl.registerLazySingleton(() => GetMyGroupsUseCase(sl()));
+  sl.registerLazySingleton(() => CreateGroupUseCase(sl()));
+  sl.registerLazySingleton(() => JoinGroupUseCase(sl()));
+  sl.registerLazySingleton(() => GetGroupDetailsUseCase(sl()));
+  sl.registerLazySingleton(() => GenerateInvitationUseCase(sl()));
+  sl.registerLazySingleton(() => AssignQuizUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateGroupUseCase(sl()));
+  sl.registerLazySingleton(() => KickMemberUseCase(sl()));
+  sl.registerLazySingleton(() => DeleteGroupUseCase(sl()));
+
+  // Blocs
+  sl.registerFactory(
+    () => GroupsBloc(getMyGroups: sl(), createGroup: sl(), joinGroup: sl()),
+  );
+  sl.registerFactory(
+    () => GroupDetailBloc(
+      getDetails: sl(),
+      generateInvite: sl(),
+      assignQuiz: sl(),
+    ),
+  );
+  sl.registerFactory(
+    () => GroupSettingsBloc(
+      updateGroup: sl(),
+      kickMember: sl(),
+      deleteGroup: sl(),
+    ),
+  );
+  sl.registerFactory(() => KahootSelectionBloc(getMyKahoots: sl()));
 
   // Repository
   sl.registerLazySingleton<GroupsRepository>(
     () => GroupsRepositoryImpl(remoteDataSource: sl()),
   );
 
-  // Data Source (Con ApiClient)
+  // Data Source
   sl.registerLazySingleton<GroupsRemoteDataSource>(
     () => GroupsRemoteDataSourceImpl(apiClient: sl()),
   );
 
-  sl.registerFactory(() => GroupDetailBloc(repository: sl()));
-  // Feature Groups - Settings Bloc
-  sl.registerFactory(() => GroupSettingsBloc(repository: sl()));
-  // Feature Groups - Selection Bloc
-  sl.registerFactory(() => KahootSelectionBloc(repository: sl()));
+  // ================================================================
+  // 2. CORE & EXTERNAL
+  // ================================================================
 
-  // Core & External
+  // Dio Base Configuration
   sl.registerLazySingleton(
     () => Dio(
       BaseOptions(
@@ -139,13 +185,30 @@ Future<void> init() async {
       ),
     ),
   );
+
+  // ApiClient Wrapper (Singleton)
   sl.registerLazySingleton<ApiClient>(() => ApiClient(sl()));
+
+  // Http Client
   sl.registerLazySingleton<http.Client>(() => http.Client());
 
-  // Recuperamos el token si existe y lo seteamos en el ApiClient
-  final token = await TokenStorage.getToken();
-  if (token != null) {
-    sl<ApiClient>().setAuthToken(token);
-    debugPrint("Token cargado al iniciar la app: $token"); // Log para verificar
+  // ================================================================
+  // 3. INICIALIZACIÓN DE SESIÓN
+  // ================================================================
+  try {
+    final token = await TokenStorage.getToken();
+
+    if (token != null && token.isNotEmpty) {
+      sl<ApiClient>().setAuthToken(token);
+      debugPrint(
+        "✅ INJECTION: Token cargado y seteado en ApiClient globalmente.",
+      );
+    } else {
+      debugPrint("⚠️ INJECTION: No hay token guardado.");
+    }
+  } catch (e) {
+    debugPrint(
+      "❌ INJECTION ERROR: Falló la recuperación del token al inicio: $e",
+    );
   }
 }
