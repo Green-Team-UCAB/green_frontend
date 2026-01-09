@@ -35,3 +35,7 @@ class UnauthorizedException extends AppException {
 class ConflictException extends AppException {
   ConflictException([String message = 'Conflict']) : super(message, 'CONFLICT');
 }
+
+class AuthException extends AppException { 
+  AuthException([String message = 'Authentication failed']) : super(message, 'AUTH_ERROR'); 
+}

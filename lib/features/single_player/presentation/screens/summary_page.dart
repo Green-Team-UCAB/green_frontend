@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:green_frontend/features/single_player/domain/entities/summary.dart';
 import 'package:green_frontend/features/single_player/presentation/provider/game_provider.dart';
-import 'package:green_frontend/features/single_player/presentation/screens/game_page.dart';
+
 import 'package:green_frontend/features/menu_navegation/presentation/screens/nav_bar_selection_screen.dart';
 
 class SummaryPage extends StatelessWidget {
@@ -15,9 +15,7 @@ class SummaryPage extends StatelessWidget {
       body: Consumer<GameController>(
         builder: (context, controller, child) {
           if (controller.isLoading) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+            return const Center(child: CircularProgressIndicator());
           }
           if (controller.summary == null) {
             return const Center(child: Text('No hay resumen disponible'));
@@ -31,10 +29,7 @@ class SummaryPage extends StatelessWidget {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [
-                  Color(0xFFF5F5F5),
-                  Colors.white,
-                ],
+                colors: [Color(0xFFF5F5F5), Colors.white],
               ),
             ),
             child: SafeArea(
@@ -64,7 +59,7 @@ class SummaryPage extends StatelessWidget {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withOpacity(0.1),
+                            color: Colors.grey.withValues(alpha: 0.1),
                             blurRadius: 20,
                             spreadRadius: 2,
                             offset: const Offset(0, 4),
@@ -126,11 +121,11 @@ class SummaryPage extends StatelessWidget {
                             icon: Icons.check_circle,
                             iconColor: Colors.green,
                             label: 'Respuestas Correctas',
-                            value: '${controller.correctAnswersCount}', // Solo el número
+                            value:
+                                '${controller.correctAnswersCount}', // Solo el número
                           ),
-                          
+
                           // Quitado el accuracy
-                          
                           if (kahoot != null) ...[
                             const SizedBox(height: 16),
                             _buildStatRow(
@@ -155,9 +150,9 @@ class SummaryPage extends StatelessWidget {
                           color: Colors.blue,
                           onPressed: () => _goToHomeScreen(context, controller),
                         ),
-                        
+
                         const SizedBox(height: 16),
-                        
+
                         // Botón "Play Again" (repetir el mismo kahoot)
                         _buildActionButton(
                           text: 'Jugar de nuevo',
@@ -174,7 +169,7 @@ class SummaryPage extends StatelessWidget {
                     Icon(
                       Icons.celebration,
                       size: 60,
-                      color: Colors.amber.withOpacity(0.8), // Corregido
+                      color: Colors.amber.withValues(alpha: 0.8), // Corregido
                     ),
                   ],
                 ),
@@ -198,14 +193,10 @@ class SummaryPage extends StatelessWidget {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: iconColor.withOpacity(0.1),
+            color: iconColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(
-            icon,
-            color: iconColor,
-            size: 20,
-          ),
+          child: Icon(icon, color: iconColor, size: 20),
         ),
         const SizedBox(width: 16),
         Expanded(
@@ -214,10 +205,7 @@ class SummaryPage extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
               ),
               const SizedBox(height: 4),
               Text(
@@ -253,7 +241,7 @@ class SummaryPage extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
           ),
           elevation: 4,
-          shadowColor: color.withOpacity(0.3),
+          shadowColor: color.withValues(alpha: 0.3),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -262,10 +250,7 @@ class SummaryPage extends StatelessWidget {
             const SizedBox(width: 12),
             Text(
               text,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
             ),
           ],
         ),
@@ -276,24 +261,22 @@ class SummaryPage extends StatelessWidget {
   void _goToHomeScreen(BuildContext context, GameController controller) {
     // Resetear completamente el controller
     controller.fullReset();
-    
+
     // Navegar directamente a la pantalla principal
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(
-        builder: (_) => const NavBarSelectionScreen(),
-      ),
+      MaterialPageRoute(builder: (_) => const NavBarSelectionScreen()),
       (route) => false,
     );
   }
 
   void _repeatKahoot(BuildContext context, GameController controller) {
     final kahootId = controller.preview?.id ?? controller.lastKahootId;
-    
+
     if (kahootId != null && kahootId.isNotEmpty) {
       // Resetear el controller para un nuevo juego
       controller.reset();
-      
+
       // Iniciar nuevo intento directamente
       controller.startNewAttempt(kahootId, context);
     } else {

@@ -6,8 +6,8 @@ import 'package:green_frontend/features/menu_navegation/presentation/providers/n
 // --- Tus pantallas existentes ---
 import 'package:green_frontend/features/menu_navegation/presentation/screens/create_screen.dart';
 import 'package:green_frontend/features/menu_navegation/presentation/screens/discover_screen.dart';
-import 'package:green_frontend/features/menu_navegation/presentation/screens/home_screen.dart'; // Asumo que aquí está KahootLibraryScreen
-import 'package:green_frontend/features/menu_navegation/presentation/screens/join_sync_game_screen.dart';
+import 'package:green_frontend/features/menu_navegation/presentation/screens/home_screen.dart';
+import 'package:green_frontend/features/multiplayer/presentation/join_game_page.dart';
 import 'package:green_frontend/features/menu_navegation/presentation/screens/library_screen.dart';
 
 // --- ✅ NUEVA IMPORTACIÓN (Asegúrate de que la ruta sea correcta) ---
@@ -18,12 +18,12 @@ class NavBarSelectionScreen extends StatelessWidget {
 
   // Agregamos GroupsListPage a la lista de páginas
   final List<Widget> pages = const [
-    KahootLibraryScreen(), // 0: Inicio
-    DiscoverScreen(), // 1: Descubre
-    JoinScreen(), // 2: Unirse
-    CreateScreen(), // 3: Crear
-    GroupsListPage(), // 4: Grupos (✅ NUEVA)
-    LibraryScreen(), // 5: Biblioteca
+    KahootLibraryScreen(), // Pantalla para "Inicio"
+    DiscoverScreen(), // Pantalla para "Descubre"
+    JoinGameScreen(), // Pantalla para "Unirse"
+    CreateScreen(), // Pantalla para "Crear"
+    GroupsListPage(), // Pantalla para "Grupos"
+    LibraryScreen(), // Pantalla para "Biblioteca"
   ];
 
   @override

@@ -255,6 +255,7 @@ class _KahootPreviewScreenState extends State<KahootPreviewScreen> {
     GameController controller,
   ) async {
     await controller.startNewAttempt(widget.kahootId, context);
+    if (!mounted) return;
 
     // Si el controller guardó el attempt en su estado se navega a GamePage usando attemptId
     final attempt = controller.attempt;
@@ -262,6 +263,8 @@ class _KahootPreviewScreenState extends State<KahootPreviewScreen> {
       try {
         await GameStorage.saveAttempt(attempt.attemptId, widget.kahootId);
       } catch (_) {}
+
+      if (!mounted) return;
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -281,6 +284,8 @@ class _KahootPreviewScreenState extends State<KahootPreviewScreen> {
     final attemptId = preview.gameState?.attemptId;
     if (attemptId != null && attemptId.isNotEmpty) {
       await controller.resumeAttempt(attemptId, context);
+      if (!mounted) return;
+
       final attempt = controller.attempt;
       if (attempt != null) {
         Navigator.pushReplacement(
@@ -301,6 +306,8 @@ class _KahootPreviewScreenState extends State<KahootPreviewScreen> {
     final storedAttemptId = data['attemptId'];
     if (storedAttemptId != null) {
       await controller.resumeAttempt(storedAttemptId, context);
+      if (!mounted) return;
+
       final attempt = controller.attempt;
       if (attempt != null) {
         Navigator.pushReplacement(
@@ -332,6 +339,8 @@ class _KahootPreviewScreenState extends State<KahootPreviewScreen> {
       return;
     }
     await controller.loadSummary(attemptId, context);
+    if (!mounted) return;
+
     if (controller.summary != null) {
       Navigator.pushReplacement(
         context,

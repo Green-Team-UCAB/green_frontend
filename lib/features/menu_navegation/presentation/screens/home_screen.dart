@@ -21,9 +21,6 @@ class _CardColors {
 
   static const Color textOnDark = Colors.white;
   static const Color textOnLight = Color(0xFF1A1A1A);
-  static const Color subtitleColor = Color(
-    0xCCFFFFFF,
-  ); // Blanco con 80% opacidad
 }
 
 /// IDs de los kahoots reales de tu API
@@ -237,7 +234,6 @@ class _KahootCard extends StatelessWidget {
     final description = kahoot?.description ?? '';
     final isInProgress = kahoot?.isInProgress ?? false;
     final isCompleted = kahoot?.isCompleted ?? false;
-    final gameState = kahoot?.gameState;
 
     // Determinar si el color es claro u oscuro para ajustar el texto
     final brightness = ThemeData.estimateBrightnessForColor(cardColor);
@@ -483,23 +479,6 @@ class _KahootCard extends StatelessWidget {
         );
       }
     }
-  }
-
-  Future<void> _viewSummary(
-    BuildContext context,
-    GameController controller,
-    String kahootId,
-    dynamic gameState,
-  ) async {
-    final attemptId =
-        gameState?.attemptId ?? (await GameStorage.getAttempt())['attemptId'];
-    if (attemptId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No hay intento para ver resumen')),
-      );
-      return;
-    }
-    await controller.loadSummary(attemptId, context);
   }
 
   void _showKahootPreview(

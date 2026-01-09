@@ -12,7 +12,6 @@ class ApiResponse<T> {
 
 class ApiClient {
   final Dio _dio;
-
   ApiClient(this._dio);
 
   factory ApiClient.withBaseUrl(String baseUrl, {Duration? timeout}) {
@@ -25,6 +24,10 @@ class ApiClient {
       ),
     );
     return ApiClient(dio);
+  }
+
+  void setAuthToken(String token) {
+    _dio.options.headers['Authorization'] = 'Bearer $token';
   }
 
   Future<ApiResponse<T>> request<T>({
@@ -100,16 +103,18 @@ class ApiClient {
 
   Future<ApiResponse<T>> delete<T>({
     required String path,
-    dynamic data,
     Map<String, dynamic>? queryParameters,
     Options? options,
   }) async {
     return request<T>(
       method: 'DELETE',
       path: path,
-      data: data,
       queryParameters: queryParameters,
       options: options,
     );
+  }
+
+  void clearAuthToken() {
+    _dio.options.headers.remove('Authorization');
   }
 }

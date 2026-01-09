@@ -46,3 +46,18 @@ app.*.map.json
 
 # Ignorar archivos generados de registro de plugins nativos (macOS)
 macos/Flutter/GeneratedPluginRegistrant.swift
+
+# Windows related
+windows/flutter/generated_plugin_registrant.cc
+windows/flutter/generated_plugins.cmake
+windows/flutter/generated_plugin_registrant.h
+
+# Linux related
+linux/flutter/generated_plugin_registrant.cc
+linux/flutter/generated_plugins.cmake
+linux/flutter/generated_plugin_registrant.h
+
+# Gradle/Android reports (para el archivo .html que te apareció)
+android/.gradle/
+android/build/
+**/build/reports/
