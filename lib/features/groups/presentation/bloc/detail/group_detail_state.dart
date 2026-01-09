@@ -2,6 +2,7 @@ part of 'group_detail_bloc.dart';
 
 abstract class GroupDetailState extends Equatable {
   const GroupDetailState();
+
   @override
   List<Object> get props => [];
 }
@@ -25,10 +26,9 @@ class GroupDetailError extends GroupDetailState {
   const GroupDetailError(this.message);
 }
 
-// Estado especial para cuando se genera el link (para mostrarlo en un Dialog)
 class InvitationGenerated extends GroupDetailState {
   final String link;
-  // Guardamos los datos anteriores para no perder la vista de fondo
+  // Guardamos datos para no perder el fondo
   final List<dynamic> quizzes;
   final List<dynamic> leaderboard;
 
@@ -37,4 +37,10 @@ class InvitationGenerated extends GroupDetailState {
     required this.quizzes,
     required this.leaderboard,
   });
+}
+
+// ✅ NUEVO ESTADO H8.6
+class QuizAssignedSuccess extends GroupDetailState {
+  final String message;
+  const QuizAssignedSuccess(this.message);
 }

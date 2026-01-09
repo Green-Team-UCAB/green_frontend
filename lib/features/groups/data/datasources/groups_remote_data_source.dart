@@ -18,6 +18,14 @@ abstract class GroupsRemoteDataSource {
   Future<GroupModel> editGroup(String groupId, String name, String description);
   Future<void> removeMember(String groupId, String memberId);
   Future<void> deleteGroup(String groupId);
+
+  // --- MÉTODOS PARA ASIGNAR KAHOOTS (H8.6) ---
+  Future<List<dynamic>> getMyKahootsForSelection();
+  Future<void> assignQuizToGroup(
+    String groupId,
+    String quizId,
+    String availableUntil,
+  );
 }
 
 class GroupsRemoteDataSourceImpl implements GroupsRemoteDataSource {
@@ -161,5 +169,50 @@ class GroupsRemoteDataSourceImpl implements GroupsRemoteDataSource {
   Future<void> deleteGroup(String groupId) async {
     final options = await _getAuthOptions();
     await apiClient.delete(path: '/groups/$groupId', options: options);
+  }
+
+  // ✅ NUEVO H8.6: Obtener mis Kahoots para seleccionar
+  @override
+  Future<List<dynamic>> getMyKahootsForSelection() async {
+    try {
+      final options = await _getAuthOptions();
+      // Endpoint de la biblioteca (Épica 7) para ver mis creaciones [cite: 281]
+      final response = await apiClient.get(
+        path: '/library/my-creations',
+        options: options,
+      );
+
+      final data = response.data;
+      if (data is Map && data['data'] is List) {
+        return data['data'] as List;
+      } else if (data is List) {
+        return data; // Por si acaso
+      }
+      return [];
+    } catch (e) {
+      log('⚠️ Error fetching my kahoots: $e');
+      return [];
+    }
+  }
+
+  // ✅ NUEVO H8.6: Asignar Quiz al Grupo
+  @override
+  Future<void> assignQuizToGroup(
+    String groupId,
+    String quizId,
+    String availableUntil,
+  ) async {
+    final options = await _getAuthOptions();
+    // Endpoint para asignar quiz [cite: 301]
+    await apiClient.post(
+      path: '/groups/$groupId/quizzes',
+      data: {
+        "quizId": quizId,
+        "availableFrom": DateTime.now()
+            .toIso8601String(), // Disponible desde ya
+        "availableUntil": availableUntil,
+      },
+      options: options,
+    );
   }
 }

@@ -114,4 +114,30 @@ class GroupsRepositoryImpl implements GroupsRepository {
       return Left(ServerFailure(e.toString()));
     }
   }
+
+  // ✅ NUEVO H8.6: Implementación de obtener mis kahoots
+  @override
+  Future<Either<Failure, List<dynamic>>> getMyKahoots() async {
+    try {
+      final result = await remoteDataSource.getMyKahootsForSelection();
+      return Right(result);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  // ✅ NUEVO H8.6: Implementación de asignar quiz
+  @override
+  Future<Either<Failure, void>> assignQuiz(
+    String groupId,
+    String quizId,
+    String availableUntil,
+  ) async {
+    try {
+      await remoteDataSource.assignQuizToGroup(groupId, quizId, availableUntil);
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
 }

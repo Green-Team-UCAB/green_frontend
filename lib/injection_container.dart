@@ -29,6 +29,7 @@ import 'features/groups/data/repositories/groups_repository_impl.dart';
 import 'features/groups/domain/repositories/groups_repository.dart';
 import 'features/groups/presentation/bloc/groups_bloc.dart';
 import 'features/groups/presentation/bloc/settings/group_settings_bloc.dart';
+import 'features/groups/presentation/bloc/selection/kahoot_selection_bloc.dart';
 
 // Instancia global del Service Locator
 final sl = GetIt.instance;
@@ -96,6 +97,8 @@ Future<void> init() async {
   sl.registerFactory(() => GroupDetailBloc(repository: sl()));
   // Feature Groups - Settings Bloc
   sl.registerFactory(() => GroupSettingsBloc(repository: sl()));
+  // Feature Groups - Selection Bloc
+  sl.registerFactory(() => KahootSelectionBloc(repository: sl()));
 
   //! Core & External
   sl.registerLazySingleton(

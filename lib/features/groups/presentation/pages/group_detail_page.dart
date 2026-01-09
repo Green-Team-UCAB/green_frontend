@@ -4,7 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../injection_container.dart';
 import '../../domain/entities/group.dart';
 import '../bloc/detail/group_detail_bloc.dart';
-import 'group_settings_page.dart'; // Import de la página de ajustes
+import 'group_settings_page.dart';
+import 'kahoot_selection_page.dart';
 
 class GroupDetailPage extends StatelessWidget {
   final Group group;
@@ -36,6 +37,14 @@ class _GroupDetailView extends StatelessWidget {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.message), backgroundColor: Colors.red),
           );
+        } else if (state is QuizAssignedSuccess) {
+          // ✅ Feedback visual cuando se asigna correctamente
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: Colors.green,
+            ),
+          );
         }
       },
       child: DefaultTabController(
@@ -52,7 +61,6 @@ class _GroupDetailView extends StatelessWidget {
             ),
             centerTitle: true,
             actions: [
-              // 1. Invitar (Solo Admin)
               if (group.isAdmin)
                 IconButton(
                   icon: const Icon(Icons.person_add),
@@ -63,14 +71,11 @@ class _GroupDetailView extends StatelessWidget {
                     );
                   },
                 ),
-
-              // 2. Ajustes (Solo Admin) - ✅ Lógica de retorno integrada
               if (group.isAdmin)
                 IconButton(
                   icon: const Icon(Icons.settings),
                   tooltip: 'Configuración del Grupo',
                   onPressed: () async {
-                    // Obtenemos miembros para pasarlos a la pantalla de edición
                     final state = context.read<GroupDetailBloc>().state;
                     List<dynamic> currentMembers = [];
                     if (state is GroupDetailLoaded) {
@@ -79,7 +84,6 @@ class _GroupDetailView extends StatelessWidget {
                       currentMembers = state.leaderboard;
                     }
 
-                    // Navegamos y esperamos resultado
                     final result = await Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -90,18 +94,11 @@ class _GroupDetailView extends StatelessWidget {
                       ),
                     );
 
-                    // Si se eliminó el grupo (result map con action: delete)
                     if (result != null &&
                         result is Map &&
                         result['action'] == 'delete') {
-                      if (context.mounted) {
-                        Navigator.pop(
-                          context,
-                          true,
-                        ); // Cerramos detalle y avisamos a lista
-                      }
+                      if (context.mounted) Navigator.pop(context, true);
                     } else if (result == true) {
-                      // Si hubo cambios menores (nombre/descripción), recargamos
                       if (context.mounted) {
                         context.read<GroupDetailBloc>().add(
                           LoadGroupDetailsEvent(group.id),
@@ -149,11 +146,44 @@ class _GroupDetailView extends StatelessWidget {
               return const Center(child: Text("Cargando detalles..."));
             },
           ),
+
+          // ✅ BOTÓN FLOTANTE PARA ASIGNAR KAHOOT (Solo Admin)
+          floatingActionButton: group.isAdmin
+              ? FloatingActionButton.extended(
+                  onPressed: () async {
+                    // 1. Navegar a la pantalla de selección
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const KahootSelectionPage(),
+                      ),
+                    );
+
+                    // 2. Si vuelve con datos, disparamos el evento de asignación
+                    if (result != null && result is Map && context.mounted) {
+                      context.read<GroupDetailBloc>().add(
+                        AssignQuizEvent(
+                          groupId: group.id,
+                          quizId: result['quizId'],
+                          availableUntil: result['availableUntil'],
+                        ),
+                      );
+                    }
+                  },
+                  backgroundColor: Colors.deepPurple,
+                  icon: const Icon(Icons.add_task, color: Colors.white),
+                  label: const Text(
+                    "Asignar Kahoot",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                )
+              : null,
         ),
       ),
     );
   }
 
+  // ... (El resto de métodos _showInvitationDialog queda igual) ...
   void _showInvitationDialog(BuildContext context, String link) {
     showDialog(
       context: context,
@@ -174,16 +204,17 @@ class _GroupDetailView extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.deepPurple.withOpacity(0.05),
+                color: Colors.deepPurple.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.deepPurple.withOpacity(0.2)),
+                border: Border.all(
+                  color: Colors.deepPurple.withValues(alpha: 0.2),
+                ),
               ),
               child: SelectableText(
                 link,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
-                  color: Colors.black87,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -202,7 +233,7 @@ class _GroupDetailView extends StatelessWidget {
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text("Enlace copiado al portapapeles"),
+                  content: Text("Enlace copiado"),
                   backgroundColor: Colors.green,
                 ),
               );
@@ -212,9 +243,6 @@ class _GroupDetailView extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.deepPurple,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
             ),
             onPressed: () => Navigator.pop(context),
             child: const Text("Listo"),
@@ -225,12 +253,9 @@ class _GroupDetailView extends StatelessWidget {
   }
 }
 
-// --- TAB 1: ACTIVIDADES (QUIZZES) ---
 class _QuizzesTab extends StatelessWidget {
   final List<dynamic> quizzes;
-
   const _QuizzesTab({required this.quizzes});
-
   @override
   Widget build(BuildContext context) {
     if (quizzes.isEmpty) {
@@ -239,7 +264,6 @@ class _QuizzesTab extends StatelessWidget {
         message: "No hay actividades asignadas aún.",
       );
     }
-
     return ListView.separated(
       padding: const EdgeInsets.all(16),
       itemCount: quizzes.length,
@@ -260,99 +284,82 @@ class _QuizzesTab extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
           ),
           color: Colors.white,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(12),
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text("Navegar al juego (Próximamente)"),
-                ),
-              );
-            },
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isCompleted
+                            ? Colors.green.withValues(alpha: 0.1)
+                            : Colors.orange.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        isCompleted ? "COMPLETADO" : "PENDIENTE",
+                        style: TextStyle(
                           color: isCompleted
-                              ? Colors.green.withOpacity(0.1)
-                              : Colors.orange.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          isCompleted ? "COMPLETADO" : "PENDIENTE",
-                          style: TextStyle(
-                            color: isCompleted
-                                ? Colors.green[700]
-                                : Colors.orange[800],
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
+                              ? Colors.green[700]
+                              : Colors.orange[800],
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                      Text(
-                        _formatDate(date),
-                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
                     ),
+                    Text(
+                      _formatDate(date),
+                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
                   ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      if (isCompleted) ...[
-                        const Icon(
-                          Icons.emoji_events,
-                          color: Colors.amber,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          "$score pts",
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.deepPurple,
-                          ),
-                        ),
-                      ] else ...[
-                        const Icon(
-                          Icons.timer_outlined,
-                          color: Colors.grey,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          "Disponible",
-                          style: TextStyle(color: Colors.grey[600]),
-                        ),
-                      ],
-                      const Spacer(),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    if (isCompleted) ...[
                       const Icon(
-                        Icons.arrow_forward,
-                        color: Colors.deepPurple,
+                        Icons.emoji_events,
+                        color: Colors.amber,
                         size: 20,
                       ),
+                      const SizedBox(width: 6),
+                      Text(
+                        "$score pts",
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.deepPurple,
+                        ),
+                      ),
+                    ] else ...[
+                      const Icon(
+                        Icons.timer_outlined,
+                        color: Colors.grey,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        "Disponible",
+                        style: TextStyle(color: Colors.grey[600]),
+                      ),
                     ],
-                  ),
-                ],
-              ),
+                  ],
+                ),
+              ],
             ),
           ),
         );
@@ -371,12 +378,9 @@ class _QuizzesTab extends StatelessWidget {
   }
 }
 
-// --- TAB 2: RANKING (LEADERBOARD) ---
 class _LeaderboardTab extends StatelessWidget {
   final List<dynamic> leaderboard;
-
   const _LeaderboardTab({required this.leaderboard});
-
   @override
   Widget build(BuildContext context) {
     if (leaderboard.isEmpty) {
@@ -385,7 +389,6 @@ class _LeaderboardTab extends StatelessWidget {
         message: "Aún no hay ranking disponible.",
       );
     }
-
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: leaderboard.length,
@@ -394,7 +397,6 @@ class _LeaderboardTab extends StatelessWidget {
         final name = user['name'] ?? 'Usuario';
         final points = user['totalPoints'] ?? 0;
         final position = index + 1;
-
         return Card(
           margin: const EdgeInsets.only(bottom: 8),
           elevation: 2,
@@ -402,10 +404,6 @@ class _LeaderboardTab extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
           ),
           child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 8,
-            ),
             leading: CircleAvatar(
               backgroundColor: _getRankColor(position),
               foregroundColor: position <= 3 ? Colors.white : Colors.black54,
@@ -416,14 +414,13 @@ class _LeaderboardTab extends StatelessWidget {
             ),
             title: Text(
               name,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             trailing: Text(
               "$points pts",
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 color: Colors.deepPurple,
-                fontSize: 16,
               ),
             ),
           ),
@@ -444,7 +441,6 @@ class _EmptyState extends StatelessWidget {
   final IconData icon;
   final String message;
   const _EmptyState({required this.icon, required this.message});
-
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -454,7 +450,7 @@ class _EmptyState extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.deepPurple.withOpacity(0.1),
+              color: Colors.deepPurple.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, size: 50, color: Colors.deepPurple),

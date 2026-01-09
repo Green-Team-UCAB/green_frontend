@@ -9,17 +9,17 @@ class GroupDetailBloc extends Bloc<GroupDetailEvent, GroupDetailState> {
   final GroupsRepository repository;
 
   GroupDetailBloc({required this.repository}) : super(GroupDetailInitial()) {
+    // 1. Cargar Detalles (Quizzes + Ranking)
     on<LoadGroupDetailsEvent>((event, emit) async {
       emit(GroupDetailLoading());
 
-      // Llamamos a los dos endpoints en paralelo para ser eficientes
       final results = await Future.wait([
         repository.getGroupQuizzes(event.groupId),
         repository.getGroupLeaderboard(event.groupId),
       ]);
 
-      final quizzesResult = results[0] as dynamic; // Dartz Either
-      final leaderboardResult = results[1] as dynamic; // Dartz Either
+      final quizzesResult = results[0] as dynamic;
+      final leaderboardResult = results[1] as dynamic;
 
       List<dynamic> quizzes = [];
       List<dynamic> leaderboard = [];
@@ -30,14 +30,14 @@ class GroupDetailBloc extends Bloc<GroupDetailEvent, GroupDetailState> {
       emit(GroupDetailLoaded(quizzes: quizzes, leaderboard: leaderboard));
     });
 
+    // 2. Generar Invitación
     on<GenerateInviteEvent>((event, emit) async {
       final currentState = state;
       if (currentState is GroupDetailLoaded) {
-        // No emitimos Loading para no borrar la pantalla, o mostramos un loading overlay
         final result = await repository.generateInvitation(event.groupId);
 
         result.fold(
-          (failure) => null, // Manejar error si quieres con un Toast
+          (failure) => null, // Manejo opcional
           (link) => emit(
             InvitationGenerated(
               link: link,
@@ -47,6 +47,27 @@ class GroupDetailBloc extends Bloc<GroupDetailEvent, GroupDetailState> {
           ),
         );
       }
+    });
+
+    // ✅ 3. Asignar Quiz (H8.6)
+    on<AssignQuizEvent>((event, emit) async {
+      emit(GroupDetailLoading()); // Mostramos carga
+
+      final result = await repository.assignQuiz(
+        event.groupId,
+        event.quizId,
+        event.availableUntil,
+      );
+
+      result.fold(
+        (failure) =>
+            emit(GroupDetailError("Error al asignar: ${failure.toString()}")),
+        (_) {
+          emit(const QuizAssignedSuccess("Actividad asignada correctamente"));
+          // Recargamos inmediatamente para ver el nuevo quiz en la lista
+          add(LoadGroupDetailsEvent(event.groupId));
+        },
+      );
     });
   }
 }
