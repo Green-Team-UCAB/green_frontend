@@ -8,22 +8,18 @@ import 'package:green_frontend/features/menu_navegation/presentation/screens/cre
 import 'package:green_frontend/features/menu_navegation/presentation/screens/discover_screen.dart';
 import 'package:green_frontend/features/menu_navegation/presentation/screens/home_screen.dart';
 import 'package:green_frontend/features/multiplayer/presentation/join_game_page.dart';
-import 'package:green_frontend/features/menu_navegation/presentation/screens/library_screen.dart';
-
-// --- ✅ NUEVA IMPORTACIÓN (Asegúrate de que la ruta sea correcta) ---
-import '../../../groups/presentation/pages/groups_list_page.dart';
+import 'package:green_frontend/features/library/presentation/pages/library_page.dart';
 
 class NavBarSelectionScreen extends StatelessWidget {
   const NavBarSelectionScreen({super.key});
 
-  // Agregamos GroupsListPage a la lista de páginas
+  // Lista actualizada: Solo 5 pantallas
   final List<Widget> pages = const [
-    KahootLibraryScreen(), // Pantalla para "Inicio"
-    DiscoverScreen(), // Pantalla para "Descubre"
-    JoinGameScreen(), // Pantalla para "Unirse"
-    CreateScreen(), // Pantalla para "Crear"
-    GroupsListPage(), // Pantalla para "Grupos"
-    LibraryScreen(), // Pantalla para "Biblioteca"
+    KahootLibraryScreen(), // 0: Inicio
+    DiscoverScreen(), // 1: Descubre
+    JoinGameScreen(), // 2: Unirse (El botón central)
+    CreateScreen(), // 3: Crear
+    LibraryPage(), // 4: Biblioteca (El nuevo Hub Principal)
   ];
 
   @override
@@ -31,8 +27,7 @@ class NavBarSelectionScreen extends StatelessWidget {
     final navigationProvider = Provider.of<NavigationProvider>(context);
 
     return Scaffold(
-      // ✅ USAMOS INDEXED STACK: Esto evita que la pantalla se recargue desde cero
-      // cada vez que cambias de pestaña (vital para mantener los datos Mock cargados).
+      // IndexedStack mantiene el estado de las páginas (no recargan al cambiar de tab)
       body: IndexedStack(
         index: navigationProvider.currentIndex,
         children: pages,
@@ -41,35 +36,52 @@ class NavBarSelectionScreen extends StatelessWidget {
       backgroundColor: AppPallete.backgroundColor,
 
       bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed, // Mantiene los labels visibles
+        type: BottomNavigationBarType.fixed, // Labels siempre visibles
         backgroundColor: AppPallete.backgroundColor,
         currentIndex: navigationProvider.currentIndex,
         onTap: (index) {
           navigationProvider.updateIndex(index);
         },
-        selectedItemColor: AppPallete.gradient1, // Tu color morado/azul
+        selectedItemColor: AppPallete.gradient1,
         unselectedItemColor: AppPallete.greyColor,
-        selectedFontSize: 12, // Ajuste para que quepan 6 items
+        selectedFontSize: 12,
         unselectedFontSize: 12,
 
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Inicio'),
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Descubre'),
+        // Lista actualizada: Solo 5 ítems
+        items: [
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Inicio',
+          ),
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.search),
+            label: 'Descubre',
+          ),
+
+          // Botón central "Unirse" destacado (Opcional: puedes personalizarlo más si quieres)
           BottomNavigationBarItem(
-            icon: Icon(Icons.sports_esports),
+            icon: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                // Un pequeño fondo para destacar "Unirse" si lo deseas, o déjalo simple
+                color: navigationProvider.currentIndex == 2
+                    ? AppPallete.gradient1.withOpacity(0.1)
+                    : Colors.transparent,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.sports_esports),
+            ),
             label: 'Unirse',
           ),
-          BottomNavigationBarItem(
+
+          const BottomNavigationBarItem(
             icon: Icon(Icons.add_box_outlined),
             label: 'Crear',
           ),
-          // ✅ NUEVO ÍTEM DE NAVEGACIÓN
-          BottomNavigationBarItem(
-            icon: Icon(Icons.groups_outlined), // Icono perfecto para grupos
-            label: 'Grupos',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.library_books_outlined),
+
+          // "Grupos" ELIMINADO ❌
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline), // Icono de usuario/biblioteca
             label: 'Biblioteca',
           ),
         ],

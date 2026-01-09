@@ -3,69 +3,100 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../injection_container.dart';
 
 // Importamos el BLoC de la Épica 7 (Biblioteca) para reutilizar la lógica de Favoritos
-import '../../../library/presentation/bloc/library_bloc.dart';
-import '../../../library/domain/entities/kahoot_summary.dart';
-import 'package:green_frontend/features/single_player/presentation/bloc/game_bloc.dart';
-import 'package:green_frontend/features/single_player/presentation/screens/single_player_game.dart';
-import 'package:green_frontend/features/single_player/presentation/bloc/game_event.dart';
+import '../../presentation/bloc/library_bloc.dart';
+import '../../domain/entities/kahoot_summary.dart';
 
-
-class PublicQuizDetailPage extends StatelessWidget {
+class QuizDetailPage extends StatelessWidget {
   final dynamic quiz;
+  final bool isAdmin; // ✅ Define si muestras controles de edición o solo jugar
 
-  const PublicQuizDetailPage({super.key, required this.quiz});
+  const QuizDetailPage({
+    super.key,
+    required this.quiz,
+    this.isAdmin = false, // Por defecto es vista de jugador (Discovery)
+  });
 
   @override
   Widget build(BuildContext context) {
-    // 1. WRAPPER: Inyectamos el LibraryBloc y cargamos los datos al entrar.
-    // Esto permite saber inmediatamente si el quiz ya era favorito o no.
+    // Inyectamos el LibraryBloc para manejar el favorito
     return BlocProvider(
       create: (_) => sl<LibraryBloc>()..add(LoadLibraryDataEvent()),
-      child: _QuizDetailView(quiz: quiz),
+      child: _QuizDetailView(quiz: quiz, isAdmin: isAdmin),
     );
   }
 }
 
 class _QuizDetailView extends StatelessWidget {
   final dynamic quiz;
-  const _QuizDetailView({required this.quiz});
+  final bool isAdmin;
+
+  const _QuizDetailView({required this.quiz, required this.isAdmin});
 
   @override
   Widget build(BuildContext context) {
-    // Extracción de datos (igual que tenías)
-    final quizId = quiz['id'];
-    final title = quiz['title'] ?? 'Sin título';
-    final description = quiz['description'] ?? 'Sin descripción disponible.';
-    final authorName = quiz['author'] != null
-        ? quiz['author']['name']
-        : 'Desconocido';
-    final playCount = quiz['playCount'] ?? 0;
-    final questionsCount = quiz['questionsCount'] ?? 0;
-    final imageUrl = quiz['coverImageId'];
-    final category = quiz['category'] ?? 'General';
+    // ============================================================
+    // 🔍 LÓGICA DE EXTRACCIÓN DE DATOS (Soporta JSON y Entidad)
+    // ============================================================
+    final String quizId = (quiz is KahootSummary) ? quiz.id : quiz['id'];
+
+    final String title = (quiz is KahootSummary)
+        ? quiz.title
+        : (quiz['title'] ?? 'Sin título');
+
+    final String description = (quiz is KahootSummary)
+        ? (quiz.description ?? '')
+        : (quiz['description'] ?? 'Sin descripción disponible.');
+
+    final String? imageUrl = (quiz is KahootSummary)
+        ? quiz.coverImageId
+        : quiz['coverImageId'];
+
+    final int playCount = (quiz is KahootSummary)
+        ? quiz.playCount
+        : (quiz['playCount'] ?? 0);
+
+    // --- CORRECCIÓN CRÍTICA DEL AUTOR ---
+    String authorName = 'Desconocido';
+
+    if (quiz is KahootSummary) {
+      // Caso 1: Viene de la Biblioteca (Entidad ya procesada)
+      authorName = quiz.authorName ?? 'Desconocido';
+    } else if (quiz is Map) {
+      // Caso 2: Viene de Discovery (JSON Crudo)
+      // La estructura es "author": { "name": "User..." }
+      if (quiz['author'] != null && quiz['author'] is Map) {
+        authorName = quiz['author']['name'] ?? 'Desconocido';
+      } else if (quiz['authorName'] != null) {
+        // Fallback por si acaso viniera plano
+        authorName = quiz['authorName'];
+      }
+    }
+    // ============================================================
+
+    // Datos mock para completar la UI si faltan en el modelo
+    final int questionsCount = (quiz is Map && quiz['questionsCount'] != null)
+        ? quiz['questionsCount']
+        : 10;
+    final String category = (quiz is Map && quiz['category'] != null)
+        ? quiz['category']
+        : "General";
 
     return Scaffold(
       backgroundColor: Colors.white,
       body: CustomScrollView(
         slivers: [
-          // 1. Appbar con Imagen Grande (Efecto Parallax) + BOTÓN FAVORITO
+          // --- APP BAR CON IMAGEN Y FAVORITO ---
           SliverAppBar(
             expandedHeight: 250.0,
             floating: false,
             pinned: true,
             actions: [
-              // ==================================================
-              // ❤️ AQUÍ ESTÁ LA NUEVA FUNCIONALIDAD DE FAVORITOS
-              // ==================================================
               BlocBuilder<LibraryBloc, LibraryState>(
                 builder: (context, state) {
                   bool isFavorite = false;
-
-                  // Buscamos si el ID de este quiz está en la lista de favoritos cargada
                   if (state is LibraryLoaded) {
                     isFavorite = state.favorites.any((k) => k.id == quizId);
                   }
-
                   return Container(
                     margin: const EdgeInsets.only(right: 16),
                     decoration: BoxDecoration(
@@ -78,7 +109,6 @@ class _QuizDetailView extends StatelessWidget {
                         color: isFavorite ? Colors.red : Colors.grey[800],
                       ),
                       onPressed: () {
-                        // Disparamos el evento al BLoC
                         context.read<LibraryBloc>().add(
                           ToggleFavoriteInLibraryEvent(
                             kahootId: quizId,
@@ -96,8 +126,7 @@ class _QuizDetailView extends StatelessWidget {
               background: Stack(
                 fit: StackFit.expand,
                 children: [
-                  if (imageUrl != null &&
-                      imageUrl.toString().startsWith('http'))
+                  if (imageUrl != null && imageUrl.startsWith('http'))
                     Image.network(imageUrl, fit: BoxFit.cover)
                   else
                     Container(
@@ -108,7 +137,6 @@ class _QuizDetailView extends StatelessWidget {
                         color: Colors.white,
                       ),
                     ),
-
                   const DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -124,13 +152,14 @@ class _QuizDetailView extends StatelessWidget {
             ),
           ),
 
-          // 2. Contenido (Igual que tenías)
+          // --- CONTENIDO DEL BODY ---
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(24.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Badges y Stats
                   Row(
                     children: [
                       Chip(
@@ -157,6 +186,8 @@ class _QuizDetailView extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 16),
+
+                  // Título
                   Text(
                     title,
                     style: const TextStyle(
@@ -166,6 +197,8 @@ class _QuizDetailView extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
+
+                  // Autor
                   Row(
                     children: [
                       const CircleAvatar(
@@ -178,15 +211,40 @@ class _QuizDetailView extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 8),
+                      // Nombre del Autor (Extraído dinámicamente)
                       Text(
                         "Creado por $authorName",
                         style: const TextStyle(fontWeight: FontWeight.w500),
                       ),
+                      // Badge "Tú" solo si es Admin (dueño)
+                      if (isAdmin) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Text(
+                            "Tú",
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.green,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                   const SizedBox(height: 24),
                   const Divider(),
                   const SizedBox(height: 16),
+
+                  // Descripción
                   const Text(
                     "Descripción",
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -202,7 +260,7 @@ class _QuizDetailView extends StatelessWidget {
                   ),
                   const SizedBox(height: 32),
 
-                  // Información extra
+                  // Caja de Estadísticas
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -219,12 +277,17 @@ class _QuizDetailView extends StatelessWidget {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 100),
                 ],
               ),
             ),
           ),
         ],
       ),
+
+      // =========================================================
+      // 🎮 BARRA INFERIOR ADAPTATIVA
+      // =========================================================
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -237,29 +300,86 @@ class _QuizDetailView extends StatelessWidget {
             ),
           ],
         ),
-        child: ElevatedButton(
+        child: isAdmin
+            ? _buildAdminControls(context)
+            : _buildPlayerControls(context),
+      ),
+    );
+  }
+
+  // --- MODO JUGADOR ---
+  Widget _buildPlayerControls(BuildContext context) {
+    return ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.deepPurple,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      onPressed: () {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Iniciando partida en solitario...")),
+        );
+      },
+      child: const Text(
+        "JUGAR AHORA",
+        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
+  // --- MODO ADMIN ---
+  Widget _buildAdminControls(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Botón QR
+        ElevatedButton.icon(
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.deepPurple,
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 16),
+            minimumSize: const Size(double.infinity, 50),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
           ),
           onPressed: () {
-            // Aquí conectarás la Épica 5 (Jugar) en el futuro
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text("Funcionalidad 'Jugar' próximamente..."),
-              ),
+              const SnackBar(content: Text("Generando sala y código QR...")),
             );
           },
-          child: const Text(
-            "JUGAR AHORA",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          icon: const Icon(Icons.qr_code_2, size: 28), // Icono QR
+          label: const Text(
+            "Generar PIN y Código QR",
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
         ),
-      ),
+        const SizedBox(height: 12),
+
+        // Botón Editar
+        OutlinedButton.icon(
+          style: ElevatedButton.styleFrom(
+            foregroundColor: Colors.deepPurple,
+            side: const BorderSide(color: Colors.deepPurple, width: 2),
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            minimumSize: const Size(double.infinity, 50),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          onPressed: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Abriendo editor de Quiz...")),
+            );
+          },
+          icon: const Icon(Icons.edit_outlined),
+          label: const Text(
+            "Editar Quiz",
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+        ),
+      ],
     );
   }
 
