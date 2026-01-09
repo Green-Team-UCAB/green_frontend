@@ -38,6 +38,7 @@ import 'package:green_frontend/features/single_player/application/get_summary.da
 import 'package:green_frontend/features/single_player/application/get_kahoot_preview.dart';
 import 'package:green_frontend/features/single_player/infraestructure/repositories/async_game_repository_impl.dart';
 import 'package:green_frontend/features/single_player/infraestructure/datasources/async_game_datasource.dart';
+import 'package:green_frontend/features/single_player/presentation/bloc/game_bloc.dart';
 
 import 'package:green_frontend/features/single_player/presentation/provider/game_provider.dart';
 
@@ -53,14 +54,10 @@ void main() async {
   // --- Inicialización y registro temporal de dependencias Single Player ---
 
   const baseUrl = 'https://quizzy-backend-0wh2.onrender.com/api';
-  final dio = Dio(
-    BaseOptions(
-      baseUrl: baseUrl,
-      connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(seconds: 30),
-    ),
-  );
-  final dataSource = AsyncGameDataSourceImpl(dio: dio);
+  final dio = di.sl<Dio>(); // el Dio global que registraste en injection_container.dart
+
+  final dataSource = AsyncGameDataSourceImpl(dio:dio);
+
   final mapper = ExceptionFailureMapper();
   final repository = AsyncGameRepositoryImpl(
     dataSource: dataSource,
@@ -115,6 +112,17 @@ void main() async {
             loginUser: ctx.read<LoginUserUseCase>(),
           ),
         ),
+        // AsyncGame datasource con el mismo Dio global
+        Provider<AsyncGameDataSource>(
+          create: (_) => dataSource,
+      ),
+      
+
+        // Bloc del juego solitario
+        BlocProvider<GameBloc>(
+          create: (ctx) => GameBloc(startAttempt:ctx.read<StartAttempt>()),
+        ),
+
       ],
       child: const MyApp(),
     ),
