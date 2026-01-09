@@ -3,7 +3,7 @@ import 'package:green_frontend/core/theme/app_pallete.dart';
 import 'package:green_frontend/features/menu_navegation/presentation/screens/create_screen.dart';
 import 'package:green_frontend/features/menu_navegation/presentation/screens/discover_screen.dart';
 import 'package:green_frontend/features/menu_navegation/presentation/screens/home_screen.dart';
-import 'package:green_frontend/features/menu_navegation/presentation/screens/join_sync_game_screen.dart';
+import 'package:green_frontend/features/multiplayer/presentation/join_game_page.dart';
 import 'package:green_frontend/features/menu_navegation/presentation/screens/library_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:green_frontend/features/menu_navegation/presentation/providers/navigation_provider.dart';
@@ -15,7 +15,7 @@ class NavBarSelectionScreen extends StatelessWidget{
   final List<Widget> pages = const [
     KahootLibraryScreen(),      // Pantalla para "Inicio"
     DiscoverScreen(),  // Pantalla para "Descubre"
-    JoinScreen(),      // Pantalla para "Unirse"
+    JoinGameScreen(),      // Pantalla para "Unirse"
     CreateScreen(),    // Pantalla para "Crear"
     LibraryScreen(),   // Pantalla para "Biblioteca"
   ];
