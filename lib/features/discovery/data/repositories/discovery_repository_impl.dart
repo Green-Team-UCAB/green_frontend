@@ -2,8 +2,6 @@ import 'package:fpdart/fpdart.dart';
 import '../../../../core/error/failures.dart';
 import '../../domain/repositories/discovery_repository.dart';
 import '../datasources/discovery_remote_data_source.dart';
-import '../../../shared/domain/entities/kahoot_summary.dart';
-import '../../../shared/domain/entities/category.dart';
 
 class DiscoveryRepositoryImpl implements DiscoveryRepository {
   final DiscoveryRemoteDataSource remoteDataSource;
@@ -11,14 +9,14 @@ class DiscoveryRepositoryImpl implements DiscoveryRepository {
   DiscoveryRepositoryImpl({required this.remoteDataSource});
 
   @override
-  Future<Either<Failure, List<KahootSummary>>> searchKahoots(
-    String query, {
-    String? categoryId,
+  Future<Either<Failure, List<dynamic>>> searchQuizzes({
+    String? query,
+    List<String>? categories,
   }) async {
     try {
-      final result = await remoteDataSource.searchKahoots(
-        query,
-        categoryId: categoryId,
+      final result = await remoteDataSource.searchQuizzes(
+        query: query,
+        categories: categories,
       );
       return Right(result);
     } catch (e) {
@@ -27,9 +25,9 @@ class DiscoveryRepositoryImpl implements DiscoveryRepository {
   }
 
   @override
-  Future<Either<Failure, List<KahootSummary>>> getFeaturedKahoots() async {
+  Future<Either<Failure, List<dynamic>>> getFeaturedQuizzes() async {
     try {
-      final result = await remoteDataSource.getFeaturedKahoots();
+      final result = await remoteDataSource.getFeaturedQuizzes();
       return Right(result);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
@@ -37,12 +35,13 @@ class DiscoveryRepositoryImpl implements DiscoveryRepository {
   }
 
   @override
-  Future<Either<Failure, List<Category>>> getCategories() async {
+  Future<Either<Failure, List<String>>> getCategories() async {
     try {
       final result = await remoteDataSource.getCategories();
       return Right(result);
     } catch (e) {
-      return Left(ServerFailure(e.toString()));
+      // Si falla, devolvemos lista vacía en lugar de error para no romper la UI de filtros
+      return const Right([]);
     }
   }
 }

@@ -32,14 +32,17 @@ class ApiClient {
     required String path,
     dynamic data,
     Map<String, dynamic>? queryParameters,
-    Map<String, dynamic>? headers,
+    Options? options,
   }) async {
     try {
+      options ??= Options();
+      options.method = method;
+
       final response = await _dio.request(
         path,
         data: data,
         queryParameters: queryParameters,
-        options: Options(method: method, headers: headers),
+        options: options,
       );
 
       return ApiResponse<T>(
@@ -55,13 +58,13 @@ class ApiClient {
   Future<ApiResponse<T>> get<T>({
     required String path,
     Map<String, dynamic>? queryParameters,
-    Map<String, dynamic>? headers,
+    Options? options,
   }) async {
     return request<T>(
       method: 'GET',
       path: path,
       queryParameters: queryParameters,
-      headers: headers,
+      options: options,
     );
   }
 
@@ -69,14 +72,29 @@ class ApiClient {
     required String path,
     dynamic data,
     Map<String, dynamic>? queryParameters,
-    Map<String, dynamic>? headers,
+    Options? options,
   }) async {
     return request<T>(
       method: 'POST',
       path: path,
       data: data,
       queryParameters: queryParameters,
-      headers: headers,
+      options: options,
+    );
+  }
+
+  Future<ApiResponse<T>> patch<T>({
+    required String path,
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) async {
+    return request<T>(
+      method: 'PATCH',
+      path: path,
+      data: data,
+      queryParameters: queryParameters,
+      options: options,
     );
   }
 
@@ -84,14 +102,14 @@ class ApiClient {
     required String path,
     dynamic data,
     Map<String, dynamic>? queryParameters,
-    Map<String, dynamic>? headers,
+    Options? options,
   }) async {
     return request<T>(
       method: 'DELETE',
       path: path,
       data: data,
       queryParameters: queryParameters,
-      headers: headers,
+      options: options,
     );
   }
 }

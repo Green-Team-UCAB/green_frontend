@@ -1,15 +1,16 @@
 import 'package:fpdart/fpdart.dart';
 import '../../../../core/error/failures.dart';
-import '../../../shared/domain/entities/kahoot_summary.dart';
-import '../../../shared/domain/entities/category.dart';
 
 abstract class DiscoveryRepository {
-  // Agregamos categoryId opcional
-  Future<Either<Failure, List<KahootSummary>>> searchKahoots(
-    String query, {
-    String? categoryId,
+  /// Busca quizes públicos con filtros
+  Future<Either<Failure, List<dynamic>>> searchQuizzes({
+    String? query,
+    List<String>? categories,
   });
 
-  Future<Either<Failure, List<KahootSummary>>> getFeaturedKahoots();
-  Future<Either<Failure, List<Category>>> getCategories();
+  /// Obtiene los quizes destacados para el carrusel principal
+  Future<Either<Failure, List<dynamic>>> getFeaturedQuizzes();
+
+  /// Obtiene la lista de categorías disponibles
+  Future<Either<Failure, List<String>>> getCategories();
 }

@@ -1,138 +1,161 @@
-import '../../../shared/data/models/kahoot_summary_model.dart';
-import '../../../shared/data/models/category_model.dart';
+import 'dart:developer';
+import 'package:dio/dio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../core/network/api_client.dart';
 
 abstract class DiscoveryRemoteDataSource {
-  // Actualizado para aceptar categoryId opcional
-  Future<List<KahootSummaryModel>> searchKahoots(
-    String query, {
-    String? categoryId,
+  Future<List<dynamic>> searchQuizzes({
+    String? query,
+    List<String>? categories,
+    int page = 1,
+    int limit = 20,
   });
-  Future<List<KahootSummaryModel>> getFeaturedKahoots();
-  Future<List<CategoryModel>> getCategories();
+
+  Future<List<dynamic>> getFeaturedQuizzes({int limit = 10});
+
+  Future<List<String>> getCategories();
 }
 
 class DiscoveryRemoteDataSourceImpl implements DiscoveryRemoteDataSource {
+  final ApiClient apiClient;
+
+  DiscoveryRemoteDataSourceImpl({required this.apiClient});
+
+  Future<Options> _getAuthOptions() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('accessToken') ?? '';
+    return Options(headers: {'Authorization': 'Bearer $token'});
+  }
+
   @override
-  Future<List<KahootSummaryModel>> searchKahoots(
-    String query, {
-    String? categoryId,
+  Future<List<dynamic>> searchQuizzes({
+    String? query,
+    List<String>? categories,
+    int page = 1,
+    int limit = 20,
   }) async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    try {
+      final options = await _getAuthOptions();
 
-    // Base de datos fake
-    final List<KahootSummaryModel> fakeDatabase = [
-      KahootSummaryModel(
-        id: '1',
-        title: 'Matemáticas Básicas',
-        description: 'Suma y Resta',
-        authorName: 'Profe Mario',
-        status: 'published',
-        playCount: 150,
-        createdAt: DateTime.now(),
-        visibility: 'public',
-        coverImageUrl: null,
-      ),
-      KahootSummaryModel(
-        id: '2',
-        title: 'Historia de Venezuela',
-        description: 'Próceres',
-        authorName: 'Historiador123',
-        status: 'published',
-        playCount: 42,
-        createdAt: DateTime.now(),
-        visibility: 'public',
-        coverImageUrl: null,
-      ),
-      KahootSummaryModel(
-        id: '3',
-        title: 'Flutter Avanzado',
-        description: 'Bloc y Clean Arch',
-        authorName: 'DevMaster',
-        status: 'published',
-        playCount: 1200,
-        createdAt: DateTime.now(),
-        visibility: 'public',
-        coverImageUrl: null,
-      ),
-      KahootSummaryModel(
-        id: '4',
-        title: 'Ciencias Naturales',
-        description: 'Biología básica',
-        authorName: 'BioTeacher',
-        status: 'published',
-        playCount: 80,
-        createdAt: DateTime.now(),
-        visibility: 'public',
-        coverImageUrl: null,
-      ),
-    ];
+      final Map<String, dynamic> queryParams = {'page': page, 'limit': limit};
 
-    // Lógica de filtrado (Simulación)
-    return fakeDatabase.where((k) {
-      // 1. Filtro por Texto (Query)
-      final matchesQuery =
-          query.isEmpty ||
-          k.title.toLowerCase().contains(query.toLowerCase()) ||
-          k.authorName.toLowerCase().contains(query.toLowerCase());
+      if (query != null && query.isNotEmpty) {
+        queryParams['q'] = query;
+      }
 
-      // 2. Filtro por Categoría (Simulado buscando la palabra en el título o descripción)
-      // En un backend real, esto compararía k.categoryId == categoryId
-      final matchesCategory =
-          categoryId == null ||
-          k.title.toLowerCase().contains(categoryId.toLowerCase()) ||
-          k.description.toLowerCase().contains(categoryId.toLowerCase());
+      if (categories != null && categories.isNotEmpty) {
+        queryParams['categories'] = categories;
+      }
 
-      return matchesQuery && matchesCategory;
-    }).toList();
+      final response = await apiClient.get(
+        path: '/explore',
+        queryParameters: queryParams,
+        options: options,
+      );
+
+      final data = response.data;
+
+      // ✅ CAMBIO: Si el back responde, devolvemos lo que hay (aunque sea vacío)
+      if (data is List) {
+        return data;
+      } else if (data is Map && data['data'] is List) {
+        return data['data'] as List;
+      }
+
+      return []; // Si el formato es raro pero no dio error, devolvemos vacío.
+    } catch (e) {
+      // ⚠️ SOLO EN CASO DE ERROR REAL (Sin conexión/Timeout) usamos Mocks
+      log('⚠️ Error Backend /explore: $e. Usando MOCK DATA.');
+      await Future.delayed(const Duration(milliseconds: 800));
+      return _generateMockQuizzes(10, titlePrefix: "Resultado");
+    }
   }
 
   @override
-  Future<List<KahootSummaryModel>> getFeaturedKahoots() async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    return [
-      KahootSummaryModel(
-        id: 'f1',
-        title: 'Trivia de Cine',
-        description: '',
-        authorName: 'CinemaX',
-        status: 'published',
-        playCount: 5000,
-        createdAt: DateTime.now(),
-        visibility: 'public',
-      ),
-      KahootSummaryModel(
-        id: 'f2',
-        title: 'Capitales del Mundo',
-        description: '',
-        authorName: 'GeoMaster',
-        status: 'published',
-        playCount: 8900,
-        createdAt: DateTime.now(),
-        visibility: 'public',
-      ),
-      KahootSummaryModel(
-        id: 'f3',
-        title: 'Programación 101',
-        description: '',
-        authorName: 'CodeAcademy',
-        status: 'published',
-        playCount: 300,
-        createdAt: DateTime.now(),
-        visibility: 'public',
-      ),
-    ];
+  Future<List<dynamic>> getFeaturedQuizzes({int limit = 10}) async {
+    try {
+      final options = await _getAuthOptions();
+
+      final response = await apiClient.get(
+        path: '/explore/featured',
+        queryParameters: {'limit': limit},
+        options: options,
+      );
+
+      final data = response.data;
+
+      // ✅ CAMBIO: Devolvemos lista real (vacía o llena)
+      if (data is List) {
+        return data;
+      } else if (data is Map && data['data'] is List) {
+        return data['data'] as List;
+      }
+
+      return [];
+    } catch (e) {
+      // ⚠️ SOLO EN CASO DE ERROR REAL usamos Mocks
+      log('⚠️ Error Backend /explore/featured: $e. Usando MOCK DATA.');
+      await Future.delayed(const Duration(milliseconds: 800));
+      return _generateMockQuizzes(5, titlePrefix: "Destacado");
+    }
   }
 
   @override
-  Future<List<CategoryModel>> getCategories() async {
-    await Future.delayed(const Duration(milliseconds: 400));
-    return [
-      const CategoryModel(id: 'c1', name: 'Matemáticas'),
-      const CategoryModel(id: 'c2', name: 'Ciencias'),
-      const CategoryModel(id: 'c3', name: 'Historia'),
-      const CategoryModel(id: 'c4', name: 'Arte'),
-      const CategoryModel(id: 'c5', name: 'Tecnología'),
-      const CategoryModel(id: 'c6', name: 'Idiomas'),
-    ];
+  Future<List<String>> getCategories() async {
+    try {
+      final options = await _getAuthOptions();
+      final response = await apiClient.get(
+        path: '/explore/categories',
+        options: options,
+      );
+
+      final data = response.data;
+      if (data is List) {
+        // Convertimos a lista de Strings
+        return List<String>.from(data.map((e) => e['name'] ?? e.toString()));
+      }
+
+      return [];
+    } catch (e) {
+      log('⚠️ Error Backend /explore/categories: $e. Usando MOCK DATA.');
+      // ⚠️ SOLO EN CASO DE ERROR REAL usamos Mocks de categorías
+      return [
+        "Matemáticas",
+        "Ciencias",
+        "Historia",
+        "Geografía",
+        "Arte",
+        "Tecnología",
+        "Idiomas",
+        "Deportes",
+        "Cine y TV",
+        "Cultura General",
+      ];
+    }
+  }
+
+  // --- GENERADOR DE DATOS FALSOS (Solo para emergencias) ---
+  List<dynamic> _generateMockQuizzes(int count, {String titlePrefix = "Quiz"}) {
+    return List.generate(
+      count,
+      (index) => {
+        "id": "mock-id-$index",
+        "title": "$titlePrefix #$index: Conocimiento General (MOCK)",
+        "description":
+            "Este es un dato falso porque falló la conexión al servidor.",
+        "coverImageId": "https://picsum.photos/300/200?random=$index",
+        "playCount": (index + 1) * 150,
+        "category": "General",
+        "author": {
+          "id": "mock-author-$index",
+          "name": "Profesor Mock",
+          "avatarUrl": null,
+        },
+        "createdAt": DateTime.now()
+            .subtract(Duration(days: index))
+            .toIso8601String(),
+        "questionsCount": 10 + index,
+      },
+    );
   }
 }

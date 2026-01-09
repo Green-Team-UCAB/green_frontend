@@ -1,6 +1,7 @@
+import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
-import 'package:http/http.dart' as http; // <--- 1. IMPORTANTE: Importar http
-import 'core/network/api_client.dart'; // Importar ApiClient
+import 'package:green_frontend/features/groups/presentation/bloc/detail/group_detail_bloc.dart';
+import 'core/network/api_client.dart';
 
 // Imports de la Feature Discovery (H6.1)
 import 'features/discovery/data/datasources/discovery_remote_data_source.dart';
@@ -22,6 +23,14 @@ import 'features/library/data/repositories/library_repository_impl.dart';
 import 'features/library/domain/repositories/library_repository.dart';
 import 'features/library/presentation/bloc/library_bloc.dart';
 
+// Imports de Groups
+import 'features/groups/data/datasources/groups_remote_data_source.dart';
+import 'features/groups/data/repositories/groups_repository_impl.dart';
+import 'features/groups/domain/repositories/groups_repository.dart';
+import 'features/groups/presentation/bloc/groups_bloc.dart';
+import 'features/groups/presentation/bloc/settings/group_settings_bloc.dart';
+import 'features/groups/presentation/bloc/selection/kahoot_selection_bloc.dart';
+
 // Instancia global del Service Locator
 final sl = GetIt.instance;
 
@@ -40,7 +49,7 @@ Future<void> init() async {
   // Nota: Si Discovery aún usa datos falsos sin HTTP, déjalo así.
   // Si ya lo actualizaste para usar http, agrégale (client: sl()).
   sl.registerLazySingleton<DiscoveryRemoteDataSource>(
-    () => DiscoveryRemoteDataSourceImpl(),
+    () => DiscoveryRemoteDataSourceImpl(apiClient: sl()),
   );
 
   //! Features - Reports (Epica 10)
@@ -77,13 +86,34 @@ Future<void> init() async {
     () => LibraryRemoteDataSourceImpl(apiClient: sl()),
   );
 
-  //! Core & External
+  //! Features - Groups (Epica 8)
+  sl.registerFactory(() => GroupsBloc(repository: sl()));
 
-  // Registramos ApiClient
-  sl.registerLazySingleton<ApiClient>(
-    () => ApiClient.withBaseUrl('https://quizzy-backend-0wh2.onrender.com/api'),
+  // Repository
+  sl.registerLazySingleton<GroupsRepository>(
+    () => GroupsRepositoryImpl(remoteDataSource: sl()),
   );
 
-  // Registramos el cliente HTTP (usado por Reports)
-  sl.registerLazySingleton(() => http.Client());
+  // Data Source (Con ApiClient)
+  sl.registerLazySingleton<GroupsRemoteDataSource>(
+    () => GroupsRemoteDataSourceImpl(apiClient: sl()),
+  );
+
+  sl.registerFactory(() => GroupDetailBloc(repository: sl()));
+  // Feature Groups - Settings Bloc
+  sl.registerFactory(() => GroupSettingsBloc(repository: sl()));
+  // Feature Groups - Selection Bloc
+  sl.registerFactory(() => KahootSelectionBloc(repository: sl()));
+
+  //! Core & External
+  sl.registerLazySingleton(
+    () => Dio(
+      BaseOptions(
+        baseUrl: 'https://quizzy-backend-0wh2.onrender.com/api',
+        connectTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(seconds: 30),
+      ),
+    ),
+  );
+  sl.registerLazySingleton(() => ApiClient(sl()));
 }
