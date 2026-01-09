@@ -247,13 +247,21 @@ class _QuizDetailView extends StatelessWidget {
             ),
           ),
           onPressed: () {
-            // Aquí conectarás la Épica 5 (Jugar) en el futuro
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text("Funcionalidad 'Jugar' próximamente..."),
-              ),
-            );
-          },
+  // Disparamos el evento al GameBloc
+  context.read<GameBloc>().add(StartGame(quiz['id']));
+
+  // Navegamos a la pantalla del juego
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => BlocProvider.value(
+        value: context.read<GameBloc>(),
+        child: SinglePlayerGameScreen(),
+      ),
+    ),
+  );
+},
+
           child: const Text(
             "JUGAR AHORA",
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),

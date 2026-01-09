@@ -5,6 +5,9 @@ import '../../../../injection_container.dart';
 // Importamos el BLoC de la Épica 7 (Biblioteca) para reutilizar la lógica de Favoritos
 import '../../presentation/bloc/library_bloc.dart';
 import '../../domain/entities/kahoot_summary.dart';
+import 'package:green_frontend/features/single_player/presentation/bloc/game_bloc.dart';
+import 'package:green_frontend/features/single_player/presentation/screens/single_player_game.dart';
+import 'package:green_frontend/features/single_player/presentation/bloc/game_event.dart';
 
 class QuizDetailPage extends StatelessWidget {
   final dynamic quiz;
@@ -301,32 +304,42 @@ class _QuizDetailView extends StatelessWidget {
           ],
         ),
         child: isAdmin
-            ? _buildAdminControls(context)
-            : _buildPlayerControls(context),
+    ? _buildAdminControls(context)
+    : _buildPlayerControls(context, quizId),
+
       ),
     );
   }
 
   // --- MODO JUGADOR ---
-  Widget _buildPlayerControls(BuildContext context) {
-    return ElevatedButton(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.deepPurple,
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-      onPressed: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Iniciando partida en solitario...")),
-        );
-      },
-      child: const Text(
-        "JUGAR AHORA",
-        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-      ),
-    );
-  }
+Widget _buildPlayerControls(BuildContext context, String quizId) {
+  return ElevatedButton(
+    style: ElevatedButton.styleFrom(
+      backgroundColor: Colors.deepPurple,
+      foregroundColor: Colors.white,
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    ),
+    onPressed: () {
+      context.read<GameBloc>().add(StartGame(quizId));
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => BlocProvider.value(
+            value: context.read<GameBloc>(),
+            child: SinglePlayerGameScreen(),
+          ),
+        ),
+      );
+    },
+    child: const Text(
+      "JUGAR AHORA",
+      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+    ),
+  );
+}
+
 
   // --- MODO ADMIN ---
   Widget _buildAdminControls(BuildContext context) {
