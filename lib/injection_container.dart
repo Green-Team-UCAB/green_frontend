@@ -2,6 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
 import 'package:http/http.dart' as http;
 import 'package:green_frontend/features/groups/presentation/bloc/detail/group_detail_bloc.dart';
+import 'package:green_frontend/core/storage/token_storage.dart';
+import 'package:flutter/foundation.dart'; // Para debugPrint
 import 'core/network/api_client.dart';
 
 // Imports de la Feature Discovery (H6.1)
@@ -19,10 +21,16 @@ import 'features/reports/presentation/bloc/report_detail_bloc.dart';
 import 'features/reports/presentation/bloc/host_report_bloc.dart';
 
 // Imports de Library
-import 'features/library/data/datasources/library_remote_data_source.dart';
-import 'features/library/data/repositories/library_repository_impl.dart';
+import 'features/library/infrastructure/datasources/library_remote_datasource.dart';
+import 'features/library/infrastructure/datasources/library_repository_impl.dart';
 import 'features/library/domain/repositories/library_repository.dart';
 import 'features/library/presentation/bloc/library_bloc.dart';
+// Use Cases
+import 'features/library/application/get_my_kahoots_use_case.dart';
+import 'features/library/application/get_favorites_use_case.dart';
+import 'features/library/application/get_in_progress_use_case.dart';
+import 'features/library/application/get_completed_use_case.dart';
+import 'features/library/application/toggle_favorite_use_case.dart';
 
 // Imports de Groups
 import 'features/groups/data/datasources/groups_remote_data_source.dart';
@@ -73,12 +81,27 @@ Future<void> init() async {
 
   //! Features - Library (Epica 7)
 
+  // Use Cases
+  sl.registerLazySingleton(() => GetMyKahootsUseCase(sl()));
+  sl.registerLazySingleton(() => GetFavoritesUseCase(sl()));
+  sl.registerLazySingleton(() => GetInProgressUseCase(sl()));
+  sl.registerLazySingleton(() => GetCompletedUseCase(sl()));
+  sl.registerLazySingleton(() => ToggleFavoriteUseCase(sl()));
+
   // Bloc
-  sl.registerFactory(() => LibraryBloc(repository: sl()));
+  sl.registerFactory(
+    () => LibraryBloc(
+      getMyKahoots: sl(),
+      getFavorites: sl(),
+      getInProgress: sl(),
+      getCompleted: sl(),
+      toggleFavorite: sl(),
+    ),
+  );
 
   // Repository
   sl.registerLazySingleton<LibraryRepository>(
-    () => LibraryRepositoryImpl(remoteDataSource: sl()),
+    () => LibraryRepositoryImpl(dataSource: sl()),
   );
 
   // Data Source
@@ -106,7 +129,7 @@ Future<void> init() async {
   // Feature Groups - Selection Bloc
   sl.registerFactory(() => KahootSelectionBloc(repository: sl()));
 
-  //! Core & External
+  // Core & External
   sl.registerLazySingleton(
     () => Dio(
       BaseOptions(
@@ -116,6 +139,13 @@ Future<void> init() async {
       ),
     ),
   );
-  sl.registerLazySingleton(() => ApiClient(sl()));
+  sl.registerLazySingleton<ApiClient>(() => ApiClient(sl()));
   sl.registerLazySingleton<http.Client>(() => http.Client());
+
+  // Recuperamos el token si existe y lo seteamos en el ApiClient
+  final token = await TokenStorage.getToken();
+  if (token != null) {
+    sl<ApiClient>().setAuthToken(token);
+    debugPrint("Token cargado al iniciar la app: $token"); // Log para verificar
+  }
 }

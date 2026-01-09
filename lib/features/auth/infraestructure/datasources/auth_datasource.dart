@@ -1,11 +1,9 @@
 import 'package:green_frontend/features/auth/infraestructure/models/user_model.dart';
-import 'package:dio/dio.dart';
 import 'package:green_frontend/core/error/exceptions.dart';
-import 'package:green_frontend/core/network/api_client.dart';
-import 'package:green_frontend/core/network/input_validator.dart';
-import 'package:green_frontend/core/storage/token_storage.dart';
-
 import 'package:flutter/foundation.dart';
+import '../../../../core/storage/token_storage.dart';
+import '../../../../core/network/api_client.dart';
+import 'package:green_frontend/core/network/input_validator.dart';
 
 //Contrato del DataSource para la autenticación
 
@@ -34,7 +32,7 @@ class AuthRemoteDataSourceImpl implements AuthDataSource {
   static const String _authPath = '/auth';
   static const String _usersPath = '/users';
 
-  AuthRemoteDataSourceImpl({required Dio dio}) : client = ApiClient(dio);
+  AuthRemoteDataSourceImpl({required this.client});
 
   AuthRemoteDataSourceImpl.withBaseUrl(String baseUrl)
     : client = ApiClient.withBaseUrl(baseUrl);
@@ -96,7 +94,7 @@ class AuthRemoteDataSourceImpl implements AuthDataSource {
       final token = data['accessToken'] as String;
 
       client.setAuthToken(token);
-      // await TokenStorage.saveToken(token); // Descomentar si deseas persistencia
+      await TokenStorage.saveToken(token); // Descomentar si deseas persistencia
 
       return UserModel.fromJson(userJson);
     }
@@ -127,7 +125,7 @@ class AuthRemoteDataSourceImpl implements AuthDataSource {
       final token = data['token'] as String;
 
       client.setAuthToken(token);
-      //await TokenStorage.saveToken(token);
+      await TokenStorage.saveToken(token);
 
       return UserModel.fromJson(userJson);
     }
