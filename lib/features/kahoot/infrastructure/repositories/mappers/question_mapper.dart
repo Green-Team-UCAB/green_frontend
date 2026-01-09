@@ -1,7 +1,6 @@
 import 'package:green_frontend/features/kahoot/domain/entities/question.dart';
 import 'package:green_frontend/features/kahoot/infrastructure/repositories/mappers/answer_mapper.dart';
 
-
 class QuestionMapper {
   // Convierte un Map (en JSON) a una entidad Question
   static Question fromMap(Map<String, dynamic> map) {
@@ -11,9 +10,9 @@ class QuestionMapper {
       mediaId: map['mediaId'],
       timeLimitSeconds: map['timeLimitSeconds'] ?? 20,
       type: _stringToQuestionType(map['type']),
-      answers: List<Map<String, dynamic>>.from(map['answers'] ?? [])
-          .map(AnswerMapper.fromMap)
-          .toList(),
+      answers: List<Map<String, dynamic>>.from(
+        map['answers'] ?? [],
+      ).map(AnswerMapper.fromMap).toList(),
       points: map['points'] ?? 1000, // Valor por defecto 1000
     );
   }
@@ -48,7 +47,6 @@ class QuestionMapper {
       case QuestionType.trueFalse:
         return 'trueFalse';
       case QuestionType.quiz:
-      default:
         return 'quiz';
     }
   }

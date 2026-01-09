@@ -1,13 +1,11 @@
-import 'package:equatable/equatable.dart';
-
-class ReportSummary extends Equatable {
+class ReportSummary {
   final String kahootId;
-  final String gameId; // ID de la sesión o del intento
+  final String gameId; // Puede ser attemptId o sessionId
   final String gameType; // "Singleplayer" | "Multiplayer"
   final String title;
   final DateTime completionDate;
   final int finalScore;
-  final int? rankingPosition; // Puede ser null en singleplayer
+  final int? rankingPosition; // Null en singleplayer
 
   const ReportSummary({
     required this.kahootId,
@@ -18,15 +16,4 @@ class ReportSummary extends Equatable {
     required this.finalScore,
     this.rankingPosition,
   });
-
-  @override
-  List<Object?> get props => [
-    kahootId,
-    gameId,
-    gameType,
-    title,
-    completionDate,
-    finalScore,
-    rankingPosition,
-  ];
 }

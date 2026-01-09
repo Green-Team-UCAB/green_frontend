@@ -1,20 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../injection_container.dart';
-import '../bloc/report_detail_bloc.dart';
-import '../../domain/entities/report_detail.dart';
+import '../bloc/reports_bloc.dart';
+import '../../domain/entities/personal_report.dart';
 
 // PAGE
 class ReportDetailPage extends StatelessWidget {
   final String reportId;
+  final String gameType; // 'Singleplayer' | 'Multiplayer'
 
-  const ReportDetailPage({super.key, required this.reportId});
+  const ReportDetailPage({
+    super.key,
+    required this.reportId,
+    required this.gameType,
+  });
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) =>
-          sl<ReportDetailBloc>()..add(LoadReportDetailEvent(reportId)),
+          sl<ReportsBloc>()
+            ..add(LoadReportDetailEvent(gameId: reportId, gameType: gameType)),
       child: const ReportDetailView(),
     );
   }
@@ -34,11 +40,11 @@ class ReportDetailView extends StatelessWidget {
         foregroundColor: Colors.black,
         elevation: 0,
       ),
-      body: BlocBuilder<ReportDetailBloc, ReportDetailState>(
+      body: BlocBuilder<ReportsBloc, ReportsState>(
         builder: (context, state) {
           if (state is ReportDetailLoading) {
             return const Center(child: CircularProgressIndicator());
-          } else if (state is ReportDetailLoaded) {
+          } else if (state is PersonalReportLoaded) {
             return _buildContent(context, state.report);
           } else if (state is ReportDetailError) {
             return Center(child: Text(state.message));
@@ -49,17 +55,24 @@ class ReportDetailView extends StatelessWidget {
     );
   }
 
-  Widget _buildContent(BuildContext context, ReportDetail report) {
+  Widget _buildContent(BuildContext context, PersonalReport report) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          // Resumen General
+          // Resumen General (Ranking, Puntos, Aciertos)
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: Colors.deepPurple,
               borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.deepPurple.withOpacity(0.3),
+                  blurRadius: 10,
+                  offset: const Offset(0, 5),
+                ),
+              ],
             ),
             child: Column(
               children: [
@@ -76,11 +89,12 @@ class ReportDetailView extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _ScoreBadge(
-                      icon: Icons.emoji_events,
-                      label: 'Ranking',
-                      value: '#${report.rankingPosition ?? "-"}',
-                    ),
+                    if (report.rankingPosition != null)
+                      _ScoreBadge(
+                        icon: Icons.emoji_events,
+                        label: 'Ranking',
+                        value: '#${report.rankingPosition}',
+                      ),
                     _ScoreBadge(
                       icon: Icons.star,
                       label: 'Puntos',
@@ -109,7 +123,7 @@ class ReportDetailView extends StatelessWidget {
           const SizedBox(height: 12),
 
           // Lista de Preguntas
-          ...report.questions.map(
+          ...report.questionResults.map(
             (q) => Card(
               margin: const EdgeInsets.only(bottom: 12),
               shape: RoundedRectangleBorder(
@@ -138,9 +152,8 @@ class ReportDetailView extends StatelessWidget {
                       ),
                     ),
 
-                    // SECCIÓN DE RESPUESTAS DEL USUARIO (Soporta Multiple Choice)
-                    if ((q.answerText != null && q.answerText!.isNotEmpty) ||
-                        (q.answerImages != null && q.answerImages!.isNotEmpty))
+                    // LÓGICA DE RESPUESTAS (TEXTO O IMAGEN)
+                    if (q.answerTexts.isNotEmpty || q.answerMediaIds.isNotEmpty)
                       Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16.0,
@@ -158,7 +171,7 @@ class ReportDetailView extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                "Tu respuesta:", // El título singular funciona para 1 o varias
+                                "Tu respuesta:",
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: Colors.grey[600],
@@ -167,13 +180,12 @@ class ReportDetailView extends StatelessWidget {
                               ),
                               const SizedBox(height: 8),
 
-                              // 1. Renderizar Texto (Wrap soporta múltiples elementos automáticamente)
-                              if (q.answerText != null &&
-                                  q.answerText!.isNotEmpty)
+                              // RESPUESTAS DE TEXTO
+                              if (q.answerTexts.isNotEmpty)
                                 Wrap(
                                   spacing: 8,
                                   runSpacing: 8,
-                                  children: q.answerText!
+                                  children: q.answerTexts
                                       .map(
                                         (text) => Chip(
                                           label: Text(
@@ -198,13 +210,12 @@ class ReportDetailView extends StatelessWidget {
                                       .toList(),
                                 ),
 
-                              // 2. Renderizar Imágenes Reales (Wrap soporta múltiples imágenes)
-                              if (q.answerImages != null &&
-                                  q.answerImages!.isNotEmpty)
+                              // RESPUESTAS DE IMAGEN
+                              if (q.answerMediaIds.isNotEmpty)
                                 Wrap(
                                   spacing: 8,
                                   runSpacing: 8,
-                                  children: q.answerImages!
+                                  children: q.answerMediaIds
                                       .map(
                                         (url) => Container(
                                           width: 100,
@@ -219,7 +230,7 @@ class ReportDetailView extends StatelessWidget {
                                             image: DecorationImage(
                                               image: NetworkImage(
                                                 url,
-                                              ), // Carga la imagen real
+                                              ), // Asume URL válida
                                               fit: BoxFit.cover,
                                             ),
                                           ),
@@ -232,6 +243,7 @@ class ReportDetailView extends StatelessWidget {
                         ),
                       )
                     else
+                      // SIN RESPUESTA
                       Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,

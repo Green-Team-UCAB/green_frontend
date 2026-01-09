@@ -8,20 +8,21 @@ import '../bloc/reports_bloc.dart';
 import 'report_detail_page.dart';
 import 'host_report_page.dart';
 
-// 1. PAGE: Inyección
+// PAGE
 class ReportsPage extends StatelessWidget {
   const ReportsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => sl<ReportsBloc>()..add(GetMyReportsEvent()),
+      create: (context) =>
+          sl<ReportsBloc>()..add(const LoadReportsHistoryEvent()),
       child: const ReportsView(),
     );
   }
 }
 
-// 2. VIEW: UI Visual
+// VIEW
 class ReportsView extends StatelessWidget {
   const ReportsView({super.key});
 
@@ -34,8 +35,7 @@ class ReportsView extends StatelessWidget {
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
-        automaticallyImplyLeading:
-            false, // Esto asegura que no salga botón de atrás automático
+        // automaticallyImplyLeading: false, // Descomentar si es pantalla raíz del navbar
       ),
       body: BlocBuilder<ReportsBloc, ReportsState>(
         builder: (context, state) {
@@ -47,36 +47,48 @@ class ReportsView extends StatelessWidget {
                 child: Text('Aún no has jugado ningún Kahoot.'),
               );
             }
-            return ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: state.reports.length,
-              separatorBuilder: (c, i) => const SizedBox(height: 12),
-              itemBuilder: (context, index) {
-                final report = state.reports[index];
-
-                return GestureDetector(
-                  onTap: () {
-                    if (report.gameType == 'Hosted') {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              HostReportPage(sessionId: report.gameId),
-                        ),
-                      );
-                    } else {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              ReportDetailPage(reportId: report.gameId),
-                        ),
-                      );
-                    }
-                  },
-                  child: _ReportCard(report: report),
+            return RefreshIndicator(
+              onRefresh: () async {
+                context.read<ReportsBloc>().add(
+                  const LoadReportsHistoryEvent(),
                 );
               },
+              child: ListView.separated(
+                padding: const EdgeInsets.all(16),
+                itemCount: state.reports.length,
+                separatorBuilder: (c, i) => const SizedBox(height: 12),
+                itemBuilder: (context, index) {
+                  final report = state.reports[index];
+
+                  return GestureDetector(
+                    onTap: () {
+                      // Lógica para Anfitrión
+                      if (report.gameType == 'Hosted' ||
+                          report.gameType == 'Host') {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                HostReportPage(sessionId: report.gameId),
+                          ),
+                        );
+                      } else {
+                        // Lógica para Jugador (Singleplayer / Multiplayer)
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ReportDetailPage(
+                              reportId: report.gameId,
+                              gameType: report.gameType,
+                            ),
+                          ),
+                        );
+                      }
+                    },
+                    child: _ReportCard(report: report),
+                  );
+                },
+              ),
             );
           } else if (state is ReportsError) {
             return Center(child: Text(state.message));
@@ -88,7 +100,7 @@ class ReportsView extends StatelessWidget {
   }
 }
 
-// 3. WIDGET: Tarjeta (Sin cambios)
+// WIDGET: Tarjeta Estilizada
 class _ReportCard extends StatelessWidget {
   final ReportSummary report;
 
@@ -96,16 +108,31 @@ class _ReportCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dateStr = DateFormat(
-      'dd/MM/yyyy, hh:mm a',
-    ).format(report.completionDate);
+    // Formato de fecha seguro
+    String dateStr;
+    try {
+      dateStr = DateFormat(
+        'dd/MM/yyyy, hh:mm a',
+        'es',
+      ).format(report.completionDate);
+    } catch (e) {
+      dateStr = 'Fecha inválida';
+    }
 
-    final isHost = report.gameType == 'Hosted';
-    final badgeColor = isHost ? Colors.orangeAccent : Colors.white24;
-    final badgeTextColor = isHost ? Colors.black : Colors.white;
+    // Estilos según tipo de juego
+    final isHost = report.gameType == 'Hosted' || report.gameType == 'Host';
+    final isMultiplayer = report.gameType == 'Multiplayer';
+
+    // Color distintivo para cada tipo
+    Color cardColor = Colors.deepPurple; // Singleplayer por defecto
+    if (isHost) {
+      cardColor = Colors.orange[800]!;
+    } else if (isMultiplayer) {
+      cardColor = Colors.indigo;
+    }
 
     return Card(
-      color: Colors.deepPurple,
+      color: cardColor,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       elevation: 4,
       child: Padding(
@@ -126,13 +153,13 @@ class _ReportCard extends StatelessWidget {
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color: badgeColor,
+                    color: Colors.black26,
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
-                    report.gameType,
-                    style: TextStyle(
-                      color: badgeTextColor,
+                    report.gameType.toUpperCase(),
+                    style: const TextStyle(
+                      color: Colors.white,
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
                     ),
@@ -148,6 +175,8 @@ class _ReportCard extends StatelessWidget {
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 16),
             Row(
@@ -156,7 +185,7 @@ class _ReportCard extends StatelessWidget {
                   const Icon(Icons.people, color: Colors.white, size: 20),
                   const SizedBox(width: 4),
                   const Text(
-                    '5 Jugadores',
+                    'Ver Resultados',
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -176,11 +205,12 @@ class _ReportCard extends StatelessWidget {
 
                 const Spacer(),
 
-                if (report.rankingPosition != null) ...[
+                if (report.rankingPosition != null &&
+                    report.rankingPosition! > 0) ...[
                   const Icon(Icons.emoji_events, color: Colors.white, size: 20),
                   const SizedBox(width: 4),
                   Text(
-                    'Puesto #${report.rankingPosition}',
+                    '#${report.rankingPosition}',
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,

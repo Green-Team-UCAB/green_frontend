@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:dio/dio.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 import 'package:green_frontend/features/auth/presentation/screens/splash_page.dart';
 import 'package:green_frontend/features/auth/presentation/bloc/auth_bloc.dart';
@@ -16,7 +17,7 @@ import 'package:green_frontend/core/mappers/exception_failure_mapper.dart';
 import 'injection_container.dart' as di;
 import 'package:green_frontend/core/theme/app_pallete.dart';
 
-// --- Feature: Navigation (de 'develop' y tu aclaración) ---
+// --- Feature: Navigation ---
 import 'features/menu_navegation/presentation/providers/navigation_provider.dart';
 
 // --- Feature: Kahoot ---
@@ -44,14 +45,17 @@ import 'package:green_frontend/features/single_player/presentation/provider/game
 import 'package:green_frontend/core/network/api_client.dart';
 
 void main() async {
-  // Configuración de inicialización de 'develop'
+  // Configuración de inicialización
   WidgetsFlutterBinding.ensureInitialized();
+
+  // ✅ CORRECCIÓN CRÍTICA: Inicializar datos de fecha para español
+  // Esto evita el error: "Locale data has not been initialized"
+  await initializeDateFormatting('es');
+
   await di.init();
-  Bloc.observer =
-      AppBlocObserver(); // Mantener si la clase AppBlocObserver existe
+  Bloc.observer = AppBlocObserver();
 
   // --- Inicialización y registro temporal de dependencias Single Player ---
-
   const baseUrl = 'https://quizzy-backend-0wh2.onrender.com/api';
   final dio = Dio(
     BaseOptions(
@@ -67,7 +71,7 @@ void main() async {
     mapper: mapper,
   );
 
-  // Inicialización de Use Cases
+  // Inicialización de Use Cases (Single Player)
   final startUC = StartAttempt(repository);
   final getAttemptUC = GetAttempt(repository);
   final submitUC = SubmitAnswer(repository);
@@ -82,13 +86,13 @@ void main() async {
         Provider<AuthDataSource>(
           create: (_) => AuthRemoteDataSourceImpl(client: di.sl<ApiClient>()),
         ),
-        // Proveedores de Use Cases de tu rama (Single Player)
+        // Proveedores de Use Cases de Single Player
         Provider<StartAttempt>(create: (_) => startUC),
         Provider<GetAttempt>(create: (_) => getAttemptUC),
         Provider<SubmitAnswer>(create: (_) => submitUC),
         Provider<GetSummary>(create: (_) => summaryUC),
         Provider<GetKahootPreview>(create: (_) => previewUC),
-        //Mapper de excepciones
+        // Mapper de excepciones
         Provider<ExceptionFailureMapper>(
           create: (_) => ExceptionFailureMapper(),
         ),
@@ -185,7 +189,8 @@ class MyApp extends StatelessWidget {
             fillColor: Colors.white,
           ),
         ),
-
+        // Asegúrate de que el locale esté soportado si usas intl para UI
+        // supportedLocales: const [Locale('es', '')],
         home: const SplashPage(),
       ),
     );

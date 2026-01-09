@@ -4,7 +4,6 @@ import '../../../../injection_container.dart';
 
 // Importamos el BLoC de la Épica 7 (Biblioteca) para reutilizar la lógica de Favoritos
 import '../../../library/presentation/bloc/library_bloc.dart';
-import '../../../library/domain/entities/kahoot_summary.dart';
 
 class PublicQuizDetailPage extends StatelessWidget {
   final dynamic quiz;

@@ -302,7 +302,10 @@ class _KahootPreviewScreenState extends State<KahootPreviewScreen> {
     }
 
     // Fallback: leer storage local
+    // Fallback: leer storage local
     final data = await GameStorage.getAttempt();
+    if (!mounted) return;
+
     final storedAttemptId = data['attemptId'];
     if (storedAttemptId != null) {
       await controller.resumeAttempt(storedAttemptId, context);
@@ -331,9 +334,11 @@ class _KahootPreviewScreenState extends State<KahootPreviewScreen> {
     GameController controller,
     dynamic preview,
   ) async {
-    final attemptId =
-        preview.gameState?.attemptId ??
-        (await GameStorage.getAttempt())['attemptId'];
+    final data = await GameStorage.getAttempt();
+    final attemptId = preview.gameState?.attemptId ?? data['attemptId'];
+
+    if (!mounted) return;
+
     if (attemptId == null) {
       _showSnack('No hay intento para ver resumen.');
       return;
@@ -376,6 +381,7 @@ class _KahootPreviewScreenState extends State<KahootPreviewScreen> {
     );
 
     if (confirmed == true) {
+      if (!mounted) return;
       await _startNewAttempt(context, controller);
     }
   }

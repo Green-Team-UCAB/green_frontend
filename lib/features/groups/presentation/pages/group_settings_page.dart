@@ -207,7 +207,7 @@ class _GroupSettingsViewState extends State<_GroupSettingsView> {
 
           return ListTile(
             leading: CircleAvatar(
-              backgroundColor: Colors.deepPurple.withOpacity(0.1),
+              backgroundColor: Colors.deepPurple.withValues(alpha: 0.1),
               child: Text(
                 name[0].toUpperCase(),
                 style: const TextStyle(

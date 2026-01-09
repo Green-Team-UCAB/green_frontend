@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:green_frontend/features/single_player/domain/entities/summary.dart';
+
 import 'package:green_frontend/features/single_player/presentation/provider/game_provider.dart';
 
 import 'package:green_frontend/features/menu_navegation/presentation/screens/nav_bar_selection_screen.dart';
