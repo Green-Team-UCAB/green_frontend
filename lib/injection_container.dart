@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
+import 'package:http/http.dart' as http;
 import 'package:green_frontend/features/groups/presentation/bloc/detail/group_detail_bloc.dart';
 import 'core/network/api_client.dart';
 
@@ -116,4 +117,5 @@ Future<void> init() async {
     ),
   );
   sl.registerLazySingleton(() => ApiClient(sl()));
+  sl.registerLazySingleton<http.Client>(() => http.Client());
 }

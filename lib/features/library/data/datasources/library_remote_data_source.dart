@@ -1,4 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:dio/dio.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../shared/data/models/kahoot_summary_model.dart';
 
@@ -23,9 +24,9 @@ class LibraryRemoteDataSourceImpl implements LibraryRemoteDataSource {
     final token = prefs.getString('accessToken') ?? '';
 
     if (token.isNotEmpty) {
-      print('🔑 [Library] Token encontrado: ${token.substring(0, 15)}...');
+      // Token found
     } else {
-      print('⚠️ [Library] Token NO encontrado o vacío');
+      // Token not found
     }
 
     return {
@@ -64,7 +65,7 @@ class LibraryRemoteDataSourceImpl implements LibraryRemoteDataSource {
 
     await apiClient.post(
       path: '/library/favorites/$kahootId',
-      headers: headers,
+      options: Options(headers: headers),
     );
   }
 
@@ -74,7 +75,7 @@ class LibraryRemoteDataSourceImpl implements LibraryRemoteDataSource {
 
     await apiClient.delete(
       path: '/library/favorites/$kahootId',
-      headers: headers,
+      options: Options(headers: headers),
     );
   }
 
@@ -86,14 +87,12 @@ class LibraryRemoteDataSourceImpl implements LibraryRemoteDataSource {
     try {
       final headers = await _getAuthHeaders();
 
-      print(
-        '🚀 [Library] Fetching: $endpoint',
-      ); // Log para verificar versión nueva
+      // Fetching endpoint
 
       final response = await apiClient.get(
         path: endpoint,
         queryParameters: {'page': page, 'limit': 20},
-        headers: headers,
+        options: Options(headers: headers),
       );
 
       final responseData = response.data;
@@ -112,9 +111,7 @@ class LibraryRemoteDataSourceImpl implements LibraryRemoteDataSource {
       if (msg.contains('400') ||
           msg.contains('404') ||
           msg.contains('orchestration error')) {
-        print(
-          '⚠️ [Library] Backend reportó error ($msg). Retornando lista vacía.',
-        );
+        // Backend reported error, returning empty list
         return [];
       }
       rethrow;

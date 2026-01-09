@@ -4,7 +4,6 @@ import 'package:green_frontend/features/single_player/presentation/provider/game
 import 'package:green_frontend/features/single_player/domain/entities/kahoot.dart';
 import 'package:green_frontend/core/storage/local_storage.dart';
 
-
 /// Colors para las tarjetas
 class _CardColors {
   static const List<Color> cardColors = [
@@ -22,7 +21,9 @@ class _CardColors {
 
   static const Color textOnDark = Colors.white;
   static const Color textOnLight = Color(0xFF1A1A1A);
-  static const Color subtitleColor = Color(0xCCFFFFFF); // Blanco con 80% opacidad
+  static const Color subtitleColor = Color(
+    0xCCFFFFFF,
+  ); // Blanco con 80% opacidad
 }
 
 /// IDs de los kahoots reales de tu API
@@ -47,7 +48,7 @@ class _KahootLibraryScreenState extends State<KahootLibraryScreen> {
   // Mapa para guardar los previews cargados por ID
   final Map<String, Kahoot?> _kahootPreviews = {};
   final Set<String> _loadingKahoots = {};
-  
+
   // Variable para controlar si debemos continuar con las peticiones
   bool _shouldContinue = true;
 
@@ -69,7 +70,7 @@ class _KahootLibraryScreenState extends State<KahootLibraryScreen> {
   Future<void> _loadAllKahootPreviews() async {
     // Verificar si debemos continuar antes de empezar
     if (!_shouldContinue || !mounted) return;
-    
+
     for (final kahootId in KahootIds.allKahootIds) {
       // Verificar después de cada kahoot si debemos continuar
       if (!_shouldContinue || !mounted) break;
@@ -79,23 +80,24 @@ class _KahootLibraryScreenState extends State<KahootLibraryScreen> {
 
   Future<void> _loadKahootPreview(String kahootId) async {
     // Verificar múltiples condiciones antes de continuar
-    if (_loadingKahoots.contains(kahootId) || !mounted || !_shouldContinue) return;
-    
+    if (_loadingKahoots.contains(kahootId) || !mounted || !_shouldContinue)
+      return;
+
     _loadingKahoots.add(kahootId);
     if (mounted) setState(() {});
-    
+
     try {
       // OBTENER EL PROVIDER USANDO UN BUILD CONTEXT VÁLIDO
       final controller = Provider.of<GameController>(context, listen: false);
-      
+
       final result = await controller.getKahootPreviewAsync(kahootId);
-      
+
       // Verificar si el widget sigue montado y debemos continuar
       if (!mounted || !_shouldContinue) {
         _loadingKahoots.remove(kahootId);
         return;
       }
-      
+
       result.match(
         (failure) {
           if (mounted && _shouldContinue) {
@@ -133,9 +135,9 @@ class _KahootLibraryScreenState extends State<KahootLibraryScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         title: const Text(
-          'Mis kahoots', 
+          'Mis kahoots',
           style: TextStyle(
-            color: Color(0xFF1A1A1A), 
+            color: Color(0xFF1A1A1A),
             fontWeight: FontWeight.w700,
             fontSize: 20,
           ),
@@ -151,7 +153,7 @@ class _KahootLibraryScreenState extends State<KahootLibraryScreen> {
     return Column(
       children: [
         const SizedBox(height: 16),
-        
+
         // Título simple
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -164,10 +166,10 @@ class _KahootLibraryScreenState extends State<KahootLibraryScreen> {
             ),
           ),
         ),
-        
+
         const SizedBox(height: 8),
         const Divider(height: 1, color: Color(0xFFE6E6E6)),
-        
+
         // Lista de Kahoots desde la API
         Expanded(
           child: Consumer<GameController>(
@@ -190,13 +192,14 @@ class _KahootLibraryScreenState extends State<KahootLibraryScreen> {
                   final kahootId = KahootIds.allKahootIds[index];
                   final kahoot = _kahootPreviews[kahootId];
                   final isLoading = _loadingKahoots.contains(kahootId);
-                  
+
                   return _KahootCard(
                     kahootId: kahootId,
                     kahoot: kahoot,
                     isLoading: isLoading,
                     controller: controller,
-                    cardColor: _CardColors.cardColors[index % _CardColors.cardColors.length],
+                    cardColor: _CardColors
+                        .cardColors[index % _CardColors.cardColors.length],
                     onRefresh: () => _loadKahootPreview(kahootId),
                   );
                 },
@@ -238,14 +241,16 @@ class _KahootCard extends StatelessWidget {
 
     // Determinar si el color es claro u oscuro para ajustar el texto
     final brightness = ThemeData.estimateBrightnessForColor(cardColor);
-    final textColor = brightness == Brightness.dark 
-        ? _CardColors.textOnDark 
+    final textColor = brightness == Brightness.dark
+        ? _CardColors.textOnDark
         : _CardColors.textOnLight;
 
     return GestureDetector(
-      onTap: isLoading ? null : () {
-        _showKahootPreview(context, kahootId, controller);
-      },
+      onTap: isLoading
+          ? null
+          : () {
+              _showKahootPreview(context, kahootId, controller);
+            },
       child: Container(
         decoration: BoxDecoration(
           color: cardColor,
@@ -275,16 +280,12 @@ class _KahootCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Center(
-                      child: Icon(
-                        Icons.quiz,
-                        color: textColor,
-                        size: 28,
-                      ),
+                      child: Icon(Icons.quiz, color: textColor, size: 28),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   // Título
                   Text(
                     title,
@@ -297,9 +298,9 @@ class _KahootCard extends StatelessWidget {
                       height: 1.2,
                     ),
                   ),
-                  
+
                   const SizedBox(height: 8),
-                  
+
                   // Descripción (si existe)
                   if (description.isNotEmpty)
                     Expanded(
@@ -313,20 +314,26 @@ class _KahootCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                  
+
                   const SizedBox(height: 12),
-                  
+
                   // Estado
                   if (!isLoading)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
-                        isInProgress ? 'En progreso' : 
-                        isCompleted ? 'Completado' : 'Nuevo',
+                        isInProgress
+                            ? 'En progreso'
+                            : isCompleted
+                            ? 'Completado'
+                            : 'Nuevo',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -337,7 +344,7 @@ class _KahootCard extends StatelessWidget {
                 ],
               ),
             ),
-            
+
             // Botón de acción en la esquina inferior derecha
             if (!isLoading)
               Positioned(
@@ -350,7 +357,7 @@ class _KahootCard extends StatelessWidget {
                   textColor,
                 ),
               ),
-            
+
             // Indicador de carga
             if (isLoading)
               Positioned.fill(
@@ -446,11 +453,20 @@ class _KahootCard extends StatelessWidget {
   }
 
   // Métodos de acción
-  Future<void> _startNewGame(BuildContext context, GameController controller, String kahootId) async {
+  Future<void> _startNewGame(
+    BuildContext context,
+    GameController controller,
+    String kahootId,
+  ) async {
     await controller.startNewAttempt(kahootId, context);
   }
 
-  Future<void> _resumeGame(BuildContext context, GameController controller, String kahootId, dynamic gameState) async {
+  Future<void> _resumeGame(
+    BuildContext context,
+    GameController controller,
+    String kahootId,
+    dynamic gameState,
+  ) async {
     final attemptId = gameState?.attemptId;
     if (attemptId != null && attemptId.isNotEmpty) {
       await controller.resumeAttempt(attemptId, context);
@@ -461,14 +477,22 @@ class _KahootCard extends StatelessWidget {
         await controller.resumeAttempt(storedAttemptId, context);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No se encontró un intento para reanudar')),
+          const SnackBar(
+            content: Text('No se encontró un intento para reanudar'),
+          ),
         );
       }
     }
   }
 
-  Future<void> _viewSummary(BuildContext context, GameController controller, String kahootId, dynamic gameState) async {
-    final attemptId = gameState?.attemptId ?? (await GameStorage.getAttempt())['attemptId'];
+  Future<void> _viewSummary(
+    BuildContext context,
+    GameController controller,
+    String kahootId,
+    dynamic gameState,
+  ) async {
+    final attemptId =
+        gameState?.attemptId ?? (await GameStorage.getAttempt())['attemptId'];
     if (attemptId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No hay intento para ver resumen')),
@@ -478,16 +502,17 @@ class _KahootCard extends StatelessWidget {
     await controller.loadSummary(attemptId, context);
   }
 
-  void _showKahootPreview(BuildContext context, String kahootId, GameController controller) {
+  void _showKahootPreview(
+    BuildContext context,
+    String kahootId,
+    GameController controller,
+  ) {
     // Navegar a pantalla de preview detallada
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       builder: (context) {
-        return _KahootPreviewModal(
-          kahootId: kahootId,
-          controller: controller,
-        );
+        return _KahootPreviewModal(kahootId: kahootId, controller: controller);
       },
     );
   }
@@ -498,10 +523,7 @@ class _KahootPreviewModal extends StatelessWidget {
   final String kahootId;
   final GameController controller;
 
-  const _KahootPreviewModal({
-    required this.kahootId,
-    required this.controller,
-  });
+  const _KahootPreviewModal({required this.kahootId, required this.controller});
 
   @override
   Widget build(BuildContext context) {
@@ -550,13 +572,13 @@ class _KahootPreviewModal extends StatelessWidget {
               // Título
               Text(
                 kahoot.title,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
               ),
-              
+
               const SizedBox(height: 8),
-              
+
               if (kahoot.description != null && kahoot.description!.isNotEmpty)
                 Text(
                   kahoot.description!,
@@ -564,12 +586,15 @@ class _KahootPreviewModal extends StatelessWidget {
                     color: const Color(0xFF6B6B6B),
                   ),
                 ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Estado
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF5F5F5),
                   borderRadius: BorderRadius.circular(8),
@@ -577,25 +602,22 @@ class _KahootPreviewModal extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
-                      Icons.info,
-                      color: const Color(0xFF7C4DFF),
-                      size: 18,
-                    ),
+                    Icon(Icons.info, color: const Color(0xFF7C4DFF), size: 18),
                     const SizedBox(width: 8),
                     Text(
-                      kahoot.isInProgress ? 'En progreso' : 
-                      kahoot.isCompleted ? 'Completado' : 'No iniciado',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                      ),
+                      kahoot.isInProgress
+                          ? 'En progreso'
+                          : kahoot.isCompleted
+                          ? 'Completado'
+                          : 'No iniciado',
+                      style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 24),
-              
+
               // Botón principal de acción
               SizedBox(
                 width: double.infinity,
@@ -614,10 +636,7 @@ class _KahootPreviewModal extends StatelessWidget {
                   ),
                   child: const Text(
                     'Comenzar juego',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),
