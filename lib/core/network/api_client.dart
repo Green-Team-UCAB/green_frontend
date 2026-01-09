@@ -17,6 +17,7 @@ class ApiResponse<T> {
 
 class ApiClient {
   final Dio _dio;
+  String? _authToken;
   
   ApiClient(this._dio);
   
@@ -31,7 +32,12 @@ class ApiClient {
     );
     return ApiClient(dio);
   }
-  
+
+  void setAuthToken(String token) { 
+    _authToken = token;
+    _dio.options.headers['Authorization'] = 'Bearer $token'; 
+  }
+
   Future<ApiResponse<T>> request<T>({
     required String method,
     required String path,
@@ -79,4 +85,34 @@ class ApiClient {
       queryParameters: queryParameters,
     );
   }
+
+  Future<ApiResponse<T>> patch<T>({ 
+    required String path, 
+    dynamic data, 
+    Map<String, dynamic>? queryParameters, 
+  }) async { 
+    return request<T>( 
+      method: 'PATCH', 
+      path: path, 
+      data: data, 
+      queryParameters: queryParameters, 
+      ); 
+    }
+
+  Future<ApiResponse<T>> delete<T>({ 
+    required String path, 
+    Map<String, dynamic>? queryParameters, 
+  }) async { 
+    return request<T>(
+      method: 'DELETE', 
+      path: path, 
+      queryParameters: queryParameters, 
+      ); 
+  }
+
+  void clearAuthToken() {
+  _authToken = null;
+  _dio.options.headers.remove('Authorization');
+}
+
 }
