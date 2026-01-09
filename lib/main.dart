@@ -6,19 +6,17 @@ import 'package:dio/dio.dart';
 
 import 'package:green_frontend/features/auth/presentation/screens/splash_page.dart';
 import 'package:green_frontend/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:green_frontend/features/auth/application/register_user.dart'; 
+import 'package:green_frontend/features/auth/application/register_user.dart';
 import 'package:green_frontend/features/auth/application/login_user.dart';
 import 'package:green_frontend/features/auth/infraestructure/repositories/auth_repository_impl.dart';
 import 'package:green_frontend/features/auth/domain/repositories/auth_repository.dart';
 import 'package:green_frontend/features/auth/infraestructure/datasources/auth_datasource.dart';
 import 'package:green_frontend/core/mappers/exception_failure_mapper.dart';
 
-
 import 'injection_container.dart' as di;
 import 'package:green_frontend/core/theme/app_pallete.dart';
 
 // --- Feature: Navigation (de 'develop' y tu aclaración) ---
-import 'features/menu_navegation/presentation/screens/nav_bar_selection_screen.dart';
 import 'features/menu_navegation/presentation/providers/navigation_provider.dart';
 
 // --- Feature: Kahoot ---
@@ -40,25 +38,34 @@ import 'package:green_frontend/features/single_player/application/get_summary.da
 import 'package:green_frontend/features/single_player/application/get_kahoot_preview.dart';
 import 'package:green_frontend/features/single_player/infraestructure/repositories/async_game_repository_impl.dart';
 import 'package:green_frontend/features/single_player/infraestructure/datasources/async_game_datasource.dart';
-import 'package:green_frontend/core/mappers/exception_failure_mapper.dart';
+
 import 'package:green_frontend/features/single_player/presentation/provider/game_provider.dart';
+
+import 'package:green_frontend/core/network/api_client.dart';
 
 void main() async {
   // Configuración de inicialización de 'develop'
   WidgetsFlutterBinding.ensureInitialized();
   await di.init();
-  Bloc.observer = AppBlocObserver(); // Mantener si la clase AppBlocObserver existe
+  Bloc.observer =
+      AppBlocObserver(); // Mantener si la clase AppBlocObserver existe
 
   // --- Inicialización y registro temporal de dependencias Single Player ---
 
   const baseUrl = 'https://quizzy-backend-0wh2.onrender.com/api';
-  final dio = Dio(BaseOptions(
+  final dio = Dio(
+    BaseOptions(
       baseUrl: baseUrl,
       connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(seconds: 30)));
+      receiveTimeout: const Duration(seconds: 30),
+    ),
+  );
   final dataSource = AsyncGameDataSourceImpl(dio: dio);
   final mapper = ExceptionFailureMapper();
-  final repository = AsyncGameRepositoryImpl(dataSource: dataSource, mapper: mapper);
+  final repository = AsyncGameRepositoryImpl(
+    dataSource: dataSource,
+    mapper: mapper,
+  );
 
   // Inicialización de Use Cases
   final startUC = StartAttempt(repository);
@@ -68,15 +75,12 @@ void main() async {
   final previewUC = GetKahootPreview(repository);
   // -------------------------------------------------------------------
 
-
   runApp(
-    MultiProvider( 
+    MultiProvider(
       providers: [
         // Datasource de Autenticación
-        Provider<AuthDataSource>( 
-          create: (_) => AuthRemoteDataSourceImpl( 
-            dio: Dio(BaseOptions(baseUrl: 'https://quizzy-backend-0wh2.onrender.com/api')), 
-          ), 
+        Provider<AuthDataSource>(
+          create: (_) => AuthRemoteDataSourceImpl(client: di.sl<ApiClient>()),
         ),
         // Proveedores de Use Cases de tu rama (Single Player)
         Provider<StartAttempt>(create: (_) => startUC),
@@ -85,31 +89,32 @@ void main() async {
         Provider<GetSummary>(create: (_) => summaryUC),
         Provider<GetKahootPreview>(create: (_) => previewUC),
         //Mapper de excepciones
-        Provider<ExceptionFailureMapper>( 
-          create: (_) => ExceptionFailureMapper(), 
-        ),
-        
-        // Implementacion de repositorio de Autenticación
-        Provider<AuthRepository>( 
-          create: (ctx) => AuthRepositoryImpl( 
-            dataSource: ctx.read<AuthDataSource>(), 
-            mapper: ctx.read<ExceptionFailureMapper>(), 
-          ), 
+        Provider<ExceptionFailureMapper>(
+          create: (_) => ExceptionFailureMapper(),
         ),
 
+        // Implementacion de repositorio de Autenticación
+        Provider<AuthRepository>(
+          create: (ctx) => AuthRepositoryImpl(
+            dataSource: ctx.read<AuthDataSource>(),
+            mapper: ctx.read<ExceptionFailureMapper>(),
+          ),
+        ),
 
         // Casos de uso de Autenticación
-        Provider<RegisterUserUseCase>( 
-          create: (ctx) => RegisterUserUseCase(ctx.read<AuthRepository>()), 
-        ), 
-        Provider<LoginUserUseCase>( 
-          create: (ctx) => LoginUserUseCase(ctx.read<AuthRepository>()), 
-        ), 
-        // Bloc de autenticación 
-        BlocProvider<AuthBloc>( 
-          create: (ctx) => AuthBloc( 
-            registerUser: ctx.read<RegisterUserUseCase>(), 
-            loginUser: ctx.read<LoginUserUseCase>(), ), ),
+        Provider<RegisterUserUseCase>(
+          create: (ctx) => RegisterUserUseCase(ctx.read<AuthRepository>()),
+        ),
+        Provider<LoginUserUseCase>(
+          create: (ctx) => LoginUserUseCase(ctx.read<AuthRepository>()),
+        ),
+        // Bloc de autenticación
+        BlocProvider<AuthBloc>(
+          create: (ctx) => AuthBloc(
+            registerUser: ctx.read<RegisterUserUseCase>(),
+            loginUser: ctx.read<LoginUserUseCase>(),
+          ),
+        ),
       ],
       child: const MyApp(),
     ),
@@ -123,9 +128,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        
         ChangeNotifierProvider(create: (_) => NavigationProvider()),
-        
+
         Provider<KahootRemoteDataSource>(
           create: (_) => KahootRemoteDataSource(),
         ),
@@ -151,7 +155,7 @@ class MyApp extends StatelessWidget {
             themeRepository: context.read<ThemeRepositoryImpl>(),
           ),
         ),
-        
+
         ChangeNotifierProvider(
           create: (context) => GameController(
             // Usa los Use Cases registrados en el MultiProvider de main()
@@ -181,7 +185,7 @@ class MyApp extends StatelessWidget {
             fillColor: Colors.white,
           ),
         ),
-        
+
         home: const SplashPage(),
       ),
     );
