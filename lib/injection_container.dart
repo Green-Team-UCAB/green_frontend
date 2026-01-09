@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
+import 'package:green_frontend/features/groups/presentation/bloc/detail/group_detail_bloc.dart';
 import 'core/network/api_client.dart';
 
 // Imports de la Feature Discovery (H6.1)
@@ -90,6 +91,8 @@ Future<void> init() async {
   sl.registerLazySingleton<GroupsRemoteDataSource>(
     () => GroupsRemoteDataSourceImpl(apiClient: sl()),
   );
+
+  sl.registerFactory(() => GroupDetailBloc(repository: sl()));
 
   //! Core & External
   sl.registerLazySingleton(

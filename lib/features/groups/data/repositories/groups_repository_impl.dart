@@ -43,4 +43,36 @@ class GroupsRepositoryImpl implements GroupsRepository {
       return Left(ServerFailure(e.toString()));
     }
   }
+
+  @override
+  Future<Either<Failure, List<dynamic>>> getGroupQuizzes(String groupId) async {
+    try {
+      final result = await remoteDataSource.getGroupQuizzes(groupId);
+      return Right(result);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<dynamic>>> getGroupLeaderboard(
+    String groupId,
+  ) async {
+    try {
+      final result = await remoteDataSource.getGroupLeaderboard(groupId);
+      return Right(result);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, String>> generateInvitation(String groupId) async {
+    try {
+      final result = await remoteDataSource.generateInvitationLink(groupId);
+      return Right(result);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
 }
