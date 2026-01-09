@@ -1,4 +1,6 @@
-import 'package:green_frontend/features/single_player/infraestructure/models/answer_model.dart';
+import 'package:green_frontend/features/single_player/domain/entities/answer.dart';
+
+
 
 abstract class GameEvent {}
 
@@ -9,7 +11,7 @@ class StartGame extends GameEvent {
 
 class SubmitAnswerEvent extends GameEvent {
   final String attemptId;
-  final AnswerModel answer;
+  final Answer answer;
   SubmitAnswerEvent(this.attemptId, this.answer);
 }
 
@@ -17,3 +19,4 @@ class FinishGame extends GameEvent {
   final String attemptId;
   FinishGame(this.attemptId);
 }
+

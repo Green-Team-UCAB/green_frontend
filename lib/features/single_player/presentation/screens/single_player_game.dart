@@ -18,10 +18,6 @@ class SinglePlayerGameScreen extends StatelessWidget {
             return Center(
               child: Text("Intento iniciado: ${state.attempt.attemptId}"),
             );
-          } else if (state is GameFinished) {
-            return Center(
-              child: Text("Juego terminado. Resumen: ${state.summary.toString()}"),
-            );
           } else if (state is GameError) {
             return Center(child: Text("Error: ${state.message}"));
           }
@@ -31,4 +27,3 @@ class SinglePlayerGameScreen extends StatelessWidget {
     );
   }
 }
-
