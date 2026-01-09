@@ -1,4 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:green_frontend/features/auth/presentation/screens/login_page.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:green_frontend/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:green_frontend/features/auth/presentation/bloc/auth_event.dart';
+import 'package:green_frontend/features/auth/presentation/bloc/auth_state.dart';
+import 'dart:developer' as dev;
 
 class SignUpPage extends StatefulWidget {
   static route() => MaterialPageRoute(builder: (_) => const SignUpPage());
@@ -22,12 +28,19 @@ class _SignUpPageState extends State<SignUpPage> {
     super.dispose();
   }
 
-  void _onSignUp() {
-    if (formKey.currentState!.validate()) {
-      // Aquí llamas a tu Bloc o UseCase
-      // Ejemplo: context.read<AuthBloc>().add(AuthSignUp(...));
-    }
+void _onSignUp() {
+  if (formKey.currentState!.validate()) {
+    dev.log("UI inputs => name=${nameController.text}, email=${emailController.text}, password=${passwordController.text}");
+    context.read<AuthBloc>().add(
+      AuthSignUp(
+        userName: nameController.text.trim(),
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
+      ),
+    );
   }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -37,63 +50,86 @@ class _SignUpPageState extends State<SignUpPage> {
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Form(
-              key: formKey,
-              child: Column(
-                children: [
-                  const Text(
-                    'Sign Up.',
-                    style: TextStyle(
-                      fontSize: 48,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  _buildTextField(
-                    controller: nameController,
-                    hintText: 'Name',
-                  ),
-                  const SizedBox(height: 16),
-                  _buildTextField(
-                    controller: emailController,
-                    hintText: 'Email',
-                    keyboardType: TextInputType.emailAddress,
-                  ),
-                  const SizedBox(height: 16),
-                  _buildTextField(
-                    controller: passwordController,
-                    hintText: 'Password',
-                    obscureText: true,
-                  ),
-                  const SizedBox(height: 32),
-                  _buildGradientButton(
-                    text: 'Sign Up',
-                    onPressed: _onSignUp,
-                  ),
-                  const SizedBox(height: 24),
-                  GestureDetector(
-                    onTap: () {
-                      // Navegar a LoginPage
-                      // Navigator.push(context, LoginPage.route());
-                    },
-                    child: RichText(
-                      text: TextSpan(
-                        text: 'Already have an account? ',
-                        style: const TextStyle(color: Colors.black),
-                        children: [
-                          TextSpan(
-                            text: 'Sign In',
-                            style: const TextStyle(
-                              color: Color(0xFF8E2DE2),
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
+            child: BlocConsumer<AuthBloc, AuthState>(
+              listener: (context, state) {
+                if (state is AuthFailure) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(state.message)),
+                  );
+                } else if (state is AuthSuccess) {
+                  // Navegar a la pantalla para iniciar sesión 
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => const LoginPage()),
+                  );
+                }
+              },
+              builder: (context, state) {
+                if (state is AuthLoading) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                return Form(
+                  key: formKey,
+                  child: Column(
+                    children: [
+                      const Text(
+                        'Sign Up',
+                        style: TextStyle(
+                          fontSize: 48,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 32),
+                      _buildTextField(
+                        controller: nameController,
+                        hintText: 'Name',
+                      ),
+                      const SizedBox(height: 16),
+                      _buildTextField(
+                        controller: emailController,
+                        hintText: 'Email',
+                        keyboardType: TextInputType.emailAddress,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildTextField(
+                        controller: passwordController,
+                        hintText: 'Password',
+                        obscureText: true,
+                      ),
+                      const SizedBox(height: 32),
+                      _buildGradientButton(
+                        text: 'Sign Up',
+                        onPressed: _onSignUp,
+                      ),
+                      const SizedBox(height: 24),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const LoginPage()),
+                          );
+                        },
+                        child: RichText(
+                          text: const TextSpan(
+                            text: 'Already have an account? ',
+                            style: TextStyle(color: Colors.black),
+                            children: [
+                              TextSpan(
+                                text: 'Sign In',
+                                style: TextStyle(
+                                  color: Color.fromARGB(255, 1, 107, 8),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                );
+              },
             ),
           ),
         ),
@@ -132,7 +168,10 @@ class _SignUpPageState extends State<SignUpPage> {
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-            colors: [Color(0xFF8E2DE2), Color(0xFF4A00E0)],
+            colors: [
+              Color.fromARGB(255, 150, 239, 95),
+              Color.fromARGB(255, 1, 107, 8),
+            ],
           ),
           borderRadius: BorderRadius.circular(8),
         ),

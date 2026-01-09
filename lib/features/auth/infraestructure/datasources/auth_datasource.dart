@@ -4,6 +4,8 @@ import 'package:green_frontend/core/error/exceptions.dart';
 import 'package:green_frontend/core/network/api_client.dart';
 import 'package:green_frontend/core/network/input_validator.dart';
 import 'package:green_frontend/core/storage/token_storage.dart';
+import 'dart:developer' as dev;
+
 
 //Contrato del DataSource para la autenticación
 
@@ -42,22 +44,22 @@ class AuthRemoteDataSourceImpl implements AuthDataSource {
 
   AuthRemoteDataSourceImpl.withBaseUrl(String baseUrl)
       : client = ApiClient.withBaseUrl(baseUrl);
-
+/*
   @override
   Future<UserModel> register({
     required String userName,
     required String email,
     required String password,
   }) async {
-    InputValidator.validateNotEmpty(userName, 'userName');
+    InputValidator.validateNotEmpty(userName, 'username');
     InputValidator.validateNotEmpty(email, 'email');
     InputValidator.validateNotEmpty(password, 'password');
 
     final response = await client.post<Map<String, dynamic>>(
-      path: '$_authPath/register',
+      path: _authPath,
       data: {
         "email": email,
-        "userName": userName,
+        "username": userName,
         "password": password,
       },
     );
@@ -67,6 +69,39 @@ class AuthRemoteDataSourceImpl implements AuthDataSource {
     }
     throw ServerException('Unexpected status: ${response.statusCode}');
   }
+*/
+
+
+@override
+Future<UserModel> register(
+  {
+  required String userName,
+  required String email,
+  required String password,
+}) async {
+  InputValidator.validateUsername(userName);
+  InputValidator.validateNotEmpty(email, 'email');
+  InputValidator.validatePassword(password);
+
+  final response = await client.post<Map<String, dynamic>>(
+    path: '$_authPath/register',
+    data: {
+      "email": email,
+      "username": userName, 
+      "password": password,
+    },
+  );
+
+  // Log detallado de la respuesta
+  dev.log("Register response => status=${response.statusCode}, data=${response.data}");
+
+  if (response.statusCode == 200 || response.statusCode == 201) {
+    return UserModel.fromJson(response.data);
+  }
+
+  dev.log("Register failed => status=${response.statusCode}, data=${response.data}");
+  throw ServerException('Unexpected status: ${response.statusCode}');
+}
 
   @override
   Future<UserModel> login({
@@ -84,14 +119,14 @@ class AuthRemoteDataSourceImpl implements AuthDataSource {
       },
     );
 
-    if (response.statusCode == 200) {
+    if (response.statusCode == 200 || response.statusCode == 201) {
       final data = response.data;
 
       final userJson = data['user'] as Map<String, dynamic>;
       final token = data['token'] as String;
 
       client.setAuthToken(token);
-      await TokenStorage.saveToken(token);
+      //await TokenStorage.saveToken(token);
 
       return UserModel.fromJson(userJson);
     }
@@ -105,6 +140,8 @@ class AuthRemoteDataSourceImpl implements AuthDataSource {
     );
 
     if (response.statusCode == 200 || response.statusCode == 204) {
+      await TokenStorage.deleteToken();
+      client.clearAuthToken();
       return;
     }
     throw ServerException('Unexpected status: ${response.statusCode}');

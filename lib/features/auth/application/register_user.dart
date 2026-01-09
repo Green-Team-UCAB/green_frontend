@@ -8,7 +8,7 @@ class RegisterUserUseCase {
 
   RegisterUserUseCase(this.repository);
 
-  Future<Either<Failure, User>> execute({
+  Future<Either<Failure, User>> call({
     required String userName,
     required String email,
     required String password,

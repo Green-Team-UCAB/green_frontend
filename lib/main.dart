@@ -3,9 +3,17 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:dio/dio.dart';
-import 'package:green_frontend/features/auth/presentation/screens/singup_page.dart';
 
-// --- Core & Dependency Injection ---
+import 'package:green_frontend/features/auth/presentation/screens/splash_page.dart';
+import 'package:green_frontend/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:green_frontend/features/auth/application/register_user.dart'; 
+import 'package:green_frontend/features/auth/application/login_user.dart';
+import 'package:green_frontend/features/auth/infraestructure/repositories/auth_repository_impl.dart';
+import 'package:green_frontend/features/auth/domain/repositories/auth_repository.dart';
+import 'package:green_frontend/features/auth/infraestructure/datasources/auth_datasource.dart';
+import 'package:green_frontend/core/mappers/exception_failure_mapper.dart';
+
+
 import 'injection_container.dart' as di;
 import 'package:green_frontend/core/theme/app_pallete.dart';
 
@@ -60,15 +68,48 @@ void main() async {
   final previewUC = GetKahootPreview(repository);
   // -------------------------------------------------------------------
 
+
   runApp(
     MultiProvider( 
       providers: [
+        // Datasource de Autenticación
+        Provider<AuthDataSource>( 
+          create: (_) => AuthRemoteDataSourceImpl( 
+            dio: Dio(BaseOptions(baseUrl: 'https://quizzy-backend-0wh2.onrender.com/api')), 
+          ), 
+        ),
         // Proveedores de Use Cases de tu rama (Single Player)
         Provider<StartAttempt>(create: (_) => startUC),
         Provider<GetAttempt>(create: (_) => getAttemptUC),
         Provider<SubmitAnswer>(create: (_) => submitUC),
         Provider<GetSummary>(create: (_) => summaryUC),
         Provider<GetKahootPreview>(create: (_) => previewUC),
+        //Mapper de excepciones
+        Provider<ExceptionFailureMapper>( 
+          create: (_) => ExceptionFailureMapper(), 
+        ),
+        
+        // Implementacion de repositorio de Autenticación
+        Provider<AuthRepository>( 
+          create: (ctx) => AuthRepositoryImpl( 
+            dataSource: ctx.read<AuthDataSource>(), 
+            mapper: ctx.read<ExceptionFailureMapper>(), 
+          ), 
+        ),
+
+
+        // Casos de uso de Autenticación
+        Provider<RegisterUserUseCase>( 
+          create: (ctx) => RegisterUserUseCase(ctx.read<AuthRepository>()), 
+        ), 
+        Provider<LoginUserUseCase>( 
+          create: (ctx) => LoginUserUseCase(ctx.read<AuthRepository>()), 
+        ), 
+        // Bloc de autenticación 
+        BlocProvider<AuthBloc>( 
+          create: (ctx) => AuthBloc( 
+            registerUser: ctx.read<RegisterUserUseCase>(), 
+            loginUser: ctx.read<LoginUserUseCase>(), ), ),
       ],
       child: const MyApp(),
     ),
@@ -141,7 +182,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
         
-        home: const SignUpPage(),
+        home: const SplashPage(),
       ),
     );
   }

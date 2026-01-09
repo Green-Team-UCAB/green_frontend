@@ -12,16 +12,19 @@ class UserModel extends User {
     required super.createdAt,
   });
 
-  factory UserModel.fromJson(Map<String, dynamic> json) {
-    return UserModel(
-      id: json['id'],
-      userName: json['userName'],
-      email: json['email'],
-      role: json['role'],
-      description: json['description'],
-      createdAt: DateTime.parse(json['createdAt']),
-    );
-  }
+factory UserModel.fromJson(Map<String, dynamic> json) {
+  return UserModel(
+    id: json['id'] ?? '', 
+    userName: json['username'] ?? '',
+    email: json['email'] ?? '',
+    role: json['role'] ?? 'user', 
+    description: json['description'],
+    createdAt: json['createdAt'] != null
+        ? DateTime.parse(json['createdAt'])
+        : DateTime.now(), 
+  );
+}
+
 
   factory UserModel.fromEntity(User user) { 
     return UserModel( 
@@ -37,7 +40,7 @@ class UserModel extends User {
   Map<String, dynamic> toJson() {
     return {
       "id": id,
-      "userName": userName,
+      "username": userName,
       "email": email,
       "role": role,
       "description": description,

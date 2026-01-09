@@ -109,4 +109,10 @@ class ApiClient {
       queryParameters: queryParameters, 
       ); 
   }
+
+  void clearAuthToken() {
+  _authToken = null;
+  _dio.options.headers.remove('Authorization');
+}
+
 }

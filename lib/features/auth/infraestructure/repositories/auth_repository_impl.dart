@@ -5,6 +5,7 @@ import 'package:green_frontend/features/auth/domain/entities/user.dart';
 import 'package:green_frontend/features/auth/domain/repositories/auth_repository.dart';
 import 'package:green_frontend/features/auth/infraestructure/datasources/auth_datasource.dart';
 import 'package:green_frontend/features/auth/infraestructure/models/user_model.dart';
+import 'dart:developer' as dev;
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthDataSource dataSource;
@@ -13,23 +14,25 @@ class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl({required this.dataSource, required this.mapper});
 
   @override
-  Future<Either<Failure, User>> register({
-    required String userName,
-    required String email,
-    required String password,
-  }) async {
-    try {
-      final UserModel model = await dataSource.register(
-        userName: userName,
-        email: email,
-        password: password,
-      );
-      final User domain = model.toEntity();
-      return right(domain);
-    } on Exception catch (e) {
-      return left(mapper.mapExceptionToFailure(e));
-    }
+Future<Either<Failure, User>> register({
+  required String userName,
+  required String email,
+  required String password,
+}) async {
+  try {
+    final model = await dataSource.register(
+      userName: userName,
+      email: email,
+      password: password,
+    );
+    return right(model.toEntity());
+  } on Exception catch (e, st) {
+    dev.log("AuthRepositoryImpl.register EXCEPTION => $e", stackTrace: st);
+    final failure = mapper.mapExceptionToFailure(e);
+    return left(failure);
   }
+}
+
 
   @override
   Future<Either<Failure, User>> login({
