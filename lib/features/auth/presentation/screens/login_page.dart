@@ -106,7 +106,7 @@ class _LoginPageState extends State<LoginPage> {
                               TextSpan(
                                 text: 'Sign Up',
                                 style: TextStyle(
-                                  color: Color.fromARGB(255, 1, 107, 8),
+                                  color: Color.fromARGB(255, 73, 1, 107),
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -157,8 +157,8 @@ class _LoginPageState extends State<LoginPage> {
         decoration: BoxDecoration(
           gradient: const LinearGradient(
             colors: [
-              Color.fromARGB(255, 150, 239, 95),
-              Color.fromARGB(255, 1, 107, 8),
+              Color.fromARGB(255, 205, 95, 239),
+              Color.fromARGB(255, 73, 1, 107),
             ],
           ),
           borderRadius: BorderRadius.circular(8),
