@@ -120,7 +120,10 @@ void main() async {
 
         // Bloc del juego solitario
         BlocProvider<GameBloc>(
-          create: (ctx) => GameBloc(startAttempt:ctx.read<StartAttempt>()),
+          create: (ctx) => GameBloc(startAttempt:ctx.read<StartAttempt>(),
+          submitAnswer: ctx.read<SubmitAnswer>(),
+          getSummary: ctx.read<GetSummary>(),),
+          
         ),
 
       ],

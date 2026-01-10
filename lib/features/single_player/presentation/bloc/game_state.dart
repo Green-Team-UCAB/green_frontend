@@ -18,3 +18,16 @@ class GameError extends GameState {
   GameError(this.message);
 }
 
+class GameAnswerFeedback extends GameState {
+  final Attempt attempt;
+  final bool wasCorrect;
+  final int pointsEarned;
+  final int nextScore;
+
+  GameAnswerFeedback({
+    required this.attempt,
+    required this.wasCorrect,
+    required this.pointsEarned,
+    required this.nextScore,
+  });
+}
