@@ -18,8 +18,9 @@ class ReportDetailPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => sl<ReportsBloc>()
-        ..add(LoadReportDetailEvent(gameId: reportId, gameType: gameType)),
+      create: (context) =>
+          sl<ReportsBloc>()
+            ..add(LoadReportDetailEvent(gameId: reportId, gameType: gameType)),
       child: const ReportDetailView(),
     );
   }
@@ -67,7 +68,7 @@ class ReportDetailView extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.deepPurple.withValues(alpha: 0.3),
+                  color: Colors.deepPurple.withOpacity(0.3),
                   blurRadius: 10,
                   offset: const Offset(0, 5),
                 ),
@@ -134,8 +135,9 @@ class ReportDetailView extends StatelessWidget {
                   children: [
                     ListTile(
                       leading: CircleAvatar(
-                        backgroundColor:
-                            q.isCorrect ? Colors.green[100] : Colors.red[100],
+                        backgroundColor: q.isCorrect
+                            ? Colors.green[100]
+                            : Colors.red[100],
                         child: Icon(
                           q.isCorrect ? Icons.check : Icons.close,
                           color: q.isCorrect ? Colors.green : Colors.red,

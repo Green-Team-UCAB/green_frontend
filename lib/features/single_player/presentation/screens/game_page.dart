@@ -84,15 +84,14 @@ class _GamePageState extends State<GamePage> {
                 Container(
                   width: double.infinity,
                   margin: const EdgeInsets.only(bottom: 16),
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
                   decoration: BoxDecoration(
                     color: Colors.purple.shade50, // Fondo morado claro
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: Colors.purple.shade200, width: 2),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.purple.withValues(alpha: 0.1),
+                        color: Colors.purple.withOpacity(0.1),
                         blurRadius: 8,
                         offset: const Offset(0, 4),
                       ),
@@ -230,7 +229,7 @@ class _GamePageState extends State<GamePage> {
 
   Widget _buildOptionsGrid(GameController controller, BuildContext context) {
     final options = controller.currentSlide!.options as List;
-
+    
     // Si hay 4 opciones, mostramos en grid de 2x2
     if (options.length == 4) {
       return GridView.count(
@@ -297,7 +296,7 @@ class _GamePageState extends State<GamePage> {
               });
             },
       style: ElevatedButton.styleFrom(
-        backgroundColor: isSelected ? color.withValues(alpha: 0.9) : color,
+        backgroundColor: isSelected ? color.withOpacity(0.9) : color,
         foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
         shape: RoundedRectangleBorder(
@@ -308,7 +307,7 @@ class _GamePageState extends State<GamePage> {
           ),
         ),
         elevation: isSelected ? 4 : 2,
-        shadowColor: Colors.black.withValues(alpha: 0.2),
+        shadowColor: Colors.black.withOpacity(0.2),
       ),
       child: Text(
         text,
@@ -322,17 +321,18 @@ class _GamePageState extends State<GamePage> {
   }
 
   void _submitAnswer(BuildContext context, GameController controller) async {
-    final elapsedSeconds =
-        startTime != null ? DateTime.now().difference(startTime!).inSeconds : 0;
+    final elapsedSeconds = startTime != null
+        ? DateTime.now().difference(startTime!).inSeconds
+        : 0;
 
     final answerEntity = Answer(
       slideId: controller.currentSlide!.slideId,
       answerIndex: selectedIndices.toList(),
       timeElapsedSeconds: elapsedSeconds,
     );
-
+    
     await controller.submitAnswerResult(answerEntity, context);
-
+    
     // Resetear para la siguiente pregunta
     setState(() {
       selectedIndices.clear();

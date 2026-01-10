@@ -152,7 +152,7 @@ class _JoinGameScreenState extends State<JoinGameScreen> {
                                       : _formatPinForDisplay(pin),
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
-                                    color: Colors.white.withValues(alpha: 0.95),
+                                    color: Colors.white.withOpacity(0.95),
                                     fontSize: pin.isEmpty ? 40 : 56,
                                     fontWeight: FontWeight.bold,
                                     letterSpacing: 2,
@@ -181,12 +181,12 @@ class _JoinGameScreenState extends State<JoinGameScreen> {
                                       child: MobileScanner(
                                         controller: cameraController,
                                         onDetect: (capture) {
-                                          final barcode =
-                                              capture.barcodes.firstWhere(
-                                            (b) => b.rawValue != null,
-                                            orElse: () =>
-                                                capture.barcodes.first,
-                                          );
+                                          final barcode = capture.barcodes
+                                              .firstWhere(
+                                                (b) => b.rawValue != null,
+                                                orElse: () =>
+                                                    capture.barcodes.first,
+                                              );
                                           if (barcode.rawValue != null)
                                             onQrScanned(barcode.rawValue!);
                                         },
@@ -257,8 +257,8 @@ class _JoinGameScreenState extends State<JoinGameScreen> {
                   ),
                   onPressed: isPinSelected
                       ? (pin.length >= 4
-                          ? () => Navigator.of(context).pop(pin)
-                          : null)
+                            ? () => Navigator.of(context).pop(pin)
+                            : null)
                       : () {},
                   child: Text(
                     'JOIN NOW',

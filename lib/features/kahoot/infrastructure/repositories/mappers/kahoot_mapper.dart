@@ -17,8 +17,9 @@ class KahootMapper {
           .toList(),
       category: map['category'],
       playCount: map['playCount'],
-      createdAt:
-          map['createdAt'] != null ? DateTime.parse(map['createdAt']) : null,
+      createdAt: map['createdAt'] != null
+          ? DateTime.parse(map['createdAt'])
+          : null,
     );
   }
 
@@ -30,9 +31,7 @@ class KahootMapper {
     }
 
     // Validar UUID básico
-    final uuidRegex = RegExp(
-        r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
-        caseSensitive: false);
+    final uuidRegex = RegExp(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', caseSensitive: false);
     if (!uuidRegex.hasMatch(themeId)) {
       throw Exception('El themeId "$themeId" no es un UUID válido');
     }
@@ -52,6 +51,21 @@ class KahootMapper {
       if (kahoot.category != null && kahoot.category!.isNotEmpty)
         'category': kahoot.category,
     };
+
+    // DEBUG: Verificar que las preguntas tienen timeLimit en camelCase
+    print('🔍 KahootMapper.toMap - Verificando preguntas:');
+    if (result['questions'] != null && (result['questions'] as List).isNotEmpty) {
+      for (var i = 0; i < (result['questions'] as List).length; i++) {
+        final question = (result['questions'] as List)[i] as Map<String, dynamic>;
+        if (question.containsKey('timeLimit')) {
+          print('   Pregunta $i: timeLimit = ${question['timeLimit']} (${question['timeLimit'].runtimeType})');
+        } else if (question.containsKey('TimeLimitSeconds')) {
+          print('   ⚠️ Pregunta $i: Tiene TimeLimitSeconds (incorrecto)');
+        } else {
+          print('   ⚠️ Pregunta $i: No tiene timeLimit');
+        }
+      }
+    }
 
     return result;
   }

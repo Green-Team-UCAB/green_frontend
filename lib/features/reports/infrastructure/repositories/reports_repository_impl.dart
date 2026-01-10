@@ -1,5 +1,5 @@
 import 'package:dartz/dartz.dart';
-
+import 'dart:math'; // Para randoms si quisieras, aunque aquí usaremos datos fijos para probar casos específicos
 import '../../../../core/error/failures.dart';
 import '../../domain/entities/personal_report.dart';
 import '../../domain/entities/report_summary.dart';
@@ -205,7 +205,7 @@ class ReportsRepositoryImpl implements ReportsRepository {
       final result = await call();
       return Right(result);
     } catch (e) {
-      // print("⚠️ [ReportsRepo] Falló la API ($e). Usando MOCK DATA.");
+      print("⚠️ [ReportsRepo] Falló la API ($e). Usando MOCK DATA.");
       // Simulamos un pequeño delay para que se vea el loading
       await Future.delayed(const Duration(milliseconds: 800));
       return Right(mockFallback());

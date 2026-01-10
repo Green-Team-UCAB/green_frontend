@@ -54,9 +54,6 @@ import 'features/groups/application/update_group_use_case.dart';
 import 'features/groups/application/kick_member_use_case.dart';
 import 'features/groups/application/delete_group_use_case.dart';
 
-// --- Feature: IA (Épica 9) ---
-import 'core/network/ai_service.dart';
-
 // Instancia global del Service Locator
 final sl = GetIt.instance;
 
@@ -194,9 +191,6 @@ Future<void> init() async {
 
   // Http Client
   sl.registerLazySingleton<http.Client>(() => http.Client());
-
-  // AI Service
-  sl.registerLazySingleton<AiService>(() => AiService());
 
   // ================================================================
   // 3. INICIALIZACIÓN DE SESIÓN

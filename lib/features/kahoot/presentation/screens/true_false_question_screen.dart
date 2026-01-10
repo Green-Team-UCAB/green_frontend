@@ -8,17 +8,16 @@ import 'media_selection_screen.dart';
 class TrueFalseQuestionScreen extends StatefulWidget {
   final int? questionIndex;
 
-  const TrueFalseQuestionScreen({super.key, this.questionIndex});
+  const TrueFalseQuestionScreen({Key? key, this.questionIndex}) : super(key: key);
 
   @override
-  State<TrueFalseQuestionScreen> createState() =>
-      _TrueFalseQuestionScreenState();
+  _TrueFalseQuestionScreenState createState() => _TrueFalseQuestionScreenState();
 }
 
 class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
   final _questionTextController = TextEditingController();
   int _timeLimit = 20; // CAMBIADO: variable renombrada
-  final List<Answer> _answers = [
+  List<Answer> _answers = [
     Answer(text: 'Verdadero', isCorrect: false),
     Answer(text: 'Falso', isCorrect: false),
   ];
@@ -35,24 +34,17 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
 
   void _loadQuestion() {
     final kahootProvider = Provider.of<KahootProvider>(context, listen: false);
-    final question =
-        kahootProvider.currentKahoot.questions[widget.questionIndex!];
+    final question = kahootProvider.currentKahoot.questions[widget.questionIndex!];
 
     _questionTextController.text = question.text;
     _timeLimit = question.timeLimit; // CAMBIADO
     if (_timeLimit <= 0) _timeLimit = 20;
-
-    _answers.clear();
-    _answers.addAll(
-      question.answers.map(
-        (a) => Answer(
-          id: a.id,
-          text: a.text,
-          mediaId: a.mediaId,
-          isCorrect: a.isCorrect,
-        ),
-      ),
-    );
+    _answers = question.answers.map((a) => Answer(
+      id: a.id,
+      text: a.text,
+      mediaId: a.mediaId,
+      isCorrect: a.isCorrect,
+    )).toList();
     _selectedMediaId = question.mediaId;
     _points = question.points;
     if (_points <= 0) _points = 1000;
@@ -60,9 +52,9 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
 
   void _saveQuestion() {
     if (_questionTextController.text.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Por favor, ingresa la pregunta')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Por favor, ingresa la pregunta')),
+      );
       return;
     }
 
@@ -105,9 +97,7 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Verdadero o Falso'),
-        actions: [
-          IconButton(icon: Icon(Icons.check), onPressed: _saveQuestion),
-        ],
+        actions: [IconButton(icon: Icon(Icons.check), onPressed: _saveQuestion)],
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16),
@@ -118,10 +108,7 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
               children: [
                 Icon(Icons.check_circle_outline, color: Colors.green),
                 SizedBox(width: 8),
-                Text(
-                  'Verdadero o Falso',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
+                Text('Verdadero o Falso', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               ],
             ),
             SizedBox(height: 20),
@@ -141,22 +128,15 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
               onPressed: () async {
                 final result = await Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => MediaSelectionScreen(),
-                  ),
+                  MaterialPageRoute(builder: (context) => MediaSelectionScreen()),
                 );
                 if (result != null) setState(() => _selectedMediaId = result);
               },
-              style: ElevatedButton.styleFrom(
-                minimumSize: Size(double.infinity, 50),
-              ),
+              style: ElevatedButton.styleFrom(minimumSize: Size(double.infinity, 50)),
             ),
             SizedBox(height: 20),
             // TEMPORIZADOR SIMPLIFICADO - sin Switch
-            Text(
-              'Tiempo límite:',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
+            Text('Tiempo límite:', style: TextStyle(fontWeight: FontWeight.bold)),
             SizedBox(height: 10),
             Row(
               children: [
@@ -179,23 +159,15 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
                     color: Colors.blue[50],
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: Text(
-                    '$_timeLimit s',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ), // CAMBIADO
+                  child: Text('$_timeLimit s', style: TextStyle(fontWeight: FontWeight.bold)), // CAMBIADO
                 ),
               ],
             ),
             SizedBox(height: 10),
-            Text(
-              'Mínimo: 5 segundos, Máximo: 120 segundos',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
-            ),
+            Text('Mínimo: 5 segundos, Máximo: 120 segundos',
+                style: TextStyle(fontSize: 12, color: Colors.grey)),
             SizedBox(height: 20),
-            Text(
-              'Puntaje de la pregunta:',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
+            Text('Puntaje de la pregunta:', style: TextStyle(fontWeight: FontWeight.bold)),
             SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -203,10 +175,8 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
                 ElevatedButton(
                   onPressed: () => setState(() => _points = 500),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        _points == 500 ? Colors.blue : Colors.grey[300],
-                    foregroundColor:
-                        _points == 500 ? Colors.white : Colors.black,
+                    backgroundColor: _points == 500 ? Colors.blue : Colors.grey[300],
+                    foregroundColor: _points == 500 ? Colors.white : Colors.black,
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -220,10 +190,8 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
                 ElevatedButton(
                   onPressed: () => setState(() => _points = 1000),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        _points == 1000 ? Colors.blue : Colors.grey[300],
-                    foregroundColor:
-                        _points == 1000 ? Colors.white : Colors.black,
+                    backgroundColor: _points == 1000 ? Colors.blue : Colors.grey[300],
+                    foregroundColor: _points == 1000 ? Colors.white : Colors.black,
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -237,10 +205,8 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
                 ElevatedButton(
                   onPressed: () => setState(() => _points = 2000),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        _points == 2000 ? Colors.blue : Colors.grey[300],
-                    foregroundColor:
-                        _points == 2000 ? Colors.white : Colors.black,
+                    backgroundColor: _points == 2000 ? Colors.blue : Colors.grey[300],
+                    foregroundColor: _points == 2000 ? Colors.white : Colors.black,
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -258,10 +224,7 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
             SizedBox(height: 10),
             Card(
               child: ListTile(
-                title: Text(
-                  'Verdadero',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
+                title: Text('Verdadero', style: TextStyle(fontWeight: FontWeight.bold)),
                 trailing: Checkbox(
                   value: _answers[0].isCorrect,
                   onChanged: (value) => setState(() {
@@ -274,10 +237,7 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
             SizedBox(height: 8),
             Card(
               child: ListTile(
-                title: Text(
-                  'Falso',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
+                title: Text('Falso', style: TextStyle(fontWeight: FontWeight.bold)),
                 trailing: Checkbox(
                   value: _answers[1].isCorrect,
                   onChanged: (value) => setState(() {

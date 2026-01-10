@@ -1,3 +1,5 @@
+
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
@@ -9,7 +11,7 @@ import 'injection_container.dart' as di;
 import 'package:green_frontend/core/theme/app_pallete.dart';
 
 // --- Feature: Navigation ---
-
+import 'features/menu_navegation/presentation/screens/nav_bar_selection_screen.dart';
 import 'features/menu_navegation/presentation/providers/navigation_provider.dart';
 
 // --- Feature: Auth ---
@@ -52,21 +54,16 @@ void main() async {
 
   // --- Inicialización y registro de dependencias Single Player ---
   const baseUrl = 'https://quizzy-backend-0wh2.onrender.com/api';
-
-  final dio = Dio(
-    BaseOptions(
-      baseUrl: baseUrl,
-      connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(seconds: 30),
-    ),
-  );
+  
+  final dio = Dio(BaseOptions(
+    baseUrl: baseUrl,
+    connectTimeout: const Duration(seconds: 30),
+    receiveTimeout: const Duration(seconds: 30),
+  ));
 
   final dataSource = AsyncGameDataSourceImpl(dio: dio);
   final mapper = ExceptionFailureMapper();
-  final repository = AsyncGameRepositoryImpl(
-    dataSource: dataSource,
-    mapper: mapper,
-  );
+  final repository = AsyncGameRepositoryImpl(dataSource: dataSource, mapper: mapper);
 
   // Inicialización de Use Cases Single Player
   final startUC = StartAttempt(repository);
@@ -82,19 +79,19 @@ void main() async {
         Provider<AuthDataSource>(
           create: (_) => AuthRemoteDataSourceImpl(client: di.sl<ApiClient>()),
         ),
-
+        
         // Proveedores de Use Cases de Single Player
         Provider<StartAttempt>(create: (_) => startUC),
         Provider<GetAttempt>(create: (_) => getAttemptUC),
         Provider<SubmitAnswer>(create: (_) => submitUC),
         Provider<GetSummary>(create: (_) => summaryUC),
         Provider<GetKahootPreview>(create: (_) => previewUC),
-
+        
         // Mapper de excepciones
         Provider<ExceptionFailureMapper>(
           create: (_) => ExceptionFailureMapper(),
         ),
-
+        
         // Implementación de repositorio de Autenticación
         Provider<AuthRepository>(
           create: (ctx) => AuthRepositoryImpl(
@@ -102,16 +99,16 @@ void main() async {
             mapper: ctx.read<ExceptionFailureMapper>(),
           ),
         ),
-
+        
         // Casos de uso de Autenticación
         Provider<RegisterUserUseCase>(
           create: (ctx) => RegisterUserUseCase(ctx.read<AuthRepository>()),
         ),
-
+        
         Provider<LoginUserUseCase>(
           create: (ctx) => LoginUserUseCase(ctx.read<AuthRepository>()),
         ),
-
+        
         // Bloc de autenticación
         BlocProvider<AuthBloc>(
           create: (ctx) => AuthBloc(
@@ -133,41 +130,42 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => NavigationProvider()),
-
+        
         // Kahoot Datasource - ahora se obtiene el token dinámicamente
         Provider<KahootRemoteDataSource>(
           create: (_) => KahootRemoteDataSource(),
         ),
-
+        
         Provider<ThemeRemoteDataSource>(
           create: (_) => ThemeRemoteDataSource(client: http.Client()),
         ),
-
+        
         // Repositories
         Provider<KahootRepositoryImpl>(
-          create: (context) =>
-              KahootRepositoryImpl(context.read<KahootRemoteDataSource>()),
+          create: (context) => KahootRepositoryImpl(
+            context.read<KahootRemoteDataSource>(),
+          ),
         ),
-
+        
         Provider<ThemeRepositoryImpl>(
           create: (context) => ThemeRepositoryImpl(
             remoteDataSource: context.read<ThemeRemoteDataSource>(),
           ),
         ),
-
+        
         // Providers
         ChangeNotifierProvider(
           create: (context) => KahootProvider(
             SaveKahootUseCase(context.read<KahootRepositoryImpl>()),
           ),
         ),
-
+        
         ChangeNotifierProvider<ThemeProvider>(
           create: (context) => ThemeProvider(
             themeRepository: context.read<ThemeRepositoryImpl>(),
           ),
         ),
-
+        
         ChangeNotifierProvider(
           create: (context) => GameController(
             startAttempt: context.read<StartAttempt>(),
@@ -194,8 +192,7 @@ class MyApp extends StatelessWidget {
             fillColor: Colors.white,
           ),
         ),
-        home:
-            const SplashPage(), // Usamos SplashPage para manejar la autenticación
+        home: const SplashPage(), // Usamos SplashPage para manejar la autenticación
       ),
     );
   }

@@ -1,6 +1,8 @@
+
 import 'package:flutter/material.dart';
 import 'package:green_frontend/features/kahoot/application/providers/theme_provider.dart';
 import 'package:provider/provider.dart';
+
 
 class MediaSelectionScreen extends StatelessWidget {
   @override
@@ -8,7 +10,9 @@ class MediaSelectionScreen extends StatelessWidget {
     final themeProvider = Provider.of<ThemeProvider>(context);
 
     return Scaffold(
-      appBar: AppBar(title: Text('Añadir multimedia')),
+      appBar: AppBar(
+        title: Text('Añadir multimedia'),
+      ),
       body: Column(
         children: [
           // Opciones de carga
@@ -23,7 +27,7 @@ class MediaSelectionScreen extends StatelessWidget {
                     title: Text('Pegar'),
                     onTap: () {
                       // Implementar pegado
-                      // Por ahora,  regresara null
+                      // Por ahora,  regresara null 
                       Navigator.pop(context, null);
                     },
                   ),
@@ -33,6 +37,7 @@ class MediaSelectionScreen extends StatelessWidget {
                     title: Text('Galería'),
                     onTap: () async {
                       // Aquí deberías abrir la galería del dispositivo
+                      
                     },
                   ),
                   Divider(),
@@ -41,7 +46,7 @@ class MediaSelectionScreen extends StatelessWidget {
                     title: Text('Cámara'),
                     onTap: () async {
                       // Aquí deberías abrir la cámara
-
+                     
                       Navigator.pop(context, null);
                     },
                   ),
@@ -97,3 +102,4 @@ class MediaSelectionScreen extends StatelessWidget {
     );
   }
 }
+

@@ -15,7 +15,7 @@ class DesarrolloPage extends StatelessWidget {
         title: const Text('Próximamente'),
         backgroundColor: Colors.blueAccent,
         elevation: 2,
-        shadowColor: Colors.blueAccent.withValues(alpha: 0.3),
+        shadowColor: Colors.blueAccent.withOpacity(0.3),
       ),
 
       // Cuerpo principal
@@ -36,13 +36,13 @@ class DesarrolloPage extends StatelessWidget {
                 margin: const EdgeInsets.only(bottom: 30),
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.blueAccent.withValues(alpha: 0.1),
+                  color: Colors.blueAccent.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   Icons.construction_rounded,
                   size: 80,
-                  color: Colors.blueAccent.withValues(alpha: 0.7),
+                  color: Colors.blueAccent.withOpacity(0.7),
                 ),
               ),
 

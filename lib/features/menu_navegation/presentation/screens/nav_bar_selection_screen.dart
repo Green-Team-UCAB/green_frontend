@@ -65,7 +65,7 @@ class NavBarSelectionScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 // Un pequeño fondo para destacar "Unirse" si lo deseas, o déjalo simple
                 color: navigationProvider.currentIndex == 2
-                    ? AppPallete.gradient1.withValues(alpha: 0.1)
+                    ? AppPallete.gradient1.withOpacity(0.1)
                     : Colors.transparent,
                 shape: BoxShape.circle,
               ),

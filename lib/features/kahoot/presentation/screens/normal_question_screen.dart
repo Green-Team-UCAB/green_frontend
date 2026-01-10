@@ -17,8 +17,8 @@ class NormalQuestionScreen extends StatefulWidget {
 class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
   final _questionTextController = TextEditingController();
   int _timeLimit = 20; // CAMBIADO: variable renombrada
-  final List<Answer> _answers = [];
-  final List<TextEditingController> _answerControllers = [];
+  List<Answer> _answers = [];
+  List<TextEditingController> _answerControllers = [];
   String? _selectedMediaId;
   int _points = 1000;
 
@@ -37,12 +37,10 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
 
   void _loadQuestion() {
     final kahootProvider = Provider.of<KahootProvider>(context, listen: false);
-    final question =
-        kahootProvider.currentKahoot.questions[widget.questionIndex!];
+    final question = kahootProvider.currentKahoot.questions[widget.questionIndex!];
 
     _questionTextController.text = question.text;
-    _timeLimit = question
-        .timeLimit; // CAMBIADO: usar timeLimit en lugar de timeLimitSeconds
+    _timeLimit = question.timeLimit; // CAMBIADO: usar timeLimit en lugar de timeLimitSeconds
     if (_timeLimit <= 0) _timeLimit = 20;
     _selectedMediaId = question.mediaId;
     _points = question.points;
@@ -52,14 +50,12 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
     _answerControllers.clear();
 
     for (var answer in question.answers) {
-      _answers.add(
-        Answer(
-          id: answer.id,
-          text: answer.text,
-          mediaId: answer.mediaId,
-          isCorrect: answer.isCorrect,
-        ),
-      );
+      _answers.add(Answer(
+        id: answer.id,
+        text: answer.text,
+        mediaId: answer.mediaId,
+        isCorrect: answer.isCorrect,
+      ));
       _answerControllers.add(TextEditingController(text: answer.text));
     }
   }
@@ -74,9 +70,9 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
   void _saveQuestion() {
     // Validaciones
     if (_questionTextController.text.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Por favor, ingresa la pregunta')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Por favor, ingresa la pregunta')),
+      );
       return;
     }
 
@@ -95,9 +91,7 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
     final hasCorrectAnswer = _answers.any((answer) => answer.isCorrect);
     if (!hasCorrectAnswer) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Debe marcar al menos una respuesta como correcta'),
-        ),
+        SnackBar(content: Text('Debe marcar al menos una respuesta como correcta')),
       );
       return;
     }
@@ -147,9 +141,7 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Quiz - Pregunta'),
-        actions: [
-          IconButton(icon: Icon(Icons.check), onPressed: _saveQuestion),
-        ],
+        actions: [IconButton(icon: Icon(Icons.check), onPressed: _saveQuestion)],
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16),
@@ -160,10 +152,7 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
               children: [
                 Icon(Icons.quiz, color: Colors.purple),
                 SizedBox(width: 8),
-                Text(
-                  'Quiz',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
+                Text('Quiz', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               ],
             ),
             SizedBox(height: 20),
@@ -183,22 +172,15 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
               onPressed: () async {
                 final result = await Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => MediaSelectionScreen(),
-                  ),
+                  MaterialPageRoute(builder: (context) => MediaSelectionScreen()),
                 );
                 if (result != null) setState(() => _selectedMediaId = result);
               },
-              style: ElevatedButton.styleFrom(
-                minimumSize: Size(double.infinity, 50),
-              ),
+              style: ElevatedButton.styleFrom(minimumSize: Size(double.infinity, 50)),
             ),
             SizedBox(height: 20),
             // TEMPORIZADOR SIMPLIFICADO - sin Switch que cause problemas
-            Text(
-              'Tiempo límite:',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
+            Text('Tiempo límite:', style: TextStyle(fontWeight: FontWeight.bold)),
             SizedBox(height: 10),
             Row(
               children: [
@@ -221,23 +203,15 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
                     color: Colors.blue[50],
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: Text(
-                    '$_timeLimit s',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ), // CAMBIADO
+                  child: Text('$_timeLimit s', style: TextStyle(fontWeight: FontWeight.bold)), // CAMBIADO
                 ),
               ],
             ),
             SizedBox(height: 10),
-            Text(
-              'Mínimo: 5 segundos, Máximo: 120 segundos',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
-            ),
+            Text('Mínimo: 5 segundos, Máximo: 120 segundos',
+                style: TextStyle(fontSize: 12, color: Colors.grey)),
             SizedBox(height: 20),
-            Text(
-              'Puntaje de la pregunta:',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
+            Text('Puntaje de la pregunta:', style: TextStyle(fontWeight: FontWeight.bold)),
             SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -245,10 +219,8 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
                 ElevatedButton(
                   onPressed: () => setState(() => _points = 500),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        _points == 500 ? Colors.blue : Colors.grey[300],
-                    foregroundColor:
-                        _points == 500 ? Colors.white : Colors.black,
+                    backgroundColor: _points == 500 ? Colors.blue : Colors.grey[300],
+                    foregroundColor: _points == 500 ? Colors.white : Colors.black,
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -262,10 +234,8 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
                 ElevatedButton(
                   onPressed: () => setState(() => _points = 1000),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        _points == 1000 ? Colors.blue : Colors.grey[300],
-                    foregroundColor:
-                        _points == 1000 ? Colors.white : Colors.black,
+                    backgroundColor: _points == 1000 ? Colors.blue : Colors.grey[300],
+                    foregroundColor: _points == 1000 ? Colors.white : Colors.black,
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -279,10 +249,8 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
                 ElevatedButton(
                   onPressed: () => setState(() => _points = 2000),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        _points == 2000 ? Colors.blue : Colors.grey[300],
-                    foregroundColor:
-                        _points == 2000 ? Colors.white : Colors.black,
+                    backgroundColor: _points == 2000 ? Colors.blue : Colors.grey[300],
+                    foregroundColor: _points == 2000 ? Colors.white : Colors.black,
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -314,32 +282,28 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
                             labelText: 'Respuesta ${index + 1}',
                             border: InputBorder.none,
                           ),
-                          onChanged: (value) => setState(
-                            () => _answers[index] = Answer(
-                              id: _answers[index].id,
-                              text: value,
-                              mediaId: _answers[index].mediaId,
-                              isCorrect: _answers[index].isCorrect,
-                            ),
-                          ),
+                          onChanged: (value) => setState(() => _answers[index] = Answer(
+                            id: _answers[index].id,
+                            text: value,
+                            mediaId: _answers[index].mediaId,
+                            isCorrect: _answers[index].isCorrect,
+                          )),
                         ),
                       ),
                       Checkbox(
                         value: answer.isCorrect,
-                        onChanged: (value) => setState(
-                          () => _answers[index] = Answer(
-                            id: _answers[index].id,
-                            text: _answers[index].text,
-                            mediaId: _answers[index].mediaId,
-                            isCorrect: value!,
-                          ),
-                        ),
+                        onChanged: (value) => setState(() => _answers[index] = Answer(
+                          id: _answers[index].id,
+                          text: _answers[index].text,
+                          mediaId: _answers[index].mediaId,
+                          isCorrect: value!,
+                        )),
                       ),
                     ],
                   ),
                 ),
               );
-            }),
+            }).toList(),
             TextButton.icon(
               icon: Icon(Icons.add),
               label: Text('Añadir respuesta'),

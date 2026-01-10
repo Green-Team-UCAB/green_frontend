@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:green_frontend/features/auth/presentation/screens/edit_profile.dart';
 
+
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
@@ -11,10 +12,10 @@ class ProfileScreen extends StatelessWidget {
       body: Column(
         children: [
           Stack(
-            clipBehavior: Clip.none,
+            clipBehavior: Clip.none, 
             alignment: Alignment.center,
             children: [
-              // Banner
+              // Banner 
               ClipPath(
                 clipper: HeaderClipper(),
                 child: Container(
@@ -29,17 +30,17 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ),
               ),
-
-              // imagen del avatar
+              
+              // imagen del avatar 
               Positioned(
-                top: 160,
+                top: 160, 
                 child: Container(
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.white, width: 5),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
+                        color: Colors.black.withOpacity(0.1),
                         blurRadius: 10,
                         offset: const Offset(0, 5),
                       )
@@ -48,8 +49,7 @@ class ProfileScreen extends StatelessWidget {
                   child: const CircleAvatar(
                     radius: 55,
                     backgroundColor: Color(0xFFF3E5F5),
-                    child:
-                        Icon(Icons.person, size: 60, color: Color(0xFF6E48AA)),
+                    child: Icon(Icons.person, size: 60, color: Color(0xFF6E48AA)),
                   ),
                 ),
               ),
@@ -89,8 +89,7 @@ class ProfileScreen extends StatelessWidget {
                     title: "Editar Perfil",
                     onTap: () => Navigator.push(
                       context,
-                      MaterialPageRoute(
-                          builder: (_) => const EditProfileScreen()),
+                      MaterialPageRoute(builder: (_) => const EditProfileScreen()),
                     ),
                   ),
                   const SizedBox(height: 15),
@@ -140,12 +139,10 @@ class ProfileScreen extends StatelessWidget {
         title: const Text("Cerrar Sesión"),
         content: const Text("Está seguro que desea cerrar sesión?"),
         actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text("Cerrar Sesión",
-                style: TextStyle(color: Colors.red)),
+            child: const Text("Cerrar Sesión", style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -161,7 +158,11 @@ class HeaderClipper extends CustomClipper<Path> {
     path.lineTo(0, size.height - 40);
     // Crea una curva cóncava hacia arriba en el centro
     path.quadraticBezierTo(
-        size.width / 2, size.height + 20, size.width, size.height - 40);
+      size.width / 2, 
+      size.height + 20, 
+      size.width, 
+      size.height - 40
+    );
     path.lineTo(size.width, 0);
     path.close();
     return path;

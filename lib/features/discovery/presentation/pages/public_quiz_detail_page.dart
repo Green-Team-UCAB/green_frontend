@@ -4,7 +4,7 @@ import '../../../../injection_container.dart';
 
 // Importamos el BLoC de la Épica 7 (Biblioteca) para reutilizar la lógica de Favoritos
 import '../../../library/presentation/bloc/library_bloc.dart';
-
+import '../../../library/domain/entities/kahoot_summary.dart';
 import 'package:green_frontend/features/single_player/presentation/bloc/game_bloc.dart';
 import 'package:green_frontend/features/single_player/presentation/screens/single_player_game.dart';
 import 'package:green_frontend/features/single_player/presentation/bloc/game_event.dart';

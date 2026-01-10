@@ -4,7 +4,7 @@ publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.0.0 <4.0.0'
+  sdk: ^3.9.2
 
 dependencies:
   flutter:
@@ -43,9 +43,6 @@ dependencies:
   fpdart: ^1.2.0
   intl: ^0.20.2
   flutter_secure_storage: ^10.0.0
-
-  # --- IA ---
-  google_generative_ai: ^0.4.7 
 
   mobile_scanner: ^7.1.4
 

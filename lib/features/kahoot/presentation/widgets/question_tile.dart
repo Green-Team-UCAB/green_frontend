@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:green_frontend/features/kahoot/domain/entities/question.dart';
 
+
 class QuestionTile extends StatelessWidget {
   final Question question;
   final int index;
@@ -21,9 +22,7 @@ class QuestionTile extends StatelessWidget {
       margin: EdgeInsets.only(bottom: 8),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: question.type == QuestionType.quiz
-              ? Colors.purple
-              : Colors.green,
+          backgroundColor: question.type == QuestionType.quiz ? Colors.purple : Colors.green,
           child: Text(
             (index + 1).toString(),
             style: TextStyle(color: Colors.white),
@@ -56,3 +55,4 @@ class QuestionTile extends StatelessWidget {
     );
   }
 }
+
