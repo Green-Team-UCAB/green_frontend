@@ -1,5 +1,6 @@
-import 'package:green_frontend/features/kahoot/domain/entities/question.dart';
 
+
+import 'package:green_frontend/features/kahoot/domain/entities/question.dart';
 
 class KahootValidator {
   static String? validateTitle(String title) {
@@ -11,17 +12,27 @@ class KahootValidator {
 
   static String? validateQuestions(List<Question> questions) {
     if (questions.isEmpty) return 'Debe agregar al menos una pregunta';
-    
+
     for (var i = 0; i < questions.length; i++) {
       final question = questions[i];
       if (question.text.isEmpty) {
         return 'La pregunta ${i + 1} no puede estar vacía';
       }
-      
+
+      // Validar que el puntaje sea positivo
+      if (question.points <= 0) {
+        return 'La pregunta ${i + 1} debe tener un puntaje positivo mayor a 0';
+      }
+
+      // Validar que el tiempo límite sea positivo
+      if (question.timeLimit <= 0) { // CAMBIADO: timeLimit en lugar de timeLimitSeconds
+        return 'La pregunta ${i + 1} debe tener un tiempo límite positivo mayor a 0';
+      }
+
       if (question.answers.isEmpty) {
         return 'La pregunta ${i + 1} debe tener al menos una respuesta';
       }
-      
+
       if (question.type == QuestionType.quiz) {
         final correctAnswers = question.answers.where((a) => a.isCorrect).length;
         if (correctAnswers == 0) {
@@ -29,7 +40,7 @@ class KahootValidator {
         }
       }
     }
-    
+
     return null;
   }
 }

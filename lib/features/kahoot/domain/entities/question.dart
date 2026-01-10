@@ -6,18 +6,18 @@ class Question {
   String? id;
   String text;
   String? mediaId;
-  int timeLimitSeconds;
+  int timeLimit; // CAMBIADO: timeLimitSeconds → timeLimit
   QuestionType type;
   List<Answer> answers;
-  int points; // Nuevo campo para el puntaje
+  int points;
 
   Question({
     this.id,
     required this.text,
     this.mediaId,
-    required this.timeLimitSeconds,
+    required this.timeLimit, // CAMBIADO
     required this.type,
     required this.answers,
-    required this.points, // Agregado
+    required this.points,
   });
 }
