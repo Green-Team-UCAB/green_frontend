@@ -3,12 +3,10 @@ import 'package:green_frontend/features/kahoot/application/use_cases/save_kahoot
 import 'package:green_frontend/features/kahoot/domain/entities/kahoot.dart';
 import 'package:green_frontend/features/kahoot/domain/entities/question.dart';
 
-
 class KahootProvider with ChangeNotifier {
   Kahoot _currentKahoot = Kahoot.empty();
   bool _isLoading = false;
   String? _error;
-  
   final SaveKahootUseCase _saveKahootUseCase;
 
   KahootProvider(this._saveKahootUseCase);
@@ -69,10 +67,13 @@ class KahootProvider with ChangeNotifier {
   Future<void> saveKahoot() async {
     _isLoading = true;
     _error = null;
-    
     notifyListeners();
 
     try {
+      if (_currentKahoot.themeId.isEmpty) {
+        throw Exception('Debe seleccionar un tema para el Kahoot');
+      }
+
       final savedKahoot = await _saveKahootUseCase.execute(_currentKahoot);
       _currentKahoot = savedKahoot;
     } catch (e) {
@@ -86,6 +87,11 @@ class KahootProvider with ChangeNotifier {
   void clear() {
     _currentKahoot = Kahoot.empty();
     _error = null;
+    notifyListeners();
+  }
+
+  void loadKahoot(Kahoot kahoot) {
+    _currentKahoot = kahoot;
     notifyListeners();
   }
 }

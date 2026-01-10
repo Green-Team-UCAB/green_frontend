@@ -4,7 +4,6 @@ import 'package:green_frontend/features/kahoot/application/providers/theme_provi
 import 'package:green_frontend/features/kahoot/domain/entities/theme_image.dart';
 import 'package:provider/provider.dart';
 
-
 class ThemeSelectionScreen extends StatefulWidget {
   @override
   _ThemeSelectionScreenState createState() => _ThemeSelectionScreenState();
@@ -15,24 +14,26 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<ThemeProvider>(context, listen: false).loadThemes();
+      final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+      if (themeProvider.themes.isEmpty) {
+        themeProvider.loadThemes();
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
-    final kahootProvider = Provider.of<KahootProvider>(context, listen: false);
 
     return Scaffold(
       appBar: AppBar(
         title: Text('Temas Kahoot!'),
       ),
-      body: _buildBody(themeProvider, kahootProvider),
+      body: _buildBody(themeProvider),
     );
   }
 
-  Widget _buildBody(ThemeProvider themeProvider, KahootProvider kahootProvider) {
+  Widget _buildBody(ThemeProvider themeProvider) {
     if (themeProvider.isLoading) {
       return Center(child: CircularProgressIndicator());
     }
@@ -45,7 +46,7 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> {
       return _buildEmptyWidget(themeProvider);
     }
 
-    return _buildThemesGrid(themeProvider, kahootProvider);
+    return _buildThemesGrid(themeProvider);
   }
 
   Widget _buildErrorWidget(ThemeProvider themeProvider) {
@@ -88,7 +89,7 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> {
     );
   }
 
-  Widget _buildThemesGrid(ThemeProvider themeProvider, KahootProvider kahootProvider) {
+  Widget _buildThemesGrid(ThemeProvider themeProvider) {
     return GridView.builder(
       padding: EdgeInsets.all(16),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -100,16 +101,15 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> {
       itemCount: themeProvider.themes.length,
       itemBuilder: (context, index) {
         final theme = themeProvider.themes[index];
-        return _buildThemeCard(theme, kahootProvider);
+        return _buildThemeCard(theme);
       },
     );
   }
 
-  Widget _buildThemeCard(ThemeImage theme, KahootProvider kahootProvider) {
+  Widget _buildThemeCard(ThemeImage theme) {
     return GestureDetector(
       onTap: () {
-        kahootProvider.setThemeId(theme.id);
-        Navigator.pop(context);
+        Navigator.pop(context, theme);
       },
       child: Card(
         elevation: 3,
@@ -154,3 +154,4 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> {
     );
   }
 }
+

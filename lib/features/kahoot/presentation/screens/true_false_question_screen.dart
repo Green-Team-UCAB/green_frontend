@@ -16,13 +16,13 @@ class TrueFalseQuestionScreen extends StatefulWidget {
 
 class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
   final _questionTextController = TextEditingController();
-  int _timeLimit = 20;
+  int _timeLimit = 20; // CAMBIADO: variable renombrada
   List<Answer> _answers = [
     Answer(text: 'Verdadero', isCorrect: false),
     Answer(text: 'Falso', isCorrect: false),
   ];
   String? _selectedMediaId;
-  int _points = 1000; // Valor inicial del puntaje
+  int _points = 1000;
 
   @override
   void initState() {
@@ -35,9 +35,10 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
   void _loadQuestion() {
     final kahootProvider = Provider.of<KahootProvider>(context, listen: false);
     final question = kahootProvider.currentKahoot.questions[widget.questionIndex!];
-    
+
     _questionTextController.text = question.text;
-    _timeLimit = question.timeLimitSeconds;
+    _timeLimit = question.timeLimit; // CAMBIADO
+    if (_timeLimit <= 0) _timeLimit = 20;
     _answers = question.answers.map((a) => Answer(
       id: a.id,
       text: a.text,
@@ -45,7 +46,8 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
       isCorrect: a.isCorrect,
     )).toList();
     _selectedMediaId = question.mediaId;
-    _points = question.points; // Cargar puntaje
+    _points = question.points;
+    if (_points <= 0) _points = 1000;
   }
 
   void _saveQuestion() {
@@ -55,7 +57,19 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
       );
       return;
     }
-    
+
+    if (_points <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('El puntaje debe ser un número positivo')),
+      );
+      return;
+    }
+
+    // Asegurar que timeLimit sea positivo
+    if (_timeLimit <= 0) {
+      _timeLimit = 20;
+    }
+
     final kahootProvider = Provider.of<KahootProvider>(context, listen: false);
     final question = Question(
       id: widget.questionIndex != null
@@ -63,18 +77,18 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
           : null,
       text: _questionTextController.text,
       mediaId: _selectedMediaId,
-      timeLimitSeconds: _timeLimit,
+      timeLimit: _timeLimit, // CAMBIADO
       type: QuestionType.trueFalse,
       answers: _answers,
-      points: _points, // Guardar puntaje
+      points: _points,
     );
-    
+
     if (widget.questionIndex == null) {
       kahootProvider.addQuestion(question);
     } else {
       kahootProvider.updateQuestion(widget.questionIndex!, question);
     }
-    
+
     Navigator.pop(context);
   }
 
@@ -83,19 +97,13 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Verdadero o Falso'),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.check),
-            onPressed: _saveQuestion,
-          ),
-        ],
+        actions: [IconButton(icon: Icon(Icons.check), onPressed: _saveQuestion)],
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Título del tipo de pregunta
             Row(
               children: [
                 Icon(Icons.check_circle_outline, color: Colors.green),
@@ -104,8 +112,6 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
               ],
             ),
             SizedBox(height: 20),
-            
-            // Campo de pregunta
             TextField(
               controller: _questionTextController,
               maxLines: 3,
@@ -116,8 +122,6 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
               ),
             ),
             SizedBox(height: 20),
-            
-            // Botón para añadir multimedia
             ElevatedButton.icon(
               icon: Icon(Icons.image),
               label: Text('Añadir multimedia'),
@@ -126,77 +130,65 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
                   context,
                   MaterialPageRoute(builder: (context) => MediaSelectionScreen()),
                 );
-                if (result != null) {
-                  setState(() {
-                    _selectedMediaId = result;
-                  });
-                }
+                if (result != null) setState(() => _selectedMediaId = result);
               },
-              style: ElevatedButton.styleFrom(
-                minimumSize: Size(double.infinity, 50),
-              ),
+              style: ElevatedButton.styleFrom(minimumSize: Size(double.infinity, 50)),
             ),
             SizedBox(height: 20),
-            
-            // Temporizador
+            // TEMPORIZADOR SIMPLIFICADO - sin Switch
+            Text('Tiempo límite:', style: TextStyle(fontWeight: FontWeight.bold)),
+            SizedBox(height: 10),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Tiempo límite: $_timeLimit s'),
-                Switch(
-                  value: true,
-                  onChanged: (value) {},
+                Expanded(
+                  child: Slider(
+                    value: _timeLimit.toDouble(), // CAMBIADO
+                    min: 5, // MÍNIMO 5 SEGUNDOS
+                    max: 120,
+                    divisions: 23,
+                    label: '$_timeLimit segundos', // CAMBIADO
+                    onChanged: (value) {
+                      setState(() => _timeLimit = value.round()); // CAMBIADO
+                    },
+                  ),
+                ),
+                SizedBox(width: 16),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.blue[50],
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text('$_timeLimit s', style: TextStyle(fontWeight: FontWeight.bold)), // CAMBIADO
                 ),
               ],
             ),
-            Slider(
-              value: _timeLimit.toDouble(),
-              min: 5,
-              max: 120,
-              divisions: 23,
-              label: '$_timeLimit s',
-              onChanged: (value) {
-                setState(() {
-                  _timeLimit = value.round();
-                });
-              },
-            ),
+            SizedBox(height: 10),
+            Text('Mínimo: 5 segundos, Máximo: 120 segundos',
+                style: TextStyle(fontSize: 12, color: Colors.grey)),
             SizedBox(height: 20),
-            
-            // Puntaje de la pregunta
             Text('Puntaje de la pregunta:', style: TextStyle(fontWeight: FontWeight.bold)),
             SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                // Botón para 0 puntos
                 ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      _points = 0;
-                    });
-                  },
+                  onPressed: () => setState(() => _points = 500),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _points == 0 ? Colors.blue : Colors.grey[300],
-                    foregroundColor: _points == 0 ? Colors.white : Colors.black,
+                    backgroundColor: _points == 500 ? Colors.blue : Colors.grey[300],
+                    foregroundColor: _points == 500 ? Colors.white : Colors.black,
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(Icons.star_border, size: 30),
                       SizedBox(height: 5),
-                      Text('0 puntos'),
+                      Text('500 pts'),
                     ],
                   ),
                 ),
-                
-                // Botón para 1000 puntos
                 ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      _points = 1000;
-                    });
-                  },
+                  onPressed: () => setState(() => _points = 1000),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _points == 1000 ? Colors.blue : Colors.grey[300],
                     foregroundColor: _points == 1000 ? Colors.white : Colors.black,
@@ -206,18 +198,12 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
                     children: [
                       Icon(Icons.star_half, size: 30),
                       SizedBox(height: 5),
-                      Text('1000 puntos'),
+                      Text('1000 pts'),
                     ],
                   ),
                 ),
-                
-                // Botón para 2000 puntos
                 ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      _points = 2000;
-                    });
-                  },
+                  onPressed: () => setState(() => _points = 2000),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _points == 2000 ? Colors.blue : Colors.grey[300],
                     foregroundColor: _points == 2000 ? Colors.white : Colors.black,
@@ -227,15 +213,13 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
                     children: [
                       Icon(Icons.star, size: 30),
                       SizedBox(height: 5),
-                      Text('2000 puntos'),
+                      Text('2000 pts'),
                     ],
                   ),
                 ),
               ],
             ),
             SizedBox(height: 20),
-            
-            // Opciones Verdadero/Falso
             Text('Opciones:', style: TextStyle(fontWeight: FontWeight.bold)),
             SizedBox(height: 10),
             Card(
@@ -243,12 +227,10 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
                 title: Text('Verdadero', style: TextStyle(fontWeight: FontWeight.bold)),
                 trailing: Checkbox(
                   value: _answers[0].isCorrect,
-                  onChanged: (value) {
-                    setState(() {
-                      _answers[0].isCorrect = value!;
-                      _answers[1].isCorrect = !value;
-                    });
-                  },
+                  onChanged: (value) => setState(() {
+                    _answers[0].isCorrect = value!;
+                    _answers[1].isCorrect = !value;
+                  }),
                 ),
               ),
             ),
@@ -258,12 +240,10 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
                 title: Text('Falso', style: TextStyle(fontWeight: FontWeight.bold)),
                 trailing: Checkbox(
                   value: _answers[1].isCorrect,
-                  onChanged: (value) {
-                    setState(() {
-                      _answers[1].isCorrect = value!;
-                      _answers[0].isCorrect = !value;
-                    });
-                  },
+                  onChanged: (value) => setState(() {
+                    _answers[1].isCorrect = value!;
+                    _answers[0].isCorrect = !value;
+                  }),
                 ),
               ),
             ),
