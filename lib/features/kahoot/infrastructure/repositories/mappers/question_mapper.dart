@@ -5,11 +5,7 @@ class QuestionMapper {
   // Convierte un Map (en JSON) a una entidad Question
   static Question fromMap(Map<String, dynamic> map) {
     // Leer en ambos formatos: timeLimit en camelCase
-    int timeLimit = _parsePositiveInt(
-      map['timeLimit'] ?? 20,
-      20,
-      'timeLimit'
-    );
+    int timeLimit = _parsePositiveInt(map['timeLimit'] ?? 20, 20, 'timeLimit');
 
     int points = _parsePositiveInt(map['points'] ?? 1000, 1000, 'points');
 
@@ -18,10 +14,12 @@ class QuestionMapper {
       text: map['text'] ?? map['questionText'] ?? '',
       mediaId: map['mediaId'] ?? map['slideImageURL'],
       timeLimit: timeLimit,
-      type: _stringToQuestionType(map['type'] ?? 'single'), // Cambiado: 'single' por defecto
-      answers: List<Map<String, dynamic>>.from(map['answers'] ?? [])
-          .map(AnswerMapper.fromMap)
-          .toList(),
+      type: _stringToQuestionType(
+        map['type'] ?? 'single',
+      ), // Cambiado: 'single' por defecto
+      answers: List<Map<String, dynamic>>.from(
+        map['answers'] ?? [],
+      ).map(AnswerMapper.fromMap).toList(),
       points: points,
     );
   }
@@ -30,14 +28,9 @@ class QuestionMapper {
   static Map<String, dynamic> toMap(Question question) {
     final int timeLimit = _ensurePositiveInt(question.timeLimit, 20);
     final int points = _ensurePositiveInt(question.points, 1000);
-    
+
     // Determinar el tipo basado en QuestionType y respuestas
     String typeString = _questionTypeToBackendString(question);
-
-    print('🔄 QuestionMapper.toMap (corregido):');
-    print('   - timeLimit (camelCase): $timeLimit');
-    print('   - points (camelCase): $points');
-    print('   - type (backend): $typeString');
 
     return {
       if (question.id != null && question.id!.isNotEmpty) 'id': question.id,
@@ -58,10 +51,10 @@ class QuestionMapper {
         return 'true_false';
       case QuestionType.quiz:
         // Para quiz, determinar si es single o multiple basado en respuestas correctas
-        int correctAnswersCount = question.answers.where((a) => a.isCorrect).length;
+        int correctAnswersCount = question.answers
+            .where((a) => a.isCorrect)
+            .length;
         return correctAnswersCount == 1 ? 'single' : 'multiple';
-      default:
-        return 'single'; // Por defecto
     }
   }
 
@@ -72,25 +65,16 @@ class QuestionMapper {
         return QuestionType.trueFalse;
       case 'multiple':
       case 'single':
-        return QuestionType.quiz; // Ambos son quiz en nuestro modelo
       default:
         return QuestionType.quiz; // Por defecto
     }
   }
 
-  // Convertir nuestro QuestionType a string (para uso interno)
-  static String _questionTypeToString(QuestionType type) {
-    switch (type) {
-      case QuestionType.trueFalse:
-        return 'trueFalse';
-      case QuestionType.quiz:
-        return 'quiz';
-      default:
-        return 'quiz';
-    }
-  }
-
-  static int _parsePositiveInt(dynamic value, int defaultValue, String fieldName) {
+  static int _parsePositiveInt(
+    dynamic value,
+    int defaultValue,
+    String fieldName,
+  ) {
     if (value == null) return defaultValue;
     try {
       if (value is int) {
@@ -102,15 +86,14 @@ class QuestionMapper {
         final intVal = value.toInt();
         return intVal > 0 ? intVal : defaultValue;
       }
-    } catch (e) {
-      print('⚠️ Error parseando $fieldName: $e');
+    } catch (_) {
+      // Ignorar error de parseo
     }
     return defaultValue;
   }
 
   static int _ensurePositiveInt(int value, int defaultValue) {
     if (value <= 0) {
-      print('⚠️ Valor no positivo: $value. Usando valor por defecto: $defaultValue');
       return defaultValue;
     }
     return value;
