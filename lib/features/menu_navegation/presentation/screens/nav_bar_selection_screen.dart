@@ -15,7 +15,7 @@ class NavBarSelectionScreen extends StatelessWidget {
 
   // Lista actualizada: Solo 5 pantallas
   final List<Widget> pages = const [
-    KahootLibraryScreen(), // 0: Inicio
+    ProfileScreen(), // 0: Inicio
     DiscoverScreen(), // 1: Descubre
     JoinGameScreen(), // 2: Unirse (El botón central)
     CreateScreen(), // 3: Crear
