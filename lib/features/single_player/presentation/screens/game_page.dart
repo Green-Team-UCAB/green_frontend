@@ -111,12 +111,12 @@ class _GamePageState extends State<GamePage> {
                 const SizedBox(height: 16),
 
                 // Imagen del autobús (si hay mediaId)
-                if (controller.currentSlide!.mediaId != null &&
-                    controller.currentSlide!.mediaId!.isNotEmpty)
+                if (controller.currentSlide!.mediaID != null &&
+                    controller.currentSlide!.mediaID!.isNotEmpty)
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12),
                     child: Image.network(
-                      controller.currentSlide!.mediaId!,
+                      controller.currentSlide!.mediaID!,
                       height: 180,
                       width: double.infinity,
                       fit: BoxFit.cover,

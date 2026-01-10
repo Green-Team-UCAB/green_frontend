@@ -11,7 +11,7 @@ class Slide {
   final QuestionType questionType;
   final String questionText;
   final int timeLimitSeconds;
-  final String? mediaId;
+  final String? mediaID;
   final List<Option> options;
 
   Slide({
@@ -19,7 +19,7 @@ class Slide {
     required this.questionType,
     required this.questionText,
     required this.timeLimitSeconds,
-    this.mediaId,
+    this.mediaID,
     required this.options,
   });
 }

@@ -15,7 +15,6 @@ class SinglePlayerGameScreen extends StatefulWidget {
 class _SinglePlayerGameScreenState extends State<SinglePlayerGameScreen> {
   Set<int> selectedIndices = {};
 
-  // Colores para las opciones (estilo Kahoot/Quiz premium)
   final List<Color> optionColors = [
     Colors.blue.shade600,
     Colors.red.shade600,
@@ -26,7 +25,7 @@ class _SinglePlayerGameScreenState extends State<SinglePlayerGameScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA), // Fondo claro y limpio
+      backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.white,
@@ -37,9 +36,12 @@ class _SinglePlayerGameScreenState extends State<SinglePlayerGameScreen> {
             int score = 0;
             if (state is GameInProgress) score = state.attempt.currentScore;
             if (state is GameAnswerFeedback) score = state.attempt.currentScore;
-            if (state is GameFinished) return const Text("Resultados Finales", style: TextStyle(fontWeight: FontWeight.bold));
-            
-            return Text("Puntaje: $score", style: const TextStyle(fontWeight: FontWeight.bold));
+            if (state is GameFinished) {
+              return const Text("Resultados Finales",
+                  style: TextStyle(fontWeight: FontWeight.bold));
+            }
+            return Text("Puntaje: $score",
+                style: const TextStyle(fontWeight: FontWeight.bold));
           },
         ),
       ),
@@ -50,9 +52,7 @@ class _SinglePlayerGameScreenState extends State<SinglePlayerGameScreen> {
           }
         },
         builder: (context, state) {
-          if (state is GameFinished) {
-            return _buildSummaryScreen(state);
-          }
+          if (state is GameFinished) return _buildSummaryScreen(state);
 
           if (state is GameInProgress || state is GameAnswerFeedback) {
             final isFeedback = state is GameAnswerFeedback;
@@ -64,46 +64,71 @@ class _SinglePlayerGameScreenState extends State<SinglePlayerGameScreen> {
 
             return Column(
               children: [
-                // Barra de progreso superior
                 const LinearProgressIndicator(
                   minHeight: 6,
                   backgroundColor: Color(0xFFE0E0E0),
                   valueColor: AlwaysStoppedAnimation<Color>(Colors.deepPurple),
                 ),
                 
-                // Contenedor de la Pregunta (Centrada)
+                // ÁREA DE PREGUNTA DINÁMICA (CON O SIN IMAGEN)
                 Expanded(
-                  flex: 2,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    alignment: Alignment.center,
-                    child: Text(
-                      slide.questionText,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF2D3436),
-                      ),
+                  flex: 3,
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (slide.mediaID != null && slide.mediaID!.isNotEmpty)
+                          Expanded(
+                            child: Container(
+                              margin: const EdgeInsets.only(bottom: 16),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.1),
+                                    blurRadius: 10,
+                                  )
+                                ],
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(20),
+                                child: Image.network(
+                                  slide.mediaID!,
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                            ),
+                          ),
+                        Text(
+                          slide.questionText,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w900,
+                            color: Color(0xFF2D3436),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
 
-                // Grid de Respuestas (Distribuido 2x2)
+                // GRID DE RESPUESTAS ADAPTABLE
                 Expanded(
-                  flex: 3,
+                  flex: 4,
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: GridView.builder(
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
+                      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                        maxCrossAxisExtent: 250, // Permite 2 columnas en móvil, 1 si es muy pequeño
                         crossAxisSpacing: 12,
                         mainAxisSpacing: 12,
-                        childAspectRatio: 1.2,
+                        childAspectRatio: 1.3,
                       ),
                       itemCount: slide.options.length,
                       itemBuilder: (context, index) {
+                        final option = slide.options[index];
                         final isSelected = selectedIndices.contains(index);
                         final color = optionColors[index % optionColors.length];
 
@@ -129,24 +154,14 @@ class _SinglePlayerGameScreenState extends State<SinglePlayerGameScreen> {
                               boxShadow: [
                                 BoxShadow(
                                   color: color.withOpacity(0.1),
-                                  blurRadius: 10,
+                                  blurRadius: 8,
                                   offset: const Offset(0, 4),
                                 )
                               ],
                             ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(12.0),
-                              child: Center(
-                                child: Text(
-                                  slide.options[index].text ?? "",
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: isSelected ? Colors.white : color,
-                                  ),
-                                ),
-                              ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(18),
+                              child: _buildOptionContent(option, isSelected, color),
                             ),
                           ),
                         );
@@ -155,7 +170,6 @@ class _SinglePlayerGameScreenState extends State<SinglePlayerGameScreen> {
                   ),
                 ),
 
-                // Espacio inferior para feedback o botón de envío
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 10, 20, 40),
                   child: isFeedback
@@ -165,18 +179,51 @@ class _SinglePlayerGameScreenState extends State<SinglePlayerGameScreen> {
               ],
             );
           }
-
-          if (state is GameLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          return const Center(child: Text("Iniciando juego..."));
+          return const Center(child: CircularProgressIndicator());
         },
       ),
     );
   }
 
-  // Los métodos auxiliares se mantienen pero con leves ajustes estéticos
+  // MÉTODO PARA RENDERIZAR CONTENIDO DE OPCIÓN (TEXTO O IMAGEN)
+  Widget _buildOptionContent(dynamic option, bool isSelected, Color color) {
+    // Caso 1: La opción es una imagen
+    if (option.mediaID != null && option.mediaID!.isNotEmpty) {
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.network(
+            option.mediaID!,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image),
+          ),
+          if (isSelected)
+            Container(
+              color: color.withOpacity(0.4),
+              child: const Icon(Icons.check_circle, color: Colors.white, size: 40),
+            ),
+        ],
+      );
+    }
+
+    // Caso 2: La opción es texto
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Text(
+          option.text ?? "",
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: isSelected ? Colors.white : color,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // --- MÉTODOS AUXILIARES (SE MANTIENEN PERO CON EL FIX DE FONTWEIGHT) ---
 
   Widget _buildSubmitButton(GameInProgress state, String slideId) {
     return SizedBox(
@@ -184,9 +231,8 @@ class _SinglePlayerGameScreenState extends State<SinglePlayerGameScreen> {
       height: 60,
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.black, // Color sólido para el botón de acción principal
+          backgroundColor: Colors.black,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          elevation: 0,
         ),
         onPressed: selectedIndices.isEmpty ? null : () {
           context.read<GameBloc>().add(
@@ -241,7 +287,8 @@ class _SinglePlayerGameScreenState extends State<SinglePlayerGameScreen> {
               onPressed: () {
                 context.read<GameBloc>().add(NextQuestion(feedback.attempt.attemptId));
               },
-              child: const Text("SIGUIENTE PREGUNTA", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              child: const Text("SIGUIENTE PREGUNTA", 
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             ),
           ),
         ],
@@ -251,42 +298,44 @@ class _SinglePlayerGameScreenState extends State<SinglePlayerGameScreen> {
 
   Widget _buildSummaryScreen(GameFinished state) {
     final s = state.summary;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.emoji_events_rounded, size: 100, color: Colors.amber),
-          const SizedBox(height: 16),
-          const Text("¡Increíble!", 
-            style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900,color: Color(0xFF2D3436),)),
-          const Text("Has completado el desafío", style: TextStyle(fontSize: 16, color: Colors.grey)),
-          const SizedBox(height: 32),
-          _buildStatCard("PUNTAJE FINAL", "${s.finalScore}", Colors.deepPurple),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(child: _buildStatCard("Correctas", "${s.totalCorrectAnswers}/${s.totalQuestions}", Colors.green)),
-              const SizedBox(width: 16),
-              Expanded(child: _buildStatCard("Precisión", "${s.accuracyPercentage.toStringAsFixed(1)}%", Colors.blue)),
-            ],
-          ),
-          const SizedBox(height: 48),
-          SizedBox(
-            width: double.infinity,
-            height: 60,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepPurple,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))
-              ),
-              onPressed: () => Navigator.pop(context),
-              child: const Text("SALIR AL MENÚ", 
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+    return SingleChildScrollView(
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.emoji_events_rounded, size: 100, color: Colors.amber),
+            const SizedBox(height: 16),
+            const Text("¡Increíble!", 
+              style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Color(0xFF2D3436))),
+            const Text("Has completado el desafío", style: TextStyle(fontSize: 16, color: Colors.grey)),
+            const SizedBox(height: 32),
+            _buildStatCard("PUNTAJE FINAL", "${s.finalScore}", Colors.deepPurple),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(child: _buildStatCard("Correctas", "${s.totalCorrectAnswers}/${s.totalQuestions}", Colors.green)),
+                const SizedBox(width: 16),
+                Expanded(child: _buildStatCard("Precisión", "${s.accuracyPercentage.toStringAsFixed(1)}%", Colors.blue)),
+              ],
             ),
-          )
-        ],
+            const SizedBox(height: 48),
+            SizedBox(
+              width: double.infinity,
+              height: 60,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.deepPurple,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))
+                ),
+                onPressed: () => Navigator.pop(context),
+                child: const Text("SALIR AL MENÚ", 
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+              ),
+            )
+          ],
+        ),
       ),
     );
   }
@@ -303,7 +352,7 @@ class _SinglePlayerGameScreenState extends State<SinglePlayerGameScreen> {
         children: [
           Text(label, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12)),
           const SizedBox(height: 8),
-          Text(value, style: TextStyle(color: color, fontSize: 26, fontWeight: FontWeight.w900,)),
+          Text(value, style: TextStyle(color: color, fontSize: 26, fontWeight: FontWeight.w900)),
         ],
       ),
     );
