@@ -114,14 +114,14 @@ class _SinglePlayerGameScreenState extends State<SinglePlayerGameScreen> {
                   ),
                 ),
 
-                // GRID DE RESPUESTAS ADAPTABLE
+                // layout dinamico
                 Expanded(
                   flex: 4,
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: GridView.builder(
                       gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                        maxCrossAxisExtent: 250, // Permite 2 columnas en móvil, 1 si es muy pequeño
+                        maxCrossAxisExtent: 250, 
                         crossAxisSpacing: 12,
                         mainAxisSpacing: 12,
                         childAspectRatio: 1.3,
@@ -187,7 +187,7 @@ class _SinglePlayerGameScreenState extends State<SinglePlayerGameScreen> {
 
   // MÉTODO PARA RENDERIZAR CONTENIDO DE OPCIÓN (TEXTO O IMAGEN)
   Widget _buildOptionContent(dynamic option, bool isSelected, Color color) {
-    // Caso 1: La opción es una imagen
+    // Option es una imagen
     if (option.mediaID != null && option.mediaID!.isNotEmpty) {
       return Stack(
         fit: StackFit.expand,
@@ -206,7 +206,7 @@ class _SinglePlayerGameScreenState extends State<SinglePlayerGameScreen> {
       );
     }
 
-    // Caso 2: La opción es texto
+    // Option es un texto
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(12.0),
@@ -214,7 +214,7 @@ class _SinglePlayerGameScreenState extends State<SinglePlayerGameScreen> {
           option.text ?? "",
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 16,
+            fontSize: 15,
             fontWeight: FontWeight.bold,
             color: isSelected ? Colors.white : color,
           ),
