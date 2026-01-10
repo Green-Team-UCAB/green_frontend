@@ -104,13 +104,21 @@ class GroupsRepositoryImpl implements GroupsRepository {
     });
   }
 
+  // Cache para los detalles generados (para mantener persistencia en sesión)
+  final Map<String, Map<String, dynamic>> _mockDetailsCache = {};
+
   @override
   Future<Either<Failure, Map<String, dynamic>>> getGroupDetails(
     String groupId,
   ) {
     return _execute(() => remoteDataSource.getGroupDetails(groupId), () async {
-      // Enforce finding the group in our local state to ensure consistency
-      // If not found (e.g. came from real API?), fallback to a generic one or error
+      // 1. Si ya tenemos detalles cacheados para este grupo, los devolvemos.
+      // Esto permite que si asignamos un quiz o eliminamos, se mantenga el cambio.
+      if (_mockDetailsCache.containsKey(groupId)) {
+        return _mockDetailsCache[groupId]!;
+      }
+
+      // Intenta encontrar el grupo en el estado local
       final group = _mockGroups.firstWhere(
         (g) => g.id == groupId,
         orElse: () => GroupEntity(
@@ -124,73 +132,97 @@ class GroupsRepositoryImpl implements GroupsRepository {
 
       final bool isAdmin = group.role == 'admin';
 
-      return {
+      // 🎲 Generador determinista basado en el ID del grupo
+      // Esto asegura que cada grupo tenga datos distintos pero consistentes
+      final random = Random(groupId.hashCode);
+
+      // Generar 1-3 quizzes aleatorios
+      final quizzesCount = 1 + random.nextInt(3);
+      final generatedQuizzes = List.generate(quizzesCount, (index) {
+        final isCompleted = random.nextBool();
+        return {
+          'assignmentId': 'mock-quiz-$groupId-$index',
+          'title':
+              'Actividad ${index + 1}: ${['Conceptos Básicos', 'Evaluación Final', 'Repaso', 'Historia', 'Ciencias'][random.nextInt(5)]}',
+          'status': isCompleted ? 'COMPLETED' : 'PENDING',
+          'availableUntil': DateTime.now()
+              .add(Duration(days: 1 + random.nextInt(10)))
+              .toIso8601String(),
+          'userResult': isCompleted
+              ? {'score': 500 + random.nextInt(1000)}
+              : null,
+        };
+      });
+
+      // Generar ranking aleatorio (3-8 personas)
+      final membersCount = 3 + random.nextInt(6);
+      final memberNames = [
+        'Ana García',
+        'Carlos Perez',
+        'Luis Diaz',
+        'Maria Lopez',
+        'Juan Silva',
+        'Elena Gomez',
+        'Pedro Ruiz',
+        'Sofia Torres',
+        'Diego Castro',
+        'Lucia Vives',
+      ];
+
+      final generatedLeaderboard = List.generate(membersCount, (index) {
+        final name = memberNames[random.nextInt(memberNames.length)];
+        return {
+          'userId': 'mock-u-$groupId-$index',
+          'name': name,
+          'totalPoints': 100 + random.nextInt(5000),
+        };
+      });
+
+      // Ordenar por puntos descendente
+      generatedLeaderboard.sort(
+        (a, b) => (b['totalPoints'] as int).compareTo(a['totalPoints'] as int),
+      );
+
+      // Asignar posición
+      for (var i = 0; i < generatedLeaderboard.length; i++) {
+        generatedLeaderboard[i]['position'] = i + 1;
+      }
+
+      // Añadir al usuario actual en una posición aleatoria o fija
+      generatedLeaderboard.add({
+        'userId': 'u-me',
+        'name': 'Tú ${isAdmin ? '(Admin)' : ''}',
+        'totalPoints': 3200, // Tus puntos fijos para demo
+        'position': membersCount + 1, // Al final por simplicidad de mezcla
+      });
+      // Reordenar final
+      generatedLeaderboard.sort(
+        (a, b) => (b['totalPoints'] as int).compareTo(a['totalPoints'] as int),
+      );
+      for (var i = 0; i < generatedLeaderboard.length; i++) {
+        generatedLeaderboard[i]['position'] = i + 1;
+      }
+
+      final generatedMembers = generatedLeaderboard
+          .map(
+            (e) => {
+              'userId': e['userId'],
+              'name': e['name'],
+              'role': e['userId'] == 'u-me' ? group.role : 'member',
+            },
+          )
+          .toList();
+
+      final details = {
         'group': group,
-        // Lista de Quizes Asignados (H8.7)
-        'quizzes': [
-          {
-            'assignmentId': 'a-1',
-            'title': 'Álgebra Básica',
-            'status': 'COMPLETED',
-            'availableUntil': DateTime.now()
-                .add(const Duration(days: 2))
-                .toIso8601String(),
-            'userResult': {'score': 1200},
-          },
-          if (isAdmin) // Add an extra quiz for admin view demo
-            {
-              'assignmentId': 'a-2',
-              'title': 'Geometría y Espacio',
-              'status': 'PENDING',
-              'availableUntil': DateTime.now()
-                  .add(const Duration(days: 5))
-                  .toIso8601String(),
-              'userResult': null,
-            },
-        ],
-        // Ranking del Grupo (H8.9)
-        'leaderboard': [
-          {
-            'userId': 'u-1',
-            'name': 'Ana García',
-            'totalPoints': 5400,
-            'position': 1,
-          },
-          {
-            'userId': 'u-2',
-            'name': 'Carlos Perez',
-            'totalPoints': 4800,
-            'position': 2,
-          },
-          if (isAdmin) // Show "You" differently if admin? mostly same
-            {
-              'userId': 'u-me',
-              'name': 'Tú (Admin)',
-              'totalPoints': 3200,
-              'position': 3,
-            }
-          else
-            {
-              'userId': 'u-me',
-              'name': 'Tú',
-              'totalPoints': 3200,
-              'position': 3,
-            },
-          {
-            'userId': 'u-4',
-            'name': 'Luis Diaz',
-            'totalPoints': 1000,
-            'position': 4,
-          },
-        ],
-        // Miembros (Para gestión H8.4)
-        'members': [
-          // Include 'Me'
-          {'userId': 'u-me', 'name': 'Tú', 'role': group.role},
-          {'userId': 'u-1', 'name': 'Ana García', 'role': 'member'},
-          {'userId': 'u-4', 'name': 'Luis Diaz', 'role': 'member'},
-        ],
+        'quizzes': generatedQuizzes,
+        'leaderboard': generatedLeaderboard,
+        'members': generatedMembers,
       };
+
+      // Guardamos en caché
+      _mockDetailsCache[groupId] = details;
+      return details;
     });
   }
 
@@ -207,11 +239,26 @@ class GroupsRepositoryImpl implements GroupsRepository {
   Future<Either<Failure, void>> assignQuiz(
     String groupId,
     String quizId,
-    String availableUntil,
-  ) {
+    String availableUntil, {
+    String? quizTitle,
+  }) {
     return _execute(
       () => remoteDataSource.assignQuiz(groupId, quizId, availableUntil),
-      () async {}, // Void success
+      () async {
+        // Actualizamos la caché mock para que aparezca el nuevo quiz
+        if (_mockDetailsCache.containsKey(groupId)) {
+          final details = _mockDetailsCache[groupId]!;
+          final quizzes = details['quizzes'] as List;
+          quizzes.add({
+            'assignmentId':
+                'mock-assign-${DateTime.now().millisecondsSinceEpoch}',
+            'title': quizTitle ?? 'Nueva Actividad Asignada',
+            'status': 'PENDING',
+            'availableUntil': availableUntil,
+            'userResult': null,
+          });
+        }
+      },
     );
   }
 

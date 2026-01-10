@@ -5,6 +5,7 @@ abstract class GroupsRemoteDataSource {
   Future<List<GroupModel>> getMyGroups();
   Future<GroupModel> createGroup(String name, String description);
   Future<GroupModel> joinGroup(String token);
+  Future<List<dynamic>> getGroupQuizzes(String groupId);
   Future<Map<String, dynamic>> getGroupDetails(String groupId);
   Future<String> generateInvitationLink(String groupId);
   Future<void> assignQuiz(String groupId, String quizId, String availableUntil);
@@ -47,9 +48,39 @@ class GroupsRemoteDataSourceImpl implements GroupsRemoteDataSource {
   }
 
   @override
+  Future<List<dynamic>> getGroupQuizzes(String groupId) async {
+    final response = await apiClient.get(path: '/groups/$groupId/quizzes');
+    // La respuesta según el usuario es { data: [...] } o directamente [...]?
+    // El "Esqueleto JSON (Response)" muestra "{ data: [...] }"
+    if (response.data is Map && response.data.containsKey('data')) {
+      return response.data['data'];
+    } else if (response.data is List) {
+      return response.data;
+    }
+    return [];
+  }
+
+  @override
   Future<Map<String, dynamic>> getGroupDetails(String groupId) async {
-    final response = await apiClient.get(path: '/groups/$groupId');
-    return response.data;
+    // 1. Obtener Metadatos del Grupo
+    final groupResponse = await apiClient.get(path: '/groups/$groupId');
+
+    // 2. Obtener Quizzes del Grupo (Nuevo Endpoint)
+    List<dynamic> quizzes = [];
+    try {
+      quizzes = await getGroupQuizzes(groupId);
+    } catch (e) {
+      print("⚠️ Error fetching quizzes separately: $e");
+    }
+
+    // 3. Obtener Ranking/Miembros (Si hay endpoints separados, agregarlos aquí.
+    // Por ahora asumimos que vienen en el endpoint principal o se manejan separados,
+    // pero para mantener compatibilidad con el Repository, mezclamos aquí).
+
+    final data = Map<String, dynamic>.from(groupResponse.data);
+    data['quizzes'] = quizzes;
+
+    return data;
   }
 
   @override
@@ -64,9 +95,14 @@ class GroupsRemoteDataSourceImpl implements GroupsRemoteDataSource {
     String quizId,
     String availableUntil,
   ) async {
+    // Nuevo path y body según documentación
     await apiClient.post(
-      path: '/groups/$groupId/assign',
-      data: {'quizId': quizId, 'availableUntil': availableUntil},
+      path: '/groups/$groupId/quizzes',
+      data: {
+        'quizId': quizId,
+        'availableFrom': DateTime.now().toIso8601String(),
+        'availableUntil': availableUntil,
+      },
     );
   }
 

@@ -21,10 +21,12 @@ class AssignQuizEvent extends GroupDetailEvent {
   final String groupId;
   final String quizId;
   final String availableUntil;
+  final String? quizTitle; // Para UI optimista / Mock
   AssignQuizEvent({
     required this.groupId,
     required this.quizId,
     required this.availableUntil,
+    this.quizTitle,
   });
 }
 
