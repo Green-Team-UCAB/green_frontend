@@ -50,7 +50,7 @@ class SlideModel {
       questionText: questionText,
       questionType: questionType,
       timeLimitSeconds: timeLimitSeconds,
-      mediaId: mediaId,
+      mediaID: mediaId,
       options: options.map((optionModel) => optionModel.toEntity()).toList(),
     );
   }

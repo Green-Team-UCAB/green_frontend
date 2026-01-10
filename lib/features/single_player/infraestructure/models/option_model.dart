@@ -25,7 +25,7 @@ class OptionModel {
     return Option(
       index: index,
       text: text,
-      mediaId: mediaId,
+      mediaID: mediaId,
     );
   }
   }

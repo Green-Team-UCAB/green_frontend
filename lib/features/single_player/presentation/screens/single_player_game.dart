@@ -4,12 +4,6 @@ import 'package:green_frontend/features/single_player/presentation/bloc/game_blo
 import 'package:green_frontend/features/single_player/presentation/bloc/game_state.dart';
 import 'package:green_frontend/features/single_player/presentation/bloc/game_event.dart';
 import 'package:green_frontend/features/single_player/domain/entities/answer.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:green_frontend/features/single_player/presentation/bloc/game_bloc.dart';
-import 'package:green_frontend/features/single_player/presentation/bloc/game_state.dart';
-import 'package:green_frontend/features/single_player/presentation/bloc/game_event.dart';
-import 'package:green_frontend/features/single_player/domain/entities/answer.dart';
 
 class SinglePlayerGameScreen extends StatefulWidget {
   const SinglePlayerGameScreen({super.key});
@@ -21,20 +15,33 @@ class SinglePlayerGameScreen extends StatefulWidget {
 class _SinglePlayerGameScreenState extends State<SinglePlayerGameScreen> {
   Set<int> selectedIndices = {};
 
+  final List<Color> optionColors = [
+    Colors.blue.shade600,
+    Colors.red.shade600,
+    Colors.orange.shade600,
+    Colors.teal.shade600,
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
+        elevation: 0,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        centerTitle: true,
         title: BlocBuilder<GameBloc, GameState>(
           builder: (context, state) {
             int score = 0;
             if (state is GameInProgress) score = state.attempt.currentScore;
             if (state is GameAnswerFeedback) score = state.attempt.currentScore;
-            
-            // Si el juego terminó, no mostramos el puntaje en el AppBar porque ya está en el resumen
-            if (state is GameFinished) return const Text("Resultados Finales");
-            
-            return Text("Puntaje: $score");
+            if (state is GameFinished) {
+              return const Text("Resultados Finales",
+                  style: TextStyle(fontWeight: FontWeight.bold));
+            }
+            return Text("Puntaje: $score",
+                style: const TextStyle(fontWeight: FontWeight.bold));
           },
         ),
       ),
@@ -45,44 +52,88 @@ class _SinglePlayerGameScreenState extends State<SinglePlayerGameScreen> {
           }
         },
         builder: (context, state) {
-          // 1. Manejo del estado final (Resumen)
-          if (state is GameFinished) {
-            return _buildSummaryScreen(state);
-          }
+          if (state is GameFinished) return _buildSummaryScreen(state);
 
-          // 2. Manejo del juego en progreso o feedback
           if (state is GameInProgress || state is GameAnswerFeedback) {
             final isFeedback = state is GameAnswerFeedback;
             final slide = (state is GameInProgress)
                 ? state.attempt.nextSlide
                 : (state as GameAnswerFeedback).attempt.nextSlide;
 
-            if (slide == null) return const Center(child: Text("Cargando resultados..."));
+            if (slide == null) return const Center(child: CircularProgressIndicator());
 
             return Column(
               children: [
-                const LinearProgressIndicator(),
-                Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Text(slide.questionText,
-                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                const LinearProgressIndicator(
+                  minHeight: 6,
+                  backgroundColor: Color(0xFFE0E0E0),
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.deepPurple),
                 ),
+                
+                // ÁREA DE PREGUNTA DINÁMICA (CON O SIN IMAGEN)
                 Expanded(
-                  child: ListView.builder(
-                    itemCount: slide.options.length,
-                    itemBuilder: (context, index) {
-                      final option = slide.options[index];
-                      final isSelected = selectedIndices.contains(index);
-
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: isSelected ? Colors.deepPurple : Colors.white,
-                            foregroundColor: isSelected ? Colors.white : Colors.black,
-                            side: BorderSide(color: Colors.deepPurple.withOpacity(0.5)),
+                  flex: 3,
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (slide.mediaID != null && slide.mediaID!.isNotEmpty)
+                          Expanded(
+                            child: Container(
+                              margin: const EdgeInsets.only(bottom: 16),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.1),
+                                    blurRadius: 10,
+                                  )
+                                ],
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(20),
+                                child: Image.network(
+                                  slide.mediaID!,
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                            ),
                           ),
-                          onPressed: isFeedback ? null : () {
+                        Text(
+                          slide.questionText,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w900,
+                            color: Color(0xFF2D3436),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // layout dinamico
+                Expanded(
+                  flex: 4,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: GridView.builder(
+                      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                        maxCrossAxisExtent: 250, 
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                        childAspectRatio: 1.3,
+                      ),
+                      itemCount: slide.options.length,
+                      itemBuilder: (context, index) {
+                        final option = slide.options[index];
+                        final isSelected = selectedIndices.contains(index);
+                        final color = optionColors[index % optionColors.length];
+
+                        return GestureDetector(
+                          onTap: isFeedback ? null : () {
                             setState(() {
                               if (selectedIndices.contains(index)) {
                                 selectedIndices.remove(index);
@@ -91,14 +142,36 @@ class _SinglePlayerGameScreenState extends State<SinglePlayerGameScreen> {
                               }
                             });
                           },
-                          child: Text(option.text ?? ""),
-                        ),
-                      );
-                    },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            decoration: BoxDecoration(
+                              color: isSelected ? color : Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: isSelected ? Colors.white : color.withOpacity(0.4),
+                                width: 2.5,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: color.withOpacity(0.1),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                )
+                              ],
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(18),
+                              child: _buildOptionContent(option, isSelected, color),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ),
+
                 Padding(
-                  padding: const EdgeInsets.all(20.0),
+                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 40),
                   child: isFeedback
                       ? _buildFeedbackSection(state as GameAnswerFeedback)
                       : _buildSubmitButton(state as GameInProgress, slide.slideId),
@@ -106,102 +179,61 @@ class _SinglePlayerGameScreenState extends State<SinglePlayerGameScreen> {
               ],
             );
           }
-
-          if (state is GameLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (state is GameError) {
-            return Center(child: Text("Error: ${state.message}"));
-          }
-
-          return const Center(child: Text("Iniciando juego..."));
+          return const Center(child: CircularProgressIndicator());
         },
       ),
     );
   }
 
-  // --- NUEVA VISTA DE RESUMEN ---
-  Widget _buildSummaryScreen(GameFinished state) {
-    final s = state.summary; // Usando tu entidad Summary
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+  // MÉTODO PARA RENDERIZAR CONTENIDO DE OPCIÓN (TEXTO O IMAGEN)
+  Widget _buildOptionContent(dynamic option, bool isSelected, Color color) {
+    // Option es una imagen
+    if (option.mediaID != null && option.mediaID!.isNotEmpty) {
+      return Stack(
+        fit: StackFit.expand,
         children: [
-          const Icon(Icons.stars, size: 80, color: Colors.amber),
-          const SizedBox(height: 16),
-          const Text("¡Juego Terminado!", 
-            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 32),
-          
-          _buildStatCard("Puntaje Total", "${s.finalScore}", Colors.deepPurple),
-          const SizedBox(height: 16),
-          
-          Row(
-            children: [
-              Expanded(
-                child: _buildStatCard(
-                  "Correctas", 
-                  "${s.totalCorrectAnswers}/${s.totalQuestions}", 
-                  Colors.green
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildStatCard(
-                  "Precisión", 
-                  "${s.accuracyPercentage.toStringAsFixed(1)}%", 
-                  Colors.blue
-                ),
-              ),
-            ],
+          Image.network(
+            option.mediaID!,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image),
           ),
-          
-          const SizedBox(height: 48),
-          SizedBox(
-            width: double.infinity,
-            height: 55,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepPurple,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))
-              ),
-              onPressed: () => Navigator.pop(context),
-              child: const Text("VOLVER A LA BIBLIOTECA", 
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          if (isSelected)
+            Container(
+              color: color.withOpacity(0.4),
+              child: const Icon(Icons.check_circle, color: Colors.white, size: 40),
             ),
-          )
         ],
+      );
+    }
+
+    // Option es un texto
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Text(
+          option.text ?? "",
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.bold,
+            color: isSelected ? Colors.white : color,
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildStatCard(String label, String value, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.5)),
-      ),
-      child: Column(
-        children: [
-          Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w500)),
-          const SizedBox(height: 4),
-          Text(value, style: TextStyle(color: color, fontSize: 22, fontWeight: FontWeight.bold)),
-        ],
-      ),
-    );
-  }
+  // --- MÉTODOS AUXILIARES (SE MANTIENEN PERO CON EL FIX DE FONTWEIGHT) ---
 
   Widget _buildSubmitButton(GameInProgress state, String slideId) {
     return SizedBox(
       width: double.infinity,
-      height: 55,
+      height: 60,
       child: ElevatedButton(
-        style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.black,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        ),
         onPressed: selectedIndices.isEmpty ? null : () {
           context.read<GameBloc>().add(
             SubmitAnswerEvent(
@@ -215,39 +247,112 @@ class _SinglePlayerGameScreenState extends State<SinglePlayerGameScreen> {
           );
         },
         child: const Text("ENVIAR RESPUESTA",
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
       ),
     );
   }
 
   Widget _buildFeedbackSection(GameAnswerFeedback feedback) {
+    final bool correct = feedback.wasCorrect;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: feedback.wasCorrect ? Colors.green.shade50 : Colors.red.shade50,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: feedback.wasCorrect ? Colors.green : Colors.red),
+        color: correct ? Colors.green.shade50 : Colors.red.shade50,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: correct ? Colors.green : Colors.red, width: 2),
       ),
       child: Column(
         children: [
-          Text(feedback.wasCorrect ? "¡CORRECTO!" : "INCORRECTO",
-              style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: feedback.wasCorrect ? Colors.green : Colors.red)),
-          Text("Ganaste ${feedback.pointsEarned} puntos",
-              style: const TextStyle(fontSize: 16)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(correct ? Icons.check_circle : Icons.cancel, color: correct ? Colors.green : Colors.red),
+              const SizedBox(width: 8),
+              Text(correct ? "¡MUY BIEN!" : "¡SIGUE INTENTANDO!",
+                  style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      color: correct ? Colors.green : Colors.red)),
+            ],
+          ),
           const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
+            height: 50,
             child: ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.blueGrey),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: correct ? Colors.green : Colors.red,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
               onPressed: () {
                 context.read<GameBloc>().add(NextQuestion(feedback.attempt.attemptId));
               },
-              child: const Text("SIGUIENTE PREGUNTA", style: TextStyle(color: Colors.white)),
+              child: const Text("SIGUIENTE PREGUNTA", 
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryScreen(GameFinished state) {
+    final s = state.summary;
+    return SingleChildScrollView(
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.emoji_events_rounded, size: 100, color: Colors.amber),
+            const SizedBox(height: 16),
+            const Text("¡Increíble!", 
+              style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Color(0xFF2D3436))),
+            const Text("Has completado el desafío", style: TextStyle(fontSize: 16, color: Colors.grey)),
+            const SizedBox(height: 32),
+            _buildStatCard("PUNTAJE FINAL", "${s.finalScore}", Colors.deepPurple),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(child: _buildStatCard("Correctas", "${s.totalCorrectAnswers}/${s.totalQuestions}", Colors.green)),
+                const SizedBox(width: 16),
+                Expanded(child: _buildStatCard("Precisión", "${s.accuracyPercentage.toStringAsFixed(1)}%", Colors.blue)),
+              ],
+            ),
+            const SizedBox(height: 48),
+            SizedBox(
+              width: double.infinity,
+              height: 60,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.deepPurple,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))
+                ),
+                onPressed: () => Navigator.pop(context),
+                child: const Text("SALIR AL MENÚ", 
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+              ),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatCard(String label, String value, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+      ),
+      child: Column(
+        children: [
+          Text(label, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12)),
+          const SizedBox(height: 8),
+          Text(value, style: TextStyle(color: color, fontSize: 26, fontWeight: FontWeight.w900)),
         ],
       ),
     );
