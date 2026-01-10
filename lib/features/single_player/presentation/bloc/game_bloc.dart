@@ -59,7 +59,6 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       if (_lastAnswerResult!.attemptState == AttemptState.completed) {
         add(FinishGame(event.attemptId));
       } else {
-        // Ahora sí, actualizamos el estado a la siguiente pregunta
         final currentState = state;
         if (currentState is GameAnswerFeedback) {
           emit(GameInProgress(
@@ -80,7 +79,11 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       
       result.match(
         (failure) => emit(GameError(failure.message)),
-        (summary) {
+        (summary) {  
+          print("JSON RECIBIDO: ${result.toString()}");
+          print("DEBUG: Final Score: ${summary.finalScore}");
+          print("DEBUG: Correctas: ${summary.totalCorrectAnswers}");
+          print("DEBUG: Totales: ${summary.totalQuestions}");
           emit(GameFinished(summary));
         },
       );
