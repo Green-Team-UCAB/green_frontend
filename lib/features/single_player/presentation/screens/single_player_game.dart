@@ -102,11 +102,7 @@ class _SinglePlayerGameScreenState extends State<SinglePlayerGameScreen> {
 
             return Column(
               children: [
-                const LinearProgressIndicator(
-                  minHeight: 6,
-                  backgroundColor: Color(0xFFE0E0E0),
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.deepPurple),
-                ),
+                
 
                 // ÁREA DE PREGUNTA DINÁMICA (CON O SIN IMAGEN)
                 Expanded(
@@ -186,12 +182,12 @@ class _SinglePlayerGameScreenState extends State<SinglePlayerGameScreen> {
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 200),
                             decoration: BoxDecoration(
-                              color: isSelected ? color : Colors.white,
+                              color: isSelected ? color : color.withValues(alpha: 0.5),
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
                                 color: isSelected
                                     ? Colors.white
-                                    : color.withValues(alpha: 0.4),
+                                    : Colors.transparent,
                                 width: 2.5,
                               ),
                               boxShadow: [
@@ -263,7 +259,7 @@ class _SinglePlayerGameScreenState extends State<SinglePlayerGameScreen> {
           style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.bold,
-            color: isSelected ? Colors.white : color,
+            color: Colors.white,
           ),
         ),
       ),
@@ -278,7 +274,7 @@ class _SinglePlayerGameScreenState extends State<SinglePlayerGameScreen> {
       height: 60,
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.black,
+          backgroundColor: const Color.fromARGB(255, 113, 7, 146),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),
