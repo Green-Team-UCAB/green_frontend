@@ -52,6 +52,43 @@ class _SinglePlayerGameScreenState extends State<SinglePlayerGameScreen> {
           }
         },
         builder: (context, state) {
+          if (state is GameError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.error_outline_rounded,
+                        size: 80, color: Colors.red[300]),
+                    const SizedBox(height: 16),
+                    const Text(
+                      "Opps!",
+                      style:
+                          TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      state.message,
+                      textAlign: TextAlign.center,
+                      style:
+                          const TextStyle(fontSize: 16, color: Colors.black54),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                      ),
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text("Volver"),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
           if (state is GameFinished) return _buildSummaryScreen(state);
 
           if (state is GameInProgress || state is GameAnswerFeedback) {

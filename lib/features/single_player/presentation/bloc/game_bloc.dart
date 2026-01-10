@@ -18,37 +18,37 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     required this.submitAnswer,
     required this.getSummary,
   }) : super(GameInitial()) {
-    
     // 1. Iniciar Juego
     on<StartGame>((event, emit) async {
-      emit(GameLoading()); 
-      final result = await startAttempt(kahootId: event.kahootId); 
+      emit(GameLoading());
+      final result = await startAttempt(kahootId: event.kahootId);
       result.match(
-        (failure) => emit(GameError(failure.message)), 
-        (attempt) => emit(GameInProgress(attempt)), 
+        (failure) => emit(GameError(failure.message)),
+        (attempt) => emit(GameInProgress(attempt)),
       );
     });
 
     // 2. Responder (Asegúrate de que esté AQUÍ, no dentro de StartGame)
     on<SubmitAnswerEvent>((event, emit) async {
-      final result = await submitAnswer(event.attemptId, event.answer); 
-      
+      final currentState = state;
+      if (currentState is! GameInProgress) return;
+
+      final currentAttempt = currentState.attempt;
+      emit(GameLoading());
+
+      final result = await submitAnswer(event.attemptId, event.answer);
+
       result.match(
         (failure) => emit(GameError(failure.message)),
         (answerResult) {
-          _lastAnswerResult = answerResult; // Guardamos para el siguiente paso
-          
-          if (state is GameInProgress) {
-            final currentState = state as GameInProgress;
-            
-            // EMITIMOS FEEDBACK en lugar de la siguiente pregunta directo
-            emit(GameAnswerFeedback(
-              attempt: currentState.attempt,
-              wasCorrect: answerResult.wasCorrect,
-              pointsEarned: answerResult.pointsEarned,
-              nextScore: answerResult.updatedScore,
-            ));
-          }
+          _lastAnswerResult = answerResult;
+
+          emit(GameAnswerFeedback(
+            attempt: currentAttempt,
+            wasCorrect: answerResult.wasCorrect,
+            pointsEarned: answerResult.pointsEarned,
+            nextScore: answerResult.updatedScore,
+          ));
         },
       );
     });
@@ -74,16 +74,12 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     // 3. Finalizar
     on<FinishGame>((event, emit) async {
       emit(GameLoading());
-      
+
       final result = await getSummary(event.attemptId);
-      
+
       result.match(
         (failure) => emit(GameError(failure.message)),
-        (summary) {  
-          print("JSON RECIBIDO: ${result.toString()}");
-          print("DEBUG: Final Score: ${summary.finalScore}");
-          print("DEBUG: Correctas: ${summary.totalCorrectAnswers}");
-          print("DEBUG: Totales: ${summary.totalQuestions}");
+        (summary) {
           emit(GameFinished(summary));
         },
       );
