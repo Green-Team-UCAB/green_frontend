@@ -60,7 +60,8 @@ class _SinglePlayerGameScreenState extends State<SinglePlayerGameScreen> {
                 ? state.attempt.nextSlide
                 : (state as GameAnswerFeedback).attempt.nextSlide;
 
-            if (slide == null) return const Center(child: CircularProgressIndicator());
+            if (slide == null)
+              return const Center(child: CircularProgressIndicator());
 
             return Column(
               children: [
@@ -69,7 +70,7 @@ class _SinglePlayerGameScreenState extends State<SinglePlayerGameScreen> {
                   backgroundColor: Color(0xFFE0E0E0),
                   valueColor: AlwaysStoppedAnimation<Color>(Colors.deepPurple),
                 ),
-                
+
                 // ÁREA DE PREGUNTA DINÁMICA (CON O SIN IMAGEN)
                 Expanded(
                   flex: 3,
@@ -86,7 +87,7 @@ class _SinglePlayerGameScreenState extends State<SinglePlayerGameScreen> {
                                 borderRadius: BorderRadius.circular(20),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.1),
+                                    color: Colors.black.withValues(alpha: 0.1),
                                     blurRadius: 10,
                                   )
                                 ],
@@ -120,8 +121,9 @@ class _SinglePlayerGameScreenState extends State<SinglePlayerGameScreen> {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: GridView.builder(
-                      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                        maxCrossAxisExtent: 250, 
+                      gridDelegate:
+                          const SliverGridDelegateWithMaxCrossAxisExtent(
+                        maxCrossAxisExtent: 250,
                         crossAxisSpacing: 12,
                         mainAxisSpacing: 12,
                         childAspectRatio: 1.3,
@@ -133,27 +135,31 @@ class _SinglePlayerGameScreenState extends State<SinglePlayerGameScreen> {
                         final color = optionColors[index % optionColors.length];
 
                         return GestureDetector(
-                          onTap: isFeedback ? null : () {
-                            setState(() {
-                              if (selectedIndices.contains(index)) {
-                                selectedIndices.remove(index);
-                              } else {
-                                selectedIndices.add(index);
-                              }
-                            });
-                          },
+                          onTap: isFeedback
+                              ? null
+                              : () {
+                                  setState(() {
+                                    if (selectedIndices.contains(index)) {
+                                      selectedIndices.remove(index);
+                                    } else {
+                                      selectedIndices.add(index);
+                                    }
+                                  });
+                                },
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 200),
                             decoration: BoxDecoration(
                               color: isSelected ? color : Colors.white,
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
-                                color: isSelected ? Colors.white : color.withOpacity(0.4),
+                                color: isSelected
+                                    ? Colors.white
+                                    : color.withValues(alpha: 0.4),
                                 width: 2.5,
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: color.withOpacity(0.1),
+                                  color: color.withValues(alpha: 0.1),
                                   blurRadius: 8,
                                   offset: const Offset(0, 4),
                                 )
@@ -161,7 +167,8 @@ class _SinglePlayerGameScreenState extends State<SinglePlayerGameScreen> {
                             ),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(18),
-                              child: _buildOptionContent(option, isSelected, color),
+                              child: _buildOptionContent(
+                                  option, isSelected, color),
                             ),
                           ),
                         );
@@ -174,7 +181,8 @@ class _SinglePlayerGameScreenState extends State<SinglePlayerGameScreen> {
                   padding: const EdgeInsets.fromLTRB(20, 10, 20, 40),
                   child: isFeedback
                       ? _buildFeedbackSection(state as GameAnswerFeedback)
-                      : _buildSubmitButton(state as GameInProgress, slide.slideId),
+                      : _buildSubmitButton(
+                          state as GameInProgress, slide.slideId),
                 ),
               ],
             );
@@ -195,12 +203,14 @@ class _SinglePlayerGameScreenState extends State<SinglePlayerGameScreen> {
           Image.network(
             option.mediaID!,
             fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image),
+            errorBuilder: (context, error, stackTrace) =>
+                const Icon(Icons.broken_image),
           ),
           if (isSelected)
             Container(
-              color: color.withOpacity(0.4),
-              child: const Icon(Icons.check_circle, color: Colors.white, size: 40),
+              color: color.withValues(alpha: 0.4),
+              child:
+                  const Icon(Icons.check_circle, color: Colors.white, size: 40),
             ),
         ],
       );
@@ -232,22 +242,28 @@ class _SinglePlayerGameScreenState extends State<SinglePlayerGameScreen> {
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.black,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),
-        onPressed: selectedIndices.isEmpty ? null : () {
-          context.read<GameBloc>().add(
-            SubmitAnswerEvent(
-              state.attempt.attemptId,
-              Answer(
-                slideId: slideId,
-                answerIndex: selectedIndices.toList(),
-                timeElapsedSeconds: 5,
-              ),
-            ),
-          );
-        },
+        onPressed: selectedIndices.isEmpty
+            ? null
+            : () {
+                context.read<GameBloc>().add(
+                      SubmitAnswerEvent(
+                        state.attempt.attemptId,
+                        Answer(
+                          slideId: slideId,
+                          answerIndex: selectedIndices.toList(),
+                          timeElapsedSeconds: 5,
+                        ),
+                      ),
+                    );
+              },
         child: const Text("ENVIAR RESPUESTA",
-            style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+            style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold)),
       ),
     );
   }
@@ -259,14 +275,16 @@ class _SinglePlayerGameScreenState extends State<SinglePlayerGameScreen> {
       decoration: BoxDecoration(
         color: correct ? Colors.green.shade50 : Colors.red.shade50,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: correct ? Colors.green : Colors.red, width: 2),
+        border:
+            Border.all(color: correct ? Colors.green : Colors.red, width: 2),
       ),
       child: Column(
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(correct ? Icons.check_circle : Icons.cancel, color: correct ? Colors.green : Colors.red),
+              Icon(correct ? Icons.check_circle : Icons.cancel,
+                  color: correct ? Colors.green : Colors.red),
               const SizedBox(width: 8),
               Text(correct ? "¡MUY BIEN!" : "¡SIGUE INTENTANDO!",
                   style: TextStyle(
@@ -282,13 +300,17 @@ class _SinglePlayerGameScreenState extends State<SinglePlayerGameScreen> {
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: correct ? Colors.green : Colors.red,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
               onPressed: () {
-                context.read<GameBloc>().add(NextQuestion(feedback.attempt.attemptId));
+                context
+                    .read<GameBloc>()
+                    .add(NextQuestion(feedback.attempt.attemptId));
               },
-              child: const Text("SIGUIENTE PREGUNTA", 
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              child: const Text("SIGUIENTE PREGUNTA",
+                  style: TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.bold)),
             ),
           ),
         ],
@@ -305,19 +327,33 @@ class _SinglePlayerGameScreenState extends State<SinglePlayerGameScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.emoji_events_rounded, size: 100, color: Colors.amber),
+            const Icon(Icons.emoji_events_rounded,
+                size: 100, color: Colors.amber),
             const SizedBox(height: 16),
-            const Text("¡Increíble!", 
-              style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Color(0xFF2D3436))),
-            const Text("Has completado el desafío", style: TextStyle(fontSize: 16, color: Colors.grey)),
+            const Text("¡Increíble!",
+                style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF2D3436))),
+            const Text("Has completado el desafío",
+                style: TextStyle(fontSize: 16, color: Colors.grey)),
             const SizedBox(height: 32),
-            _buildStatCard("PUNTAJE FINAL", "${s.finalScore}", Colors.deepPurple),
+            _buildStatCard(
+                "PUNTAJE FINAL", "${s.finalScore}", Colors.deepPurple),
             const SizedBox(height: 16),
             Row(
               children: [
-                Expanded(child: _buildStatCard("Correctas", "${s.totalCorrectAnswers}/${s.totalQuestions}", Colors.green)),
+                Expanded(
+                    child: _buildStatCard(
+                        "Correctas",
+                        "${s.totalCorrectAnswers}/${s.totalQuestions}",
+                        Colors.green)),
                 const SizedBox(width: 16),
-                Expanded(child: _buildStatCard("Precisión", "${s.accuracyPercentage.toStringAsFixed(1)}%", Colors.blue)),
+                Expanded(
+                    child: _buildStatCard(
+                        "Precisión",
+                        "${s.accuracyPercentage.toStringAsFixed(1)}%",
+                        Colors.blue)),
               ],
             ),
             const SizedBox(height: 48),
@@ -326,12 +362,15 @@ class _SinglePlayerGameScreenState extends State<SinglePlayerGameScreen> {
               height: 60,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.deepPurple,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))
-                ),
+                    backgroundColor: Colors.deepPurple,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16))),
                 onPressed: () => Navigator.pop(context),
-                child: const Text("SALIR AL MENÚ", 
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                child: const Text("SALIR AL MENÚ",
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16)),
               ),
             )
           ],
@@ -346,13 +385,19 @@ class _SinglePlayerGameScreenState extends State<SinglePlayerGameScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)
+        ],
       ),
       child: Column(
         children: [
-          Text(label, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12)),
+          Text(label,
+              style: TextStyle(
+                  color: color, fontWeight: FontWeight.bold, fontSize: 12)),
           const SizedBox(height: 8),
-          Text(value, style: TextStyle(color: color, fontSize: 26, fontWeight: FontWeight.w900)),
+          Text(value,
+              style: TextStyle(
+                  color: color, fontSize: 26, fontWeight: FontWeight.w900)),
         ],
       ),
     );
