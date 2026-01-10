@@ -94,7 +94,7 @@ class AuthRemoteDataSourceImpl implements AuthDataSource {
       final token = data['accessToken'] as String;
 
       client.setAuthToken(token);
-      await TokenStorage.saveToken(token); // Descomentar si deseas persistencia
+      await TokenStorage.saveToken(token); 
 
       return UserModel.fromJson(userJson);
     }
