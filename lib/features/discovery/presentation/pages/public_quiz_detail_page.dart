@@ -18,15 +18,8 @@ class PublicQuizDetailPage extends StatelessWidget {
   Widget build(BuildContext context) {
     // 1. WRAPPER: Inyectamos el LibraryBloc y cargamos los datos al entrar.
     // Esto permite saber inmediatamente si el quiz ya era favorito o no.
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider(
-          create: (_) => sl<LibraryBloc>()..add(LoadLibraryDataEvent()),
-        ),
-        BlocProvider(
-          create: (_) => sl<GameBloc>(),
-        ),
-      ],
+    return BlocProvider(
+      create: (_) => sl<LibraryBloc>()..add(LoadLibraryDataEvent()),
       child: _QuizDetailView(quiz: quiz),
     );
   }
@@ -42,8 +35,9 @@ class _QuizDetailView extends StatelessWidget {
     final quizId = quiz['id'];
     final title = quiz['title'] ?? 'Sin título';
     final description = quiz['description'] ?? 'Sin descripción disponible.';
-    final authorName =
-        quiz['author'] != null ? quiz['author']['name'] : 'Desconocido';
+    final authorName = quiz['author'] != null
+        ? quiz['author']['name']
+        : 'Desconocido';
     final playCount = quiz['playCount'] ?? 0;
     final questionsCount = quiz['questionsCount'] ?? 0;
     final imageUrl = quiz['coverImageId'];
@@ -85,11 +79,11 @@ class _QuizDetailView extends StatelessWidget {
                       onPressed: () {
                         // Disparamos el evento al BLoC
                         context.read<LibraryBloc>().add(
-                              ToggleFavoriteInLibraryEvent(
-                                kahootId: quizId,
-                                isCurrentlyFavorite: isFavorite,
-                              ),
-                            );
+                          ToggleFavoriteInLibraryEvent(
+                            kahootId: quizId,
+                            isCurrentlyFavorite: isFavorite,
+                          ),
+                        );
                       },
                     ),
                   );
@@ -113,6 +107,7 @@ class _QuizDetailView extends StatelessWidget {
                         color: Colors.white,
                       ),
                     ),
+
                   const DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -265,6 +260,7 @@ class _QuizDetailView extends StatelessWidget {
               ),
             );
           },
+
           child: const Text(
             "JUGAR AHORA",
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),

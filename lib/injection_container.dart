@@ -57,18 +57,6 @@ import 'features/groups/application/delete_group_use_case.dart';
 // --- Feature: IA (Épica 9) ---
 import 'core/network/ai_service.dart';
 
-// --- Feature: Single Player ---
-import 'features/single_player/infraestructure/datasources/async_game_datasource.dart';
-import 'features/single_player/infraestructure/repositories/async_game_repository_impl.dart';
-import 'features/single_player/domain/repositories/async_game_repository.dart';
-import 'features/single_player/presentation/bloc/game_bloc.dart';
-import 'features/single_player/application/start_attempt.dart';
-import 'features/single_player/application/submit_answer.dart';
-import 'features/single_player/application/get_summary.dart';
-
-// Core Mappers
-import 'core/mappers/exception_failure_mapper.dart';
-
 // Instancia global del Service Locator
 final sl = GetIt.instance;
 
@@ -186,27 +174,6 @@ Future<void> init() async {
     () => GroupsRemoteDataSourceImpl(apiClient: sl()),
   );
 
-  // --- Single Player ---
-  // Use Cases
-  sl.registerLazySingleton(() => StartAttempt(sl()));
-  sl.registerLazySingleton(() => SubmitAnswer(sl()));
-  sl.registerLazySingleton(() => GetSummary(sl()));
-
-  // Bloc
-  sl.registerFactory(
-    () => GameBloc(startAttempt: sl(), submitAnswer: sl(), getSummary: sl()),
-  );
-
-  // Repository
-  sl.registerLazySingleton<AsyncGameRepository>(
-    () => AsyncGameRepositoryImpl(dataSource: sl(), mapper: sl()),
-  );
-
-  // Data Source
-  sl.registerLazySingleton<AsyncGameDataSource>(
-    () => AsyncGameDataSourceImpl(dio: sl()),
-  );
-
   // ================================================================
   // 2. CORE & EXTERNAL
   // ================================================================
@@ -230,9 +197,6 @@ Future<void> init() async {
 
   // AI Service
   sl.registerLazySingleton<AiService>(() => AiService());
-
-  // Mappers
-  sl.registerLazySingleton(() => ExceptionFailureMapper());
 
   // ================================================================
   // 3. INICIALIZACIÓN DE SESIÓN
