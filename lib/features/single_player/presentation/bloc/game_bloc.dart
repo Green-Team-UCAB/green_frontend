@@ -74,9 +74,16 @@ class GameBloc extends Bloc<GameEvent, GameState> {
 
     // 3. Finalizar
     on<FinishGame>((event, emit) async {
-       emit(GameLoading());
-       final result = await getSummary(event.attemptId);
-       // Aquí se emite un estado GameFinished(summary)
+      emit(GameLoading());
+      
+      final result = await getSummary(event.attemptId);
+      
+      result.match(
+        (failure) => emit(GameError(failure.message)),
+        (summary) {
+          emit(GameFinished(summary));
+        },
+      );
     });
   }
 }

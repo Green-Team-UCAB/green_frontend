@@ -1,5 +1,5 @@
 import 'package:green_frontend/features/single_player/domain/entities/attempt.dart';
-
+import 'package:green_frontend/features/single_player/domain/entities/summary.dart';
 
 
 abstract class GameState {}
@@ -30,4 +30,12 @@ class GameAnswerFeedback extends GameState {
     required this.pointsEarned,
     required this.nextScore,
   });
+
+
+}
+
+class GameFinished extends GameState {
+  final Summary summary; 
+
+  GameFinished(this.summary);
 }

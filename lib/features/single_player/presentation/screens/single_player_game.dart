@@ -4,6 +4,13 @@ import 'package:green_frontend/features/single_player/presentation/bloc/game_blo
 import 'package:green_frontend/features/single_player/presentation/bloc/game_state.dart';
 import 'package:green_frontend/features/single_player/presentation/bloc/game_event.dart';
 import 'package:green_frontend/features/single_player/domain/entities/answer.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:green_frontend/features/single_player/presentation/bloc/game_bloc.dart';
+import 'package:green_frontend/features/single_player/presentation/bloc/game_state.dart';
+import 'package:green_frontend/features/single_player/presentation/bloc/game_event.dart';
+import 'package:green_frontend/features/single_player/domain/entities/answer.dart';
+
 class SinglePlayerGameScreen extends StatefulWidget {
   const SinglePlayerGameScreen({super.key});
 
@@ -12,8 +19,7 @@ class SinglePlayerGameScreen extends StatefulWidget {
 }
 
 class _SinglePlayerGameScreenState extends State<SinglePlayerGameScreen> {
-  
-  Set<int> selectedIndices = {}; 
+  Set<int> selectedIndices = {};
 
   @override
   Widget build(BuildContext context) {
@@ -21,41 +27,46 @@ class _SinglePlayerGameScreenState extends State<SinglePlayerGameScreen> {
       appBar: AppBar(
         title: BlocBuilder<GameBloc, GameState>(
           builder: (context, state) {
-            // Mostramos el puntaje acumulado dinámicamente
             int score = 0;
             if (state is GameInProgress) score = state.attempt.currentScore;
             if (state is GameAnswerFeedback) score = state.attempt.currentScore;
+            
+            // Si el juego terminó, no mostramos el puntaje en el AppBar porque ya está en el resumen
+            if (state is GameFinished) return const Text("Resultados Finales");
+            
             return Text("Puntaje: $score");
           },
         ),
       ),
       body: BlocConsumer<GameBloc, GameState>(
         listener: (context, state) {
-          // Al entrar a una nueva pregunta, limpiamos la selección
           if (state is GameInProgress) {
             setState(() => selectedIndices.clear());
           }
         },
         builder: (context, state) {
+          // 1. Manejo del estado final (Resumen)
+          if (state is GameFinished) {
+            return _buildSummaryScreen(state);
+          }
+
+          // 2. Manejo del juego en progreso o feedback
           if (state is GameInProgress || state is GameAnswerFeedback) {
             final isFeedback = state is GameAnswerFeedback;
-            
-            // Obtenemos el slide actual dependiendo del estado
-            final slide = (state is GameInProgress) 
-                ? state.attempt.nextSlide 
+            final slide = (state is GameInProgress)
+                ? state.attempt.nextSlide
                 : (state as GameAnswerFeedback).attempt.nextSlide;
 
-            if (slide == null) return const Center(child: Text("¡Fin del juego!"));
+            if (slide == null) return const Center(child: Text("Cargando resultados..."));
 
             return Column(
               children: [
-                const LinearProgressIndicator(value: 0.5),
+                const LinearProgressIndicator(),
                 Padding(
                   padding: const EdgeInsets.all(20.0),
-                  child: Text(slide.questionText, 
-                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                  child: Text(slide.questionText,
+                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
                 ),
-                
                 Expanded(
                   child: ListView.builder(
                     itemCount: slide.options.length,
@@ -67,20 +78,15 @@ class _SinglePlayerGameScreenState extends State<SinglePlayerGameScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            // Resaltamos si está seleccionado
                             backgroundColor: isSelected ? Colors.deepPurple : Colors.white,
                             foregroundColor: isSelected ? Colors.white : Colors.black,
                             side: BorderSide(color: Colors.deepPurple.withOpacity(0.5)),
                           ),
-                          // Si ya estamos en feedback, deshabilitamos la selección
                           onPressed: isFeedback ? null : () {
                             setState(() {
                               if (selectedIndices.contains(index)) {
                                 selectedIndices.remove(index);
                               } else {
-                                // Lógica: si es de selección única, limpiamos antes de añadir
-                                // (Aquí podrías chequear slide.type si tu modelo lo tiene)
-                                // selectedIndices.clear(); 
                                 selectedIndices.add(index);
                               }
                             });
@@ -91,24 +97,105 @@ class _SinglePlayerGameScreenState extends State<SinglePlayerGameScreen> {
                     },
                   ),
                 ),
-
-                // AREA DINÁMICA: FEEDBACK O BOTÓN ENVIAR
                 Padding(
                   padding: const EdgeInsets.all(20.0),
-                  child: isFeedback 
-                    ? _buildFeedbackSection(state as GameAnswerFeedback)
-                    : _buildSubmitButton(state as GameInProgress, slide.slideId),
+                  child: isFeedback
+                      ? _buildFeedbackSection(state as GameAnswerFeedback)
+                      : _buildSubmitButton(state as GameInProgress, slide.slideId),
                 ),
               ],
             );
           }
-          return const Center(child: CircularProgressIndicator());
+
+          if (state is GameLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (state is GameError) {
+            return Center(child: Text("Error: ${state.message}"));
+          }
+
+          return const Center(child: Text("Iniciando juego..."));
         },
       ),
     );
   }
 
-  // Widget para enviar la respuesta (Seleccionada -> Procesando)
+  // --- NUEVA VISTA DE RESUMEN ---
+  Widget _buildSummaryScreen(GameFinished state) {
+    final s = state.summary; // Usando tu entidad Summary
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.stars, size: 80, color: Colors.amber),
+          const SizedBox(height: 16),
+          const Text("¡Juego Terminado!", 
+            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 32),
+          
+          _buildStatCard("Puntaje Total", "${s.finalScore}", Colors.deepPurple),
+          const SizedBox(height: 16),
+          
+          Row(
+            children: [
+              Expanded(
+                child: _buildStatCard(
+                  "Correctas", 
+                  "${s.totalCorrectAnswers}/${s.totalQuestions}", 
+                  Colors.green
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildStatCard(
+                  "Precisión", 
+                  "${s.accuracyPercentage.toStringAsFixed(1)}%", 
+                  Colors.blue
+                ),
+              ),
+            ],
+          ),
+          
+          const SizedBox(height: 48),
+          SizedBox(
+            width: double.infinity,
+            height: 55,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.deepPurple,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))
+              ),
+              onPressed: () => Navigator.pop(context),
+              child: const Text("VOLVER A LA BIBLIOTECA", 
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatCard(String label, String value, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.5)),
+      ),
+      child: Column(
+        children: [
+          Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w500)),
+          const SizedBox(height: 4),
+          Text(value, style: TextStyle(color: color, fontSize: 22, fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSubmitButton(GameInProgress state, String slideId) {
     return SizedBox(
       width: double.infinity,
@@ -121,19 +208,18 @@ class _SinglePlayerGameScreenState extends State<SinglePlayerGameScreen> {
               state.attempt.attemptId,
               Answer(
                 slideId: slideId,
-                answerIndex: selectedIndices.toList(), // Enviamos todos los seleccionados
+                answerIndex: selectedIndices.toList(),
                 timeElapsedSeconds: 5,
               ),
             ),
           );
         },
-        child: const Text("ENVIAR RESPUESTA", 
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        child: const Text("ENVIAR RESPUESTA",
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       ),
     );
   }
 
-  // Widget que muestra si acertó y el botón para pasar a la siguiente
   Widget _buildFeedbackSection(GameAnswerFeedback feedback) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -145,13 +231,12 @@ class _SinglePlayerGameScreenState extends State<SinglePlayerGameScreen> {
       child: Column(
         children: [
           Text(feedback.wasCorrect ? "¡CORRECTO!" : "INCORRECTO",
-            style: TextStyle(
-              fontSize: 20, 
-              fontWeight: FontWeight.bold, 
-              color: feedback.wasCorrect ? Colors.green : Colors.red
-            )),
-          Text("Ganaste ${feedback.pointsEarned} puntos", 
-            style: const TextStyle(fontSize: 16)),
+              style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: feedback.wasCorrect ? Colors.green : Colors.red)),
+          Text("Ganaste ${feedback.pointsEarned} puntos",
+              style: const TextStyle(fontSize: 16)),
           const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
