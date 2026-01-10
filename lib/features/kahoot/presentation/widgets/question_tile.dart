@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:green_frontend/features/kahoot/domain/entities/question.dart';
 
-
 class QuestionTile extends StatelessWidget {
   final Question question;
   final int index;
@@ -18,6 +17,10 @@ class QuestionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Contar respuestas con multimedia
+    int answersWithMedia = question.answers.where((a) => a.mediaId != null && a.mediaId!.isNotEmpty).length;
+    bool hasQuestionMedia = question.mediaId != null && question.mediaId!.isNotEmpty;
+
     return Card(
       margin: EdgeInsets.only(bottom: 8),
       child: ListTile(
@@ -28,16 +31,58 @@ class QuestionTile extends StatelessWidget {
             style: TextStyle(color: Colors.white),
           ),
         ),
-        title: Text(
-          question.text.isNotEmpty ? question.text : 'Pregunta ${index + 1}',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+        title: Row(
+          children: [
+            Expanded(
+              child: Text(
+                question.text.isNotEmpty ? question.text : 'Pregunta ${index + 1}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            if (hasQuestionMedia)
+              Padding(
+                padding: const EdgeInsets.only(left: 4),
+                child: Icon(Icons.image, size: 16, color: Colors.blue),
+              ),
+          ],
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              question.type == QuestionType.quiz ? 'Quiz' : 'Verdadero o Falso',
+            Row(
+              children: [
+                Text(
+                  question.type == QuestionType.quiz ? 'Quiz' : 'V/F',
+                  style: TextStyle(fontSize: 12),
+                ),
+                SizedBox(width: 8),
+                if (answersWithMedia > 0)
+                  Row(
+                    children: [
+                      Icon(Icons.image, size: 12, color: Colors.green),
+                      SizedBox(width: 2),
+                      Text(
+                        '$answersWithMedia',
+                        style: TextStyle(fontSize: 10, color: Colors.green),
+                      ),
+                    ],
+                  ),
+                SizedBox(width: 8),
+                Icon(Icons.timer, size: 12),
+                SizedBox(width: 2),
+                Text(
+                  '${question.timeLimit}s',
+                  style: TextStyle(fontSize: 10),
+                ),
+                SizedBox(width: 8),
+                Icon(Icons.star, size: 12, color: Colors.amber),
+                SizedBox(width: 2),
+                Text(
+                  '${question.points} pts',
+                  style: TextStyle(fontSize: 10),
+                ),
+              ],
             ),
             if (question.id != null)
               Text(
@@ -55,4 +100,3 @@ class QuestionTile extends StatelessWidget {
     );
   }
 }
-
