@@ -77,9 +77,9 @@ class _SplashPageState extends State<SplashPage>
             mainAxisSize: MainAxisSize.min,
             children: [
               Image.asset(
-                'assets/appIcon.png', 
-                width: 180,
-                height: 180,
+                'assets/purpleicon2.png', 
+                width: 200,
+                height: 200,
               ),
               const SizedBox(height: 16),
               const Text(
@@ -87,7 +87,7 @@ class _SplashPageState extends State<SplashPage>
                 style: TextStyle(
                   fontSize: 50,
                   fontWeight: FontWeight.bold,
-                  color: Color.fromARGB(255, 88, 220, 81),
+                  color: Color.fromARGB(255, 124, 12, 136),
                 ),
               ),
             ],

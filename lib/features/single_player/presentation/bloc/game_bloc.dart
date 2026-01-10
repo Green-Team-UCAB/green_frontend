@@ -28,7 +28,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       );
     });
 
-    // 2. Responder (Asegúrate de que esté AQUÍ, no dentro de StartGame)
+    // 2. Responder 
     on<SubmitAnswerEvent>((event, emit) async {
       final currentState = state;
       if (currentState is! GameInProgress) return;
