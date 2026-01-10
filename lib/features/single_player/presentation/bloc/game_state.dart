@@ -1,5 +1,5 @@
 import 'package:green_frontend/features/single_player/domain/entities/attempt.dart';
-
+import 'package:green_frontend/features/single_player/domain/entities/summary.dart';
 
 
 abstract class GameState {}
@@ -18,3 +18,24 @@ class GameError extends GameState {
   GameError(this.message);
 }
 
+class GameAnswerFeedback extends GameState {
+  final Attempt attempt;
+  final bool wasCorrect;
+  final int pointsEarned;
+  final int nextScore;
+
+  GameAnswerFeedback({
+    required this.attempt,
+    required this.wasCorrect,
+    required this.pointsEarned,
+    required this.nextScore,
+  });
+
+
+}
+
+class GameFinished extends GameState {
+  final Summary summary; 
+
+  GameFinished(this.summary);
+}

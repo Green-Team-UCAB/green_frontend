@@ -326,10 +326,7 @@ Widget _buildPlayerControls(BuildContext context, String quizId) {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => BlocProvider.value(
-            value: context.read<GameBloc>(),
-            child: SinglePlayerGameScreen(),
-          ),
+          builder: (_) => const SinglePlayerGameScreen(),
         ),
       );
     },

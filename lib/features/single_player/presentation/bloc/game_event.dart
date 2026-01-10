@@ -15,6 +15,11 @@ class SubmitAnswerEvent extends GameEvent {
   SubmitAnswerEvent(this.attemptId, this.answer);
 }
 
+class NextQuestion extends GameEvent {
+  final String attemptId;
+  NextQuestion(this.attemptId);
+}
+
 class FinishGame extends GameEvent {
   final String attemptId;
   FinishGame(this.attemptId);
