@@ -22,3 +22,4 @@ class SaveKahootUseCase {
     return await repository.saveKahoot(kahoot);
   }
 }
+

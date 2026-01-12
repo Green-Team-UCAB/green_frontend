@@ -5,3 +5,4 @@ abstract class KahootRepository {
   Future<List<Kahoot>> getKahoots();
   Future<void> deleteKahoot(String id);
 }
+

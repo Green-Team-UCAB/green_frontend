@@ -1,22 +1,24 @@
 import 'package:green_frontend/features/kahoot/domain/entities/theme_image.dart';
 
-
-
-
 class ThemeMapper {
   static ThemeImage fromJson(Map<String, dynamic> json) {
+    // Leer en ambos formatos
+    final id = json['AssetId'] ?? json['assetId']?.toString() ?? '';
+    final name = json['Name'] ?? json['name']?.toString() ?? '';
+    final imageUrl = json['Url'] ?? json['url']?.toString() ?? '';
+
     return ThemeImage(
-      id: json['id']?.toString() ?? '',
-      name: json['name']?.toString() ?? '',
-      imageUrl: json['imageUrl']?.toString() ?? '',
+      id: id,
+      name: name,
+      imageUrl: imageUrl,
     );
   }
 
   static Map<String, dynamic> toJson(ThemeImage theme) {
     return {
-      'id': theme.id,
-      'name': theme.name,
-      'imageUrl': theme.imageUrl,
+      'Id': theme.id,
+      'Name': theme.name,
+      'ImageUrl': theme.imageUrl,
     };
   }
 }

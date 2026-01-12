@@ -19,8 +19,9 @@ abstract class GroupsRepository {
   Future<Either<Failure, void>> assignQuiz(
     String groupId,
     String quizId,
-    String availableUntil,
-  );
+    String availableUntil, {
+    String? quizTitle,
+  });
   Future<Either<Failure, void>> updateGroup(
     String groupId,
     String name,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../features/library/domain/entities/kahoot_summary.dart';
 import '../../../../injection_container.dart';
 import '../bloc/kahoot_selection_bloc.dart';
 
@@ -71,17 +72,12 @@ class KahootSelectionPage extends StatelessWidget {
 }
 
 class _KahootSelectionCard extends StatelessWidget {
-  final dynamic kahoot;
+  final KahootSummary kahoot;
 
   const _KahootSelectionCard({required this.kahoot});
 
   @override
   Widget build(BuildContext context) {
-    // Intentamos obtener el número de preguntas de forma segura
-    final questionsCount = (kahoot['questions'] is List)
-        ? (kahoot['questions'] as List).length
-        : 0;
-
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -98,10 +94,10 @@ class _KahootSelectionCard extends StatelessWidget {
           child: const Icon(Icons.quiz, color: Colors.deepPurple),
         ),
         title: Text(
-          kahoot['title'] ?? 'Sin título',
+          kahoot.title,
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        subtitle: Text("$questionsCount preguntas"),
+        subtitle: Text(kahoot.description ?? "Sin descripción"),
         trailing: const Icon(
           Icons.add_circle_outline,
           color: Colors.deepPurple,
@@ -111,7 +107,7 @@ class _KahootSelectionCard extends StatelessWidget {
     );
   }
 
-  void _showDatePicker(BuildContext context, dynamic kahoot) async {
+  void _showDatePicker(BuildContext context, KahootSummary kahoot) async {
     final now = DateTime.now();
     final pickedDate = await showDatePicker(
       context: context,
@@ -143,7 +139,8 @@ class _KahootSelectionCard extends StatelessWidget {
 
       if (context.mounted) {
         Navigator.pop(context, {
-          'quizId': kahoot['id'], // Asegúrate que tu API retorna 'id' o '_id'
+          'quizId': kahoot.id,
+          'quizTitle': kahoot.title,
           'availableUntil': endOfDay.toIso8601String(),
         });
       }

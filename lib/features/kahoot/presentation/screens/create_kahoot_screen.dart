@@ -1,14 +1,20 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:green_frontend/features/kahoot/domain/entities/question.dart';
 import 'package:green_frontend/features/kahoot/domain/entities/theme_image.dart';
+import 'package:green_frontend/features/kahoot/presentation/screens/normal_question_screen.dart';
 import 'package:green_frontend/features/kahoot/presentation/screens/question_type_selection_screen.dart';
+import 'package:green_frontend/features/kahoot/presentation/screens/true_false_question_screen.dart';
 import 'package:green_frontend/features/kahoot/presentation/widgets/question_tile.dart';
 import 'package:provider/provider.dart';
 import 'theme_selection_screen.dart';
-import '../../application/providers/kahoot_provider.dart';
-import '../../application/providers/theme_provider.dart';
+import 'package:green_frontend/features/kahoot/application/providers/kahoot_provider.dart';
+import 'package:green_frontend/features/kahoot/application/providers/theme_provider.dart';
+import 'package:green_frontend/features/media/application/providers/media_provider.dart';
+import 'package:green_frontend/features/discovery/application/providers/category_provider.dart';
 
 class CreateKahootScreen extends StatefulWidget {
-  const CreateKahootScreen({super.key});
+  CreateKahootScreen({Key? key}) : super(key: key);
 
   @override
   _CreateKahootScreenState createState() => _CreateKahootScreenState();
@@ -19,42 +25,71 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
   final _descriptionController = TextEditingController();
   String? _selectedVisibility = 'private';
   String? _selectedCategory;
-
-  final List<String> _categories = [
-    'Matemáticas',
-    'Ciencias',
-    'Historia',
-    'Geografía',
-    'Idiomas',
-    'Arte',
-    'Tecnología',
-    'Deportes',
-  ];
+  String? _selectedThemeName = 'Seleccionar tema';
+  String? _selectedThemeId = '';
+  String? _selectedCoverImageId;
+  String? _selectedCoverLocalPath;
 
   @override
   void initState() {
     super.initState();
-    _selectedCategory = _categories.first;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+      final categoryProvider =
+          Provider.of<CategoryProvider>(context, listen: false);
+
+      if (themeProvider.themes.isEmpty) {
+        themeProvider.loadThemes();
+      }
+
+      if (categoryProvider.categories.isEmpty) {
+        categoryProvider.loadCategories();
+      }
+    });
+  }
+
+  Future<void> _pickCoverImage() async {
+    final mediaProvider = Provider.of<MediaProvider>(context, listen: false);
+    try {
+      final media = await mediaProvider.pickImageFromGallery();
+      if (media != null) {
+        setState(() {
+          _selectedCoverImageId = media.id;
+          _selectedCoverLocalPath = media.localPath;
+        });
+
+        final kahootProvider =
+            Provider.of<KahootProvider>(context, listen: false);
+        kahootProvider.setCoverImageId(media.id);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Imagen de portada añadida correctamente')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al seleccionar imagen: $e')),
+      );
+    }
+  }
+
+  void _removeCoverImage() {
+    setState(() {
+      _selectedCoverImageId = null;
+      _selectedCoverLocalPath = null;
+    });
+
+    final kahootProvider = Provider.of<KahootProvider>(context, listen: false);
+    kahootProvider.setCoverImageId(null);
   }
 
   @override
   Widget build(BuildContext context) {
     final kahootProvider = Provider.of<KahootProvider>(context);
     final themeProvider = Provider.of<ThemeProvider>(context);
-
-    // Obtener el tema actual basado en el themeId
-    final currentTheme = kahootProvider.currentKahoot.themeId.isNotEmpty
-        ? themeProvider.themes
-              .firstWhere(
-                (theme) => theme.id == kahootProvider.currentKahoot.themeId,
-                orElse: () => ThemeImage(
-                  id: '',
-                  name: 'Tema no encontrado',
-                  imageUrl: '',
-                ),
-              )
-              .name
-        : 'Seleccionar tema';
+    final mediaProvider = Provider.of<MediaProvider>(context);
+    final categoryProvider = Provider.of<CategoryProvider>(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -70,6 +105,15 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
                 return;
               }
 
+              if (kahootProvider.currentKahoot.themeId.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Debe seleccionar un tema para el Kahoot'),
+                  ),
+                );
+                return;
+              }
+
               if (kahootProvider.currentKahoot.questions.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('Debe agregar al menos una pregunta')),
@@ -78,9 +122,7 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
               }
 
               await kahootProvider.saveKahoot();
-
-              if (!context.mounted) return;
-
+              if (!mounted) return;
               if (kahootProvider.error == null) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('Kahoot guardado exitosamente')),
@@ -99,36 +141,9 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Portada
-            GestureDetector(
-              onTap: () {
-                // Implementar selección de imagen de portada
-              },
-              child: Container(
-                height: 150,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey[300]!),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.add_photo_alternate,
-                      size: 40,
-                      color: Colors.grey[600],
-                    ),
-                    SizedBox(height: 8),
-                    Text(
-                      'Pulsa para añadir una imagen de portada',
-                      style: TextStyle(color: Colors.grey[600]),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            // Portada con multimedia
+            _buildCoverImageSection(mediaProvider),
+
             SizedBox(height: 24),
 
             // Título
@@ -157,17 +172,32 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
             SizedBox(height: 16),
 
             // Tema
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text('Tema'),
-              subtitle: Text(currentTheme),
-              trailing: Icon(Icons.arrow_forward_ios, size: 16),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ThemeSelectionScreen(),
-                  ),
+            StatefulBuilder(
+              builder: (context, setState) {
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text('Tema'),
+                  subtitle: Text(_selectedThemeName!),
+                  trailing: Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () async {
+                    if (themeProvider.themes.isEmpty) {
+                      await themeProvider.loadThemes();
+                      if (!mounted) return;
+                    }
+                    final selectedTheme = await Navigator.push<ThemeImage?>(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ThemeSelectionScreen(),
+                      ),
+                    );
+                    if (selectedTheme != null) {
+                      setState(() {
+                        _selectedThemeName = selectedTheme.name;
+                        // _selectedThemeId eliminado por no uso
+                      });
+                      kahootProvider.setThemeId(selectedTheme.id);
+                    }
+                  },
                 );
               },
             ),
@@ -193,28 +223,8 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
             ),
             Divider(),
 
-            // Categoría
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text('Categoría'),
-              trailing: DropdownButton<String>(
-                value: _selectedCategory,
-                onChanged: (value) {
-                  setState(() {
-                    _selectedCategory = value;
-                  });
-                  kahootProvider.setCategory(value!);
-                },
-                items: _categories
-                    .map(
-                      (category) => DropdownMenuItem(
-                        value: category,
-                        child: Text(category),
-                      ),
-                    )
-                    .toList(),
-              ),
-            ),
+            // Categoría - Ahora dinámica desde el backend
+            _buildCategorySection(categoryProvider, kahootProvider),
             Divider(),
 
             // Preguntas
@@ -224,20 +234,36 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
             ),
             SizedBox(height: 16),
 
-            // Lista de preguntas
             if (kahootProvider.currentKahoot.questions.isNotEmpty)
               ...kahootProvider.currentKahoot.questions.asMap().entries.map((
                 entry,
               ) {
                 final index = entry.key;
                 final question = entry.value;
-
                 return QuestionTile(
                   question: question,
                   index: index,
                   onTap: () {
-                    // Navegar a la pantalla de edición de pregunta
-                    // TODO: Implementar navegación a edición de pregunta
+                    // Navegar a la pantalla de edición de pregunta según el tipo
+                    if (question.type == QuestionType.quiz) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => NormalQuestionScreen(
+                            questionIndex: index,
+                          ),
+                        ),
+                      );
+                    } else {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => TrueFalseQuestionScreen(
+                            questionIndex: index,
+                          ),
+                        ),
+                      );
+                    }
                   },
                   onDelete: () {
                     showDialog(
@@ -245,8 +271,7 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
                       builder: (context) => AlertDialog(
                         title: Text('Eliminar pregunta'),
                         content: Text(
-                          '¿Estás seguro de que quieres eliminar esta pregunta?',
-                        ),
+                            '¿Estás seguro de que quieres eliminar esta pregunta?'),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(context),
@@ -267,7 +292,7 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
                     );
                   },
                 );
-              })
+              }).toList()
             else
               Container(
                 padding: EdgeInsets.symmetric(vertical: 32),
@@ -281,7 +306,11 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
 
             SizedBox(height: 24),
 
-            // Botón para añadir pregunta
+            // Estadísticas del Kahoot
+            _buildKahootStats(kahootProvider),
+
+            SizedBox(height: 24),
+
             Center(
               child: ElevatedButton.icon(
                 icon: Icon(Icons.add),
@@ -303,6 +332,271 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildCategorySection(
+      CategoryProvider categoryProvider, KahootProvider kahootProvider) {
+    if (categoryProvider.isLoading) {
+      return ListTile(
+        contentPadding: EdgeInsets.zero,
+        title: Text('Categoría'),
+        subtitle: Row(
+          children: [
+            SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            SizedBox(width: 8),
+            Text('Cargando categorías...'),
+          ],
+        ),
+      );
+    }
+
+    if (categoryProvider.error != null) {
+      return ListTile(
+        contentPadding: EdgeInsets.zero,
+        title: Text('Categoría'),
+        subtitle: Text('Error al cargar categorías'),
+        trailing: IconButton(
+          icon: Icon(Icons.refresh),
+          onPressed: () => categoryProvider.loadCategories(),
+        ),
+      );
+    }
+
+    // Si _selectedCategory es null y hay categorías, seleccionar la primera
+    if (_selectedCategory == null && categoryProvider.categories.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        setState(() {
+          _selectedCategory = categoryProvider.categories.first;
+        });
+        kahootProvider.setCategory(categoryProvider.categories.first);
+      });
+    }
+
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      title: Text('Categoría'),
+      trailing: DropdownButton<String>(
+        value: _selectedCategory,
+        onChanged: (value) {
+          setState(() {
+            _selectedCategory = value;
+          });
+          kahootProvider.setCategory(value!);
+        },
+        items: categoryProvider.categories
+            .map((category) => DropdownMenuItem(
+                  value: category,
+                  child: Text(category),
+                ))
+            .toList(),
+      ),
+    );
+  }
+
+  Widget _buildCoverImageSection(MediaProvider mediaProvider) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Portada del Kahoot',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        SizedBox(height: 8),
+        GestureDetector(
+          onTap: _pickCoverImage,
+          child: Container(
+            height: 150,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: _selectedCoverLocalPath == null ? Colors.grey[200] : null,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: _selectedCoverLocalPath == null
+                    ? Colors.grey[300]!
+                    : Colors.transparent,
+              ),
+              image: _selectedCoverLocalPath != null
+                  ? DecorationImage(
+                      image: FileImage(File(_selectedCoverLocalPath!)),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
+            ),
+            child: _selectedCoverLocalPath == null
+                ? Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.add_photo_alternate,
+                          size: 40, color: Colors.grey[600]),
+                      SizedBox(height: 8),
+                      Text(
+                        'Pulsa para añadir una imagen de portada',
+                        style: TextStyle(color: Colors.grey[600]),
+                      ),
+                    ],
+                  )
+                : Stack(
+                    children: [
+                      // Botón para eliminar imagen
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: GestureDetector(
+                          onTap: _removeCoverImage,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                            padding: EdgeInsets.all(8),
+                            child: Icon(Icons.close,
+                                color: Colors.white, size: 20),
+                          ),
+                        ),
+                      ),
+                      // Indicador de imagen cargada
+                      Positioned(
+                        bottom: 8,
+                        left: 8,
+                        child: Container(
+                          padding:
+                              EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.black54,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.image, color: Colors.white, size: 14),
+                              SizedBox(width: 4),
+                              Text(
+                                'Imagen de portada',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+        ),
+        if (_selectedCoverLocalPath != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              'Nota: La imagen se ha guardado localmente y se usará para mostrar la portada',
+              style: TextStyle(
+                color: Colors.green[700],
+                fontSize: 12,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildKahootStats(KahootProvider kahootProvider) {
+    final kahoot = kahootProvider.currentKahoot;
+    int totalQuestions = kahoot.questions.length;
+    int totalAnswers =
+        kahoot.questions.fold(0, (sum, q) => sum + q.answers.length);
+    int questionsWithMedia = kahoot.questions
+        .where((q) => q.mediaId != null && q.mediaId!.isNotEmpty)
+        .length;
+
+    // Contar respuestas con multimedia
+    int answersWithMedia = 0;
+    for (var question in kahoot.questions) {
+      answersWithMedia += question.answers
+          .where((a) => a.mediaId != null && a.mediaId!.isNotEmpty)
+          .length;
+    }
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Estadísticas del Kahoot',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildStatItem(
+                    Icons.quiz, 'Preguntas', totalQuestions.toString()),
+                _buildStatItem(Icons.question_answer, 'Respuestas',
+                    totalAnswers.toString()),
+              ],
+            ),
+            SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildStatItem(Icons.image, 'Preguntas con multimedia',
+                    questionsWithMedia.toString()),
+                _buildStatItem(Icons.photo_library, 'Respuestas con multimedia',
+                    answersWithMedia.toString()),
+              ],
+            ),
+            if (_selectedCoverImageId != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Row(
+                  children: [
+                    Icon(Icons.check_circle, color: Colors.green, size: 16),
+                    SizedBox(width: 8),
+                    Text(
+                      'Portada con imagen personalizada',
+                      style: TextStyle(
+                        color: Colors.green[700],
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatItem(IconData icon, String label, String value) {
+    return Column(
+      children: [
+        Icon(icon, color: Colors.purple, size: 24),
+        SizedBox(height: 4),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.purple,
+          ),
+        ),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey[600],
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
     );
   }
 }

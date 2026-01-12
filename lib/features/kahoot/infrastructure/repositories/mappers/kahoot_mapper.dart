@@ -1,9 +1,7 @@
 import 'package:green_frontend/features/kahoot/domain/entities/kahoot.dart';
 import 'package:green_frontend/features/kahoot/infrastructure/repositories/mappers/question_mapper.dart';
 
-
 class KahootMapper {
-  // Convierte un Map (en JSON) a una entidad Kahoot
   static Kahoot fromMap(Map<String, dynamic> map) {
     return Kahoot(
       id: map['id'],
@@ -12,35 +10,49 @@ class KahootMapper {
       coverImageId: map['coverImageId'],
       visibility: map['visibility'] ?? 'private',
       themeId: map['themeId'] ?? '',
-      authorId: map['authorId'],
+      authorId: map['author'] != null ? map['author']['id'] : null,
       status: map['status'] ?? 'draft',
       questions: List<Map<String, dynamic>>.from(map['questions'] ?? [])
           .map(QuestionMapper.fromMap)
           .toList(),
       category: map['category'],
       playCount: map['playCount'],
-      createdAt: map['createdAt'] != null
-          ? DateTime.parse(map['createdAt'])
-          : null,
+      createdAt:
+          map['createdAt'] != null ? DateTime.parse(map['createdAt']) : null,
     );
   }
 
-  // Convierte una entidad Kahoot a un Map (a JSON)
   static Map<String, dynamic> toMap(Kahoot kahoot) {
-    return {
-      if (kahoot.id != null) 'id': kahoot.id,
+    // Validar que themeId sea un UUID válido
+    final themeId = kahoot.themeId;
+    if (themeId.isEmpty) {
+      throw Exception('El themeId es requerido y debe ser un UUID válido');
+    }
+
+    // Validar UUID básico
+    final uuidRegex = RegExp(
+        r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
+        caseSensitive: false);
+    if (!uuidRegex.hasMatch(themeId)) {
+      throw Exception('El themeId "$themeId" no es un UUID válido');
+    }
+
+    // Crear el map con las preguntas usando QuestionMapper (que ya maneja timeLimit)
+    final Map<String, dynamic> result = {
+      if (kahoot.id != null && kahoot.id!.isNotEmpty) 'id': kahoot.id,
       'title': kahoot.title,
-      if (kahoot.description != null) 'description': kahoot.description,
-      if (kahoot.coverImageId != null) 'coverImageId': kahoot.coverImageId,
+      if (kahoot.description != null && kahoot.description!.isNotEmpty)
+        'description': kahoot.description,
+      if (kahoot.coverImageId != null && kahoot.coverImageId!.isNotEmpty)
+        'coverImageId': kahoot.coverImageId,
       'visibility': kahoot.visibility,
-      'themeId': kahoot.themeId,
-      if (kahoot.authorId != null) 'authorId': kahoot.authorId,
+      'themeId': themeId, // camelCase, validado como UUID
       'status': kahoot.status,
       'questions': kahoot.questions.map(QuestionMapper.toMap).toList(),
-      if (kahoot.category != null) 'category': kahoot.category,
-      if (kahoot.playCount != null) 'playCount': kahoot.playCount,
-      if (kahoot.createdAt != null)
-        'createdAt': kahoot.createdAt!.toIso8601String(),
+      if (kahoot.category != null && kahoot.category!.isNotEmpty)
+        'category': kahoot.category,
     };
+
+    return result;
   }
 }
