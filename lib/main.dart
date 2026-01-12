@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:green_frontend/features/discovery/data/datasources/discovery_remote_data_source.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:dio/dio.dart';
@@ -56,6 +57,10 @@ import 'package:green_frontend/features/single_player/infraestructure/repositori
 import 'package:green_frontend/features/single_player/infraestructure/datasources/async_game_datasource.dart';
 import 'package:green_frontend/features/single_player/presentation/provider/game_provider.dart';
 
+// --- Feature: Discovery (Para categorías) ---
+
+import 'package:green_frontend/features/discovery/application/providers/category_provider.dart';
+import 'package:green_frontend/features/discovery/data/datasources/discovery_remote_data_source.dart';
 void main() async {
   // Configuración de inicialización
   WidgetsFlutterBinding.ensureInitialized();
@@ -173,6 +178,13 @@ void main() async {
             context.read<MediaRepository>(),
           ),
         ),
+        
+        // Discovery Remote DataSource para categorías
+        Provider<DiscoveryRemoteDataSource>(
+          create: (context) => DiscoveryRemoteDataSourceImpl(
+            apiClient: di.sl<ApiClient>(), // CORRECCIÓN: Usar di.sl<ApiClient>() en lugar de ApiClient(dio: dio)
+          ),
+        ),
       ],
       child: const MyApp(),
     ),
@@ -231,6 +243,13 @@ class MyApp extends StatelessWidget {
             deleteMediaUseCase: context.read<DeleteMediaUseCase>(),
             getSignedUrlUseCase: context.read<GetSignedUrlUseCase>(),
             imagePicker: context.read<ImagePicker>(),
+          ),
+        ),
+        
+        // Category Provider para categorías dinámicas
+        ChangeNotifierProvider<CategoryProvider>(
+          create: (context) => CategoryProvider(
+            dataSource: context.read<DiscoveryRemoteDataSource>(),
           ),
         ),
         

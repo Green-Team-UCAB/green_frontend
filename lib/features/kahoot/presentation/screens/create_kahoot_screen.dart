@@ -11,6 +11,7 @@ import 'theme_selection_screen.dart';
 import 'package:green_frontend/features/kahoot/application/providers/kahoot_provider.dart';
 import 'package:green_frontend/features/kahoot/application/providers/theme_provider.dart';
 import 'package:green_frontend/features/media/application/providers/media_provider.dart';
+import 'package:green_frontend/features/discovery/application/providers/category_provider.dart';
 
 class CreateKahootScreen extends StatefulWidget {
   @override
@@ -26,25 +27,21 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
   String? _selectedThemeId = '';
   String? _selectedCoverImageId;
   String? _selectedCoverLocalPath;
-  List<String> _categories = [
-    'Matemáticas',
-    'Ciencias',
-    'Historia',
-    'Geografía',
-    'Idiomas',
-    'Arte',
-    'Tecnología',
-    'Deportes'
-  ];
 
   @override
   void initState() {
     super.initState();
-    _selectedCategory = _categories.first;
+    
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+      final categoryProvider = Provider.of<CategoryProvider>(context, listen: false);
+      
       if (themeProvider.themes.isEmpty) {
         themeProvider.loadThemes();
+      }
+      
+      if (categoryProvider.categories.isEmpty) {
+        categoryProvider.loadCategories();
       }
     });
   }
@@ -88,6 +85,7 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
     final kahootProvider = Provider.of<KahootProvider>(context);
     final themeProvider = Provider.of<ThemeProvider>(context);
     final mediaProvider = Provider.of<MediaProvider>(context);
+    final categoryProvider = Provider.of<CategoryProvider>(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -217,26 +215,8 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
             ),
             Divider(),
             
-            // Categoría
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text('Categoría'),
-              trailing: DropdownButton<String>(
-                value: _selectedCategory,
-                onChanged: (value) {
-                  setState(() {
-                    _selectedCategory = value;
-                  });
-                  kahootProvider.setCategory(value!);
-                },
-                items: _categories
-                    .map((category) => DropdownMenuItem(
-                          value: category,
-                          child: Text(category),
-                        ))
-                    .toList(),
-              ),
-            ),
+            // Categoría - Ahora dinámica desde el backend
+            _buildCategorySection(categoryProvider, kahootProvider),
             Divider(),
             
             // Preguntas
@@ -338,6 +318,68 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
             SizedBox(height: 32),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildCategorySection(CategoryProvider categoryProvider, KahootProvider kahootProvider) {
+    if (categoryProvider.isLoading) {
+      return ListTile(
+        contentPadding: EdgeInsets.zero,
+        title: Text('Categoría'),
+        subtitle: Row(
+          children: [
+            SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            SizedBox(width: 8),
+            Text('Cargando categorías...'),
+          ],
+        ),
+      );
+    }
+
+    if (categoryProvider.error != null) {
+      return ListTile(
+        contentPadding: EdgeInsets.zero,
+        title: Text('Categoría'),
+        subtitle: Text('Error al cargar categorías'),
+        trailing: IconButton(
+          icon: Icon(Icons.refresh),
+          onPressed: () => categoryProvider.loadCategories(),
+        ),
+      );
+    }
+
+    // Si _selectedCategory es null y hay categorías, seleccionar la primera
+    if (_selectedCategory == null && categoryProvider.categories.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        setState(() {
+          _selectedCategory = categoryProvider.categories.first;
+        });
+        kahootProvider.setCategory(categoryProvider.categories.first);
+      });
+    }
+
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      title: Text('Categoría'),
+      trailing: DropdownButton<String>(
+        value: _selectedCategory,
+        onChanged: (value) {
+          setState(() {
+            _selectedCategory = value;
+          });
+          kahootProvider.setCategory(value!);
+        },
+        items: categoryProvider.categories
+            .map((category) => DropdownMenuItem(
+                  value: category,
+                  child: Text(category),
+                ))
+            .toList(),
       ),
     );
   }
