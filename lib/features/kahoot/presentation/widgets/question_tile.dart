@@ -18,14 +18,18 @@ class QuestionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Contar respuestas con multimedia
-    int answersWithMedia = question.answers.where((a) => a.mediaId != null && a.mediaId!.isNotEmpty).length;
-    bool hasQuestionMedia = question.mediaId != null && question.mediaId!.isNotEmpty;
+    int answersWithMedia = question.answers
+        .where((a) => a.mediaId != null && a.mediaId!.isNotEmpty)
+        .length;
+    bool hasQuestionMedia =
+        question.mediaId != null && question.mediaId!.isNotEmpty;
 
     return Card(
       margin: EdgeInsets.only(bottom: 8),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: question.type == QuestionType.quiz ? Colors.purple : Colors.green,
+          backgroundColor:
+              question.type == QuestionType.quiz ? Colors.purple : Colors.green,
           child: Text(
             (index + 1).toString(),
             style: TextStyle(color: Colors.white),
@@ -35,7 +39,9 @@ class QuestionTile extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                question.text.isNotEmpty ? question.text : 'Pregunta ${index + 1}',
+                question.text.isNotEmpty
+                    ? question.text
+                    : 'Pregunta ${index + 1}',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),

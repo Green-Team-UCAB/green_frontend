@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:green_frontend/features/kahoot/application/providers/kahoot_provider.dart';
+
 import 'package:green_frontend/features/kahoot/application/providers/theme_provider.dart';
 import 'package:green_frontend/features/kahoot/domain/entities/theme_image.dart';
 import 'package:provider/provider.dart';
@@ -26,9 +26,7 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> {
     final themeProvider = Provider.of<ThemeProvider>(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Temas Kahoot!'),
-      ),
+      appBar: AppBar(title: Text('Temas Kahoot!')),
       body: _buildBody(themeProvider),
     );
   }
@@ -113,9 +111,7 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> {
       },
       child: Card(
         elevation: 3,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -141,9 +137,7 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> {
               child: Text(
                 theme.name,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontWeight: FontWeight.bold),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -154,4 +148,3 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> {
     );
   }
 }
-

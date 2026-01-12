@@ -94,12 +94,15 @@ Cada módulo (ej: `reports`, `discovery`, `library`) tiene su propia estructura 
     * `usecases/`: Lógica de negocio específica (ej. `SearchKahootsUseCase`).
     * `repositories/`: Contratos (Interfaces) que definen *qué* se hace, no *cómo*.
 
-2.  **Data (Datos):** *La implementación.*
+2.  **Application** *Capa orquestadora.*
+    Implementación de la lógica de negocio específica. Cada archivo representa una única acción (ej. JoinGameUseCase, GetSummaryUseCase). Se encarga de llamar al repositorio y procesar el resultado.
+
+3.  **Data (Datos) / Infraestructure:** *La implementación.*
     * `models/`: Adaptadores de datos (parcean JSON a Entidades).
     * `datasources/`: Conexión con APIs externas o bases de datos locales.
     * `repositories/`: Implementación de los contratos del dominio.
 
-3.  **Presentation (Presentación):** *Lo que ve el usuario.*
+4.  **Presentation (Presentación):** *Lo que ve el usuario.*
     * `bloc/`: Gestión de estado que conecta la UI con el Dominio.
     * `pages/` y `widgets/`: Interfaz gráfica construida en Flutter.
 

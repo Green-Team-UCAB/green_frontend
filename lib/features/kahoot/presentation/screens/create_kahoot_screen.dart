@@ -14,6 +14,8 @@ import 'package:green_frontend/features/media/application/providers/media_provid
 import 'package:green_frontend/features/discovery/application/providers/category_provider.dart';
 
 class CreateKahootScreen extends StatefulWidget {
+  CreateKahootScreen({Key? key}) : super(key: key);
+
   @override
   _CreateKahootScreenState createState() => _CreateKahootScreenState();
 }
@@ -31,15 +33,16 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
   @override
   void initState() {
     super.initState();
-    
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-      final categoryProvider = Provider.of<CategoryProvider>(context, listen: false);
-      
+      final categoryProvider =
+          Provider.of<CategoryProvider>(context, listen: false);
+
       if (themeProvider.themes.isEmpty) {
         themeProvider.loadThemes();
       }
-      
+
       if (categoryProvider.categories.isEmpty) {
         categoryProvider.loadCategories();
       }
@@ -56,9 +59,10 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
           _selectedCoverLocalPath = media.localPath;
         });
 
-        final kahootProvider = Provider.of<KahootProvider>(context, listen: false);
+        final kahootProvider =
+            Provider.of<KahootProvider>(context, listen: false);
         kahootProvider.setCoverImageId(media.id);
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Imagen de portada añadida correctamente')),
         );
@@ -103,7 +107,9 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
 
               if (kahootProvider.currentKahoot.themeId.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Debe seleccionar un tema para el Kahoot')),
+                  SnackBar(
+                    content: Text('Debe seleccionar un tema para el Kahoot'),
+                  ),
                 );
                 return;
               }
@@ -116,14 +122,15 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
               }
 
               await kahootProvider.saveKahoot();
+              if (!mounted) return;
               if (kahootProvider.error == null) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('Kahoot guardado exitosamente')),
                 );
               } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(kahootProvider.error!)),
-                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text(kahootProvider.error!)));
               }
             },
           ),
@@ -136,9 +143,9 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
           children: [
             // Portada con multimedia
             _buildCoverImageSection(mediaProvider),
-            
+
             SizedBox(height: 24),
-            
+
             // Título
             TextField(
               controller: _titleController,
@@ -150,7 +157,7 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
               onChanged: (value) => kahootProvider.setTitle(value),
             ),
             SizedBox(height: 16),
-            
+
             // Descripción
             TextField(
               controller: _descriptionController,
@@ -163,7 +170,7 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
               onChanged: (value) => kahootProvider.setDescription(value),
             ),
             SizedBox(height: 16),
-            
+
             // Tema
             StatefulBuilder(
               builder: (context, setState) {
@@ -175,6 +182,7 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
                   onTap: () async {
                     if (themeProvider.themes.isEmpty) {
                       await themeProvider.loadThemes();
+                      if (!mounted) return;
                     }
                     final selectedTheme = await Navigator.push<ThemeImage?>(
                       context,
@@ -185,7 +193,7 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
                     if (selectedTheme != null) {
                       setState(() {
                         _selectedThemeName = selectedTheme.name;
-                        _selectedThemeId = selectedTheme.id;
+                        // _selectedThemeId eliminado por no uso
                       });
                       kahootProvider.setThemeId(selectedTheme.id);
                     }
@@ -194,7 +202,7 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
               },
             ),
             Divider(),
-            
+
             // Visibilidad
             ListTile(
               contentPadding: EdgeInsets.zero,
@@ -214,20 +222,22 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
               ),
             ),
             Divider(),
-            
+
             // Categoría - Ahora dinámica desde el backend
             _buildCategorySection(categoryProvider, kahootProvider),
             Divider(),
-            
+
             // Preguntas
             Text(
               'Preguntas (${kahootProvider.currentKahoot.questions.length})',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 16),
-            
+
             if (kahootProvider.currentKahoot.questions.isNotEmpty)
-              ...kahootProvider.currentKahoot.questions.asMap().entries.map((entry) {
+              ...kahootProvider.currentKahoot.questions.asMap().entries.map((
+                entry,
+              ) {
                 final index = entry.key;
                 final question = entry.value;
                 return QuestionTile(
@@ -272,7 +282,10 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
                               kahootProvider.removeQuestion(index);
                               Navigator.pop(context);
                             },
-                            child: Text('Eliminar', style: TextStyle(color: Colors.red)),
+                            child: Text(
+                              'Eliminar',
+                              style: TextStyle(color: Colors.red),
+                            ),
                           ),
                         ],
                       ),
@@ -290,14 +303,14 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
                   ),
                 ),
               ),
-            
+
             SizedBox(height: 24),
-            
+
             // Estadísticas del Kahoot
             _buildKahootStats(kahootProvider),
-            
+
             SizedBox(height: 24),
-            
+
             Center(
               child: ElevatedButton.icon(
                 icon: Icon(Icons.add),
@@ -322,7 +335,8 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
     );
   }
 
-  Widget _buildCategorySection(CategoryProvider categoryProvider, KahootProvider kahootProvider) {
+  Widget _buildCategorySection(
+      CategoryProvider categoryProvider, KahootProvider kahootProvider) {
     if (categoryProvider.isLoading) {
       return ListTile(
         contentPadding: EdgeInsets.zero,
@@ -393,7 +407,6 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         SizedBox(height: 8),
-        
         GestureDetector(
           onTap: _pickCoverImage,
           child: Container(
@@ -403,8 +416,8 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
               color: _selectedCoverLocalPath == null ? Colors.grey[200] : null,
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: _selectedCoverLocalPath == null 
-                    ? Colors.grey[300]! 
+                color: _selectedCoverLocalPath == null
+                    ? Colors.grey[300]!
                     : Colors.transparent,
               ),
               image: _selectedCoverLocalPath != null
@@ -441,7 +454,8 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
                               shape: BoxShape.circle,
                             ),
                             padding: EdgeInsets.all(8),
-                            child: Icon(Icons.close, color: Colors.white, size: 20),
+                            child: Icon(Icons.close,
+                                color: Colors.white, size: 20),
                           ),
                         ),
                       ),
@@ -450,7 +464,8 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
                         bottom: 8,
                         left: 8,
                         child: Container(
-                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding:
+                              EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
                             color: Colors.black54,
                             borderRadius: BorderRadius.circular(4),
@@ -475,7 +490,6 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
                   ),
           ),
         ),
-        
         if (_selectedCoverLocalPath != null)
           Padding(
             padding: const EdgeInsets.only(top: 8),
@@ -494,13 +508,18 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
   Widget _buildKahootStats(KahootProvider kahootProvider) {
     final kahoot = kahootProvider.currentKahoot;
     int totalQuestions = kahoot.questions.length;
-    int totalAnswers = kahoot.questions.fold(0, (sum, q) => sum + q.answers.length);
-    int questionsWithMedia = kahoot.questions.where((q) => q.mediaId != null && q.mediaId!.isNotEmpty).length;
-    
+    int totalAnswers =
+        kahoot.questions.fold(0, (sum, q) => sum + q.answers.length);
+    int questionsWithMedia = kahoot.questions
+        .where((q) => q.mediaId != null && q.mediaId!.isNotEmpty)
+        .length;
+
     // Contar respuestas con multimedia
     int answersWithMedia = 0;
     for (var question in kahoot.questions) {
-      answersWithMedia += question.answers.where((a) => a.mediaId != null && a.mediaId!.isNotEmpty).length;
+      answersWithMedia += question.answers
+          .where((a) => a.mediaId != null && a.mediaId!.isNotEmpty)
+          .length;
     }
 
     return Card(
@@ -517,16 +536,20 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildStatItem(Icons.quiz, 'Preguntas', totalQuestions.toString()),
-                _buildStatItem(Icons.question_answer, 'Respuestas', totalAnswers.toString()),
+                _buildStatItem(
+                    Icons.quiz, 'Preguntas', totalQuestions.toString()),
+                _buildStatItem(Icons.question_answer, 'Respuestas',
+                    totalAnswers.toString()),
               ],
             ),
             SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildStatItem(Icons.image, 'Preguntas con multimedia', questionsWithMedia.toString()),
-                _buildStatItem(Icons.photo_library, 'Respuestas con multimedia', answersWithMedia.toString()),
+                _buildStatItem(Icons.image, 'Preguntas con multimedia',
+                    questionsWithMedia.toString()),
+                _buildStatItem(Icons.photo_library, 'Respuestas con multimedia',
+                    answersWithMedia.toString()),
               ],
             ),
             if (_selectedCoverImageId != null)

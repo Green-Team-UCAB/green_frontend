@@ -165,6 +165,7 @@ class _GroupDetailView extends StatelessWidget {
                         AssignQuizEvent(
                           groupId: group.id,
                           quizId: result['quizId'],
+                          quizTitle: result['quizTitle'],
                           availableUntil: result['availableUntil'],
                         ),
                       );

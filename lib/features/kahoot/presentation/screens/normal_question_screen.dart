@@ -23,7 +23,7 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
   List<TextEditingController> _answerControllers = [];
   String? _selectedMediaId;
   int _points = 1000;
-  
+
   // Map para rastrear imágenes de respuestas
   Map<int, String?> _answerMediaIds = {};
   Map<int, String?> _answerLocalPaths = {};
@@ -46,7 +46,7 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
   void _loadQuestion() {
     final kahootProvider = Provider.of<KahootProvider>(context, listen: false);
     final mediaProvider = Provider.of<MediaProvider>(context, listen: false);
-    
+
     final question =
         kahootProvider.currentKahoot.questions[widget.questionIndex!];
 
@@ -73,7 +73,7 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
       ));
       _answerControllers.add(TextEditingController(text: answer.text));
       _answerMediaIds[i] = answer.mediaId;
-      
+
       // Obtener ruta local si existe
       if (answer.mediaId != null && answer.mediaId!.isNotEmpty) {
         _answerLocalPaths[i] = mediaProvider.getLocalPath(answer.mediaId!);
@@ -95,14 +95,14 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
 
   Future<void> _addMediaToAnswer(int answerIndex) async {
     final mediaProvider = Provider.of<MediaProvider>(context, listen: false);
-    
+
     try {
       final media = await mediaProvider.pickImageFromGallery();
       if (media != null) {
         setState(() {
           _answerMediaIds[answerIndex] = media.id;
           _answerLocalPaths[answerIndex] = media.localPath;
-          
+
           // Actualizar la respuesta en la lista
           _answers[answerIndex] = _answers[answerIndex].copyWith(
             mediaId: media.id,
@@ -120,7 +120,7 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
     setState(() {
       _answerMediaIds[answerIndex] = null;
       _answerLocalPaths[answerIndex] = null;
-      
+
       _answers[answerIndex] = _answers[answerIndex].copyWith(
         mediaId: null,
       );
@@ -130,9 +130,9 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
   void _saveQuestion() {
     // Validaciones
     if (_questionTextController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Por favor, ingresa la pregunta')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Por favor, ingresa la pregunta')));
       return;
     }
 
@@ -205,7 +205,9 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Quiz - Pregunta'),
-        actions: [IconButton(icon: Icon(Icons.check), onPressed: _saveQuestion)],
+        actions: [
+          IconButton(icon: Icon(Icons.check), onPressed: _saveQuestion),
+        ],
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16),
@@ -217,7 +219,8 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
                 Icon(Icons.quiz, color: Colors.purple),
                 SizedBox(width: 8),
                 Text('Quiz',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               ],
             ),
             SizedBox(height: 20),
@@ -231,12 +234,13 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
               ),
             ),
             SizedBox(height: 20),
-            
+
             // Multimedia para la pregunta
             _buildQuestionMediaSection(),
-            
+
             SizedBox(height: 20),
-            Text('Tiempo límite:', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text('Tiempo límite:',
+                style: TextStyle(fontWeight: FontWeight.bold)),
             SizedBox(height: 10),
             Row(
               children: [
@@ -265,8 +269,10 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
               ],
             ),
             SizedBox(height: 10),
-            Text('Mínimo: 5 segundos, Máximo: 120 segundos',
-                style: TextStyle(fontSize: 12, color: Colors.grey)),
+            Text(
+              'Mínimo: 5 segundos, Máximo: 120 segundos',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
             SizedBox(height: 20),
             Text('Puntaje de la pregunta:',
                 style: TextStyle(fontWeight: FontWeight.bold)),
@@ -300,17 +306,17 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
 
   Widget _buildQuestionMediaSection() {
     final mediaProvider = Provider.of<MediaProvider>(context, listen: false);
-    final localPath = _selectedMediaId != null 
+    final localPath = _selectedMediaId != null
         ? mediaProvider.getLocalPath(_selectedMediaId!)
         : null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Multimedia de la pregunta:', 
+        Text('Multimedia de la pregunta:',
             style: TextStyle(fontWeight: FontWeight.bold)),
         SizedBox(height: 10),
-        
+
         // Mostrar imagen si existe
         if (_selectedMediaId != null && localPath != null)
           Container(
@@ -362,11 +368,11 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
               ],
             ),
           ),
-        
+
         ElevatedButton.icon(
           icon: Icon(Icons.image),
-          label: Text(_selectedMediaId == null 
-              ? 'Añadir multimedia' 
+          label: Text(_selectedMediaId == null
+              ? 'Añadir multimedia'
               : 'Cambiar multimedia'),
           onPressed: () async {
             final result = await Navigator.push<String?>(
@@ -380,7 +386,7 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
                 ),
               ),
             );
-            
+
             if (result != null) {
               setState(() => _selectedMediaId = result);
             }
@@ -411,7 +417,8 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
     );
   }
 
-  Widget _buildAnswerCard(int index, Answer answer, MediaProvider mediaProvider) {
+  Widget _buildAnswerCard(
+      int index, Answer answer, MediaProvider mediaProvider) {
     final hasMedia = _answerMediaIds[index] != null;
     final localPath = _answerLocalPaths[index];
 
@@ -431,26 +438,27 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
                       labelText: 'Respuesta ${index + 1}',
                       border: InputBorder.none,
                     ),
-                    onChanged: (value) => setState(() => _answers[index] = Answer(
-                      id: _answers[index].id,
-                      text: value,
-                      mediaId: _answers[index].mediaId,
-                      isCorrect: _answers[index].isCorrect,
-                    )),
+                    onChanged: (value) =>
+                        setState(() => _answers[index] = Answer(
+                              id: _answers[index].id,
+                              text: value,
+                              mediaId: _answers[index].mediaId,
+                              isCorrect: _answers[index].isCorrect,
+                            )),
                   ),
                 ),
                 Checkbox(
                   value: answer.isCorrect,
                   onChanged: (value) => setState(() => _answers[index] = Answer(
-                    id: _answers[index].id,
-                    text: _answers[index].text,
-                    mediaId: _answers[index].mediaId,
-                    isCorrect: value!,
-                  )),
+                        id: _answers[index].id,
+                        text: _answers[index].text,
+                        mediaId: _answers[index].mediaId,
+                        isCorrect: value!,
+                      )),
                 ),
               ],
             ),
-            
+
             // Imagen de la respuesta
             if (hasMedia && localPath != null)
               Container(
@@ -474,7 +482,8 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
                           return Container(
                             color: Colors.grey[200],
                             child: Center(
-                              child: Icon(Icons.broken_image, color: Colors.grey),
+                              child:
+                                  Icon(Icons.broken_image, color: Colors.grey),
                             ),
                           );
                         },
@@ -491,14 +500,15 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
                             shape: BoxShape.circle,
                           ),
                           padding: EdgeInsets.all(4),
-                          child: Icon(Icons.close, color: Colors.white, size: 16),
+                          child:
+                              Icon(Icons.close, color: Colors.white, size: 16),
                         ),
                       ),
                     ),
                   ],
                 ),
               ),
-            
+
             // Botón para agregar multimedia a la respuesta
             Align(
               alignment: Alignment.centerRight,

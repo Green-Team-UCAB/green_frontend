@@ -10,10 +10,11 @@ import 'package:green_frontend/features/media/application/providers/media_provid
 class TrueFalseQuestionScreen extends StatefulWidget {
   final int? questionIndex;
 
-  const TrueFalseQuestionScreen({Key? key, this.questionIndex}) : super(key: key);
+  const TrueFalseQuestionScreen({super.key, this.questionIndex});
 
   @override
-  _TrueFalseQuestionScreenState createState() => _TrueFalseQuestionScreenState();
+  State<TrueFalseQuestionScreen> createState() =>
+      _TrueFalseQuestionScreenState();
 }
 
 class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
@@ -25,7 +26,7 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
   ];
   String? _selectedMediaId;
   int _points = 1000;
-  
+
   // Multimedia para respuestas
   Map<int, String?> _answerMediaIds = {0: null, 1: null};
   Map<int, String?> _answerLocalPaths = {0: null, 1: null};
@@ -41,7 +42,7 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
   void _loadQuestion() {
     final kahootProvider = Provider.of<KahootProvider>(context, listen: false);
     final mediaProvider = Provider.of<MediaProvider>(context, listen: false);
-    
+
     final question =
         kahootProvider.currentKahoot.questions[widget.questionIndex!];
 
@@ -49,17 +50,19 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
     _timeLimit = question.timeLimit;
     if (_timeLimit <= 0) _timeLimit = 20;
 
-    _answers = question.answers.map((a) => Answer(
-      id: a.id,
-      text: a.text,
-      mediaId: a.mediaId,
-      isCorrect: a.isCorrect,
-    )).toList();
+    _answers = question.answers
+        .map((a) => Answer(
+              id: a.id,
+              text: a.text,
+              mediaId: a.mediaId,
+              isCorrect: a.isCorrect,
+            ))
+        .toList();
 
     _selectedMediaId = question.mediaId;
     _points = question.points;
     if (_points <= 0) _points = 1000;
-    
+
     // Cargar multimedia de respuestas
     for (var i = 0; i < _answers.length; i++) {
       _answerMediaIds[i] = _answers[i].mediaId;
@@ -73,14 +76,14 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
 
   Future<void> _addMediaToAnswer(int answerIndex) async {
     final mediaProvider = Provider.of<MediaProvider>(context, listen: false);
-    
+
     try {
       final media = await mediaProvider.pickImageFromGallery();
       if (media != null) {
         setState(() {
           _answerMediaIds[answerIndex] = media.id;
           _answerLocalPaths[answerIndex] = media.localPath;
-          
+
           // Actualizar la respuesta en la lista
           _answers[answerIndex] = _answers[answerIndex].copyWith(
             mediaId: media.id,
@@ -98,7 +101,7 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
     setState(() {
       _answerMediaIds[answerIndex] = null;
       _answerLocalPaths[answerIndex] = null;
-      
+
       _answers[answerIndex] = _answers[answerIndex].copyWith(
         mediaId: null,
       );
@@ -107,9 +110,9 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
 
   void _saveQuestion() {
     if (_questionTextController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Por favor, ingresa la pregunta')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Por favor, ingresa la pregunta')));
       return;
     }
 
@@ -155,7 +158,9 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Verdadero o Falso'),
-        actions: [IconButton(icon: Icon(Icons.check), onPressed: _saveQuestion)],
+        actions: [
+          IconButton(icon: Icon(Icons.check), onPressed: _saveQuestion),
+        ],
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16),
@@ -167,7 +172,8 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
                 Icon(Icons.check_circle_outline, color: Colors.green),
                 SizedBox(width: 8),
                 Text('Verdadero o Falso',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               ],
             ),
             SizedBox(height: 20),
@@ -181,12 +187,13 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
               ),
             ),
             SizedBox(height: 20),
-            
+
             // Multimedia para la pregunta
             _buildQuestionMediaSection(mediaProvider),
-            
+
             SizedBox(height: 20),
-            Text('Tiempo límite:', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text('Tiempo límite:',
+                style: TextStyle(fontWeight: FontWeight.bold)),
             SizedBox(height: 10),
             Row(
               children: [
@@ -215,8 +222,10 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
               ],
             ),
             SizedBox(height: 10),
-            Text('Mínimo: 5 segundos, Máximo: 120 segundos',
-                style: TextStyle(fontSize: 12, color: Colors.grey)),
+            Text(
+              'Mínimo: 5 segundos, Máximo: 120 segundos',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
             SizedBox(height: 20),
             Text('Puntaje de la pregunta:',
                 style: TextStyle(fontWeight: FontWeight.bold)),
@@ -232,11 +241,11 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
             SizedBox(height: 20),
             Text('Opciones:', style: TextStyle(fontWeight: FontWeight.bold)),
             SizedBox(height: 10),
-            
+
             // Opción Verdadero con multimedia
             _buildAnswerCard(0, 'Verdadero', mediaProvider),
             SizedBox(height: 8),
-            
+
             // Opción Falso con multimedia
             _buildAnswerCard(1, 'Falso', mediaProvider),
           ],
@@ -246,17 +255,17 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
   }
 
   Widget _buildQuestionMediaSection(MediaProvider mediaProvider) {
-    final localPath = _selectedMediaId != null 
+    final localPath = _selectedMediaId != null
         ? mediaProvider.getLocalPath(_selectedMediaId!)
         : null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Multimedia de la pregunta:', 
+        Text('Multimedia de la pregunta:',
             style: TextStyle(fontWeight: FontWeight.bold)),
         SizedBox(height: 10),
-        
+
         // Mostrar imagen si existe
         if (_selectedMediaId != null && localPath != null)
           Container(
@@ -308,11 +317,11 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
               ],
             ),
           ),
-        
+
         ElevatedButton.icon(
           icon: Icon(Icons.image),
-          label: Text(_selectedMediaId == null 
-              ? 'Añadir multimedia' 
+          label: Text(_selectedMediaId == null
+              ? 'Añadir multimedia'
               : 'Cambiar multimedia'),
           onPressed: () async {
             final result = await Navigator.push<String?>(
@@ -326,7 +335,7 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
                 ),
               ),
             );
-            
+
             if (result != null) {
               setState(() => _selectedMediaId = result);
             }
@@ -382,7 +391,7 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
               }),
             ),
           ),
-          
+
           // Imagen de la respuesta
           if (hasMedia && localPath != null)
             Padding(
@@ -407,7 +416,8 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
                           return Container(
                             color: Colors.grey[200],
                             child: Center(
-                              child: Icon(Icons.broken_image, color: Colors.grey),
+                              child:
+                                  Icon(Icons.broken_image, color: Colors.grey),
                             ),
                           );
                         },
@@ -424,7 +434,8 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
                             shape: BoxShape.circle,
                           ),
                           padding: EdgeInsets.all(4),
-                          child: Icon(Icons.close, color: Colors.white, size: 16),
+                          child:
+                              Icon(Icons.close, color: Colors.white, size: 16),
                         ),
                       ),
                     ),
@@ -432,7 +443,7 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
                 ),
               ),
             ),
-          
+
           // Botón para agregar multimedia
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

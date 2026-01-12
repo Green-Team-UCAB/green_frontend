@@ -19,7 +19,15 @@ class MediaSelectionScreen extends StatefulWidget {
 }
 
 class _MediaSelectionScreenState extends State<MediaSelectionScreen> {
-  final List<String> _allowedTypes = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'mp3'];
+  final List<String> _allowedTypes = [
+    'jpg',
+    'jpeg',
+    'png',
+    'gif',
+    'webp',
+    'mp4',
+    'mp3'
+  ];
   final Map<String, IconData> _typeIcons = {
     'image': Icons.image,
     'video': Icons.videocam,
@@ -56,7 +64,7 @@ class _MediaSelectionScreenState extends State<MediaSelectionScreen> {
         children: [
           // Opciones de carga
           _buildUploadOptions(mediaProvider),
-          
+
           // Media del usuario
           Expanded(
             child: _buildUserMedia(mediaProvider),
@@ -225,7 +233,7 @@ class _MediaSelectionScreenState extends State<MediaSelectionScreen> {
           children: [
             // Vista previa
             _buildMediaPreview(media),
-            
+
             // Indicador de tipo
             Positioned(
               top: 4,
@@ -243,7 +251,7 @@ class _MediaSelectionScreenState extends State<MediaSelectionScreen> {
                 ),
               ),
             ),
-            
+
             // Indicador de local
             if (media.isLocal)
               Positioned(
@@ -262,7 +270,7 @@ class _MediaSelectionScreenState extends State<MediaSelectionScreen> {
                   ),
                 ),
               ),
-            
+
             // Nombre del archivo
             if (media.isImage)
               Positioned(
@@ -426,7 +434,8 @@ class _MediaSelectionScreenState extends State<MediaSelectionScreen> {
               ListTile(
                 leading: Icon(Icons.storage),
                 title: Text('Almacenamiento'),
-                subtitle: Text(media.isLocal ? 'Local y remoto' : 'Solo remoto'),
+                subtitle:
+                    Text(media.isLocal ? 'Local y remoto' : 'Solo remoto'),
               ),
             ],
           ),
@@ -489,11 +498,11 @@ class _MediaSelectionScreenState extends State<MediaSelectionScreen> {
     try {
       final mediaProvider = Provider.of<MediaProvider>(context, listen: false);
       await mediaProvider.deleteMedia(mediaId);
-      
+
       if (widget.currentMediaId == mediaId && widget.onMediaSelected != null) {
         widget.onMediaSelected!(null);
       }
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Archivo eliminado correctamente')),
       );
@@ -509,7 +518,7 @@ class _MediaSelectionScreenState extends State<MediaSelectionScreen> {
         media.id,
         expiry: Duration(hours: 24),
       );
-      
+
       // Implementar compartir usando share_plus o similar
       _showSuccessSnackbar('URL generada: ${signedUrl.substring(0, 50)}...');
     } catch (e) {

@@ -22,8 +22,15 @@ class QuizDetailPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Inyectamos el LibraryBloc para manejar el favorito
-    return BlocProvider(
-      create: (_) => sl<LibraryBloc>()..add(LoadLibraryDataEvent()),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) => sl<LibraryBloc>()..add(LoadLibraryDataEvent()),
+        ),
+        BlocProvider(
+          create: (_) => sl<GameBloc>(),
+        ),
+      ],
       child: _QuizDetailView(quiz: quiz, isAdmin: isAdmin),
     );
   }
@@ -42,21 +49,18 @@ class _QuizDetailView extends StatelessWidget {
     // ============================================================
     final String quizId = (quiz is KahootSummary) ? quiz.id : quiz['id'];
 
-    final String title = (quiz is KahootSummary)
-        ? quiz.title
-        : (quiz['title'] ?? 'Sin título');
+    final String title =
+        (quiz is KahootSummary) ? quiz.title : (quiz['title'] ?? 'Sin título');
 
     final String description = (quiz is KahootSummary)
         ? (quiz.description ?? '')
         : (quiz['description'] ?? 'Sin descripción disponible.');
 
-    final String? imageUrl = (quiz is KahootSummary)
-        ? quiz.coverImageId
-        : quiz['coverImageId'];
+    final String? imageUrl =
+        (quiz is KahootSummary) ? quiz.coverImageId : quiz['coverImageId'];
 
-    final int playCount = (quiz is KahootSummary)
-        ? quiz.playCount
-        : (quiz['playCount'] ?? 0);
+    final int playCount =
+        (quiz is KahootSummary) ? quiz.playCount : (quiz['playCount'] ?? 0);
 
     // --- CORRECCIÓN CRÍTICA DEL AUTOR ---
     String authorName = 'Desconocido';
@@ -113,11 +117,11 @@ class _QuizDetailView extends StatelessWidget {
                       ),
                       onPressed: () {
                         context.read<LibraryBloc>().add(
-                          ToggleFavoriteInLibraryEvent(
-                            kahootId: quizId,
-                            isCurrentlyFavorite: isFavorite,
-                          ),
-                        );
+                              ToggleFavoriteInLibraryEvent(
+                                kahootId: quizId,
+                                isCurrentlyFavorite: isFavorite,
+                              ),
+                            );
                       },
                     ),
                   );
@@ -304,39 +308,40 @@ class _QuizDetailView extends StatelessWidget {
           ],
         ),
         child: isAdmin
-    ? _buildAdminControls(context)
-    : _buildPlayerControls(context, quizId),
-
+            ? _buildAdminControls(context)
+            : _buildPlayerControls(context, quizId),
       ),
     );
   }
 
   // --- MODO JUGADOR ---
-Widget _buildPlayerControls(BuildContext context, String quizId) {
-  return ElevatedButton(
-    style: ElevatedButton.styleFrom(
-      backgroundColor: Colors.deepPurple,
-      foregroundColor: Colors.white,
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-    ),
-    onPressed: () {
-      context.read<GameBloc>().add(StartGame(quizId));
+  Widget _buildPlayerControls(BuildContext context, String quizId) {
+    return ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.deepPurple,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      onPressed: () {
+        context.read<GameBloc>().add(StartGame(quizId));
 
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => const SinglePlayerGameScreen(),
-        ),
-      );
-    },
-    child: const Text(
-      "JUGAR AHORA",
-      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-    ),
-  );
-}
-
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => BlocProvider.value(
+              value: context.read<GameBloc>(),
+              child: const SinglePlayerGameScreen(),
+            ),
+          ),
+        );
+      },
+      child: const Text(
+        "JUGAR AHORA",
+        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
 
   // --- MODO ADMIN ---
   Widget _buildAdminControls(BuildContext context) {
