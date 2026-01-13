@@ -14,13 +14,37 @@ class GameSessionModel extends GameSession {
 
   factory GameSessionModel.fromJson(Map<String, dynamic> json) {
     return GameSessionModel(
-      sessionPin: SessionPin(json['sessionPin']),
+      sessionPin: SessionPin(json['sessionPin'].toString()),
       qrToken: json['qrToken'] != null ? QrToken(json['qrToken']) : null,
       quizTitle: json['quizTitle'],
       coverImageUrl: json['coverImageUrl'],
-      // Accediendo al objeto anidado del tema según la API
       themeUrl: json['theme']?['url'],
       themeName: json['theme']?['name'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'sessionPin': sessionPin.value,
+      if (qrToken != null) 'qrToken': qrToken!.value,
+      if (quizTitle != null) 'quizTitle': quizTitle,
+      if (coverImageUrl != null) 'coverImageUrl': coverImageUrl,
+      if (themeUrl != null || themeName != null)
+        'theme': {
+          if (themeUrl != null) 'url': themeUrl,
+          if (themeName != null) 'name': themeName,
+        },
+    };
+  }
+
+  GameSession toEntity() {
+    return GameSession(
+      sessionPin: sessionPin,
+      qrToken: qrToken,
+      quizTitle: quizTitle,
+      themeUrl: themeUrl,
+      coverImageUrl: coverImageUrl,
+      themeName: themeName,
     );
   }
 }

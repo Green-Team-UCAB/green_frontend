@@ -7,7 +7,7 @@ import 'package:green_frontend/features/menu_navegation/presentation/providers/n
 import 'package:green_frontend/features/menu_navegation/presentation/screens/create_screen.dart';
 import 'package:green_frontend/features/menu_navegation/presentation/screens/discover_screen.dart';
 import 'package:green_frontend/features/menu_navegation/presentation/screens/home_screen.dart';
-import 'package:green_frontend/features/multiplayer/presentation/join_game_page.dart';
+import 'package:green_frontend/features/multiplayer/presentation/screens/join_game_page.dart';
 import 'package:green_frontend/features/library/presentation/pages/library_page.dart';
 
 class NavBarSelectionScreen extends StatelessWidget {

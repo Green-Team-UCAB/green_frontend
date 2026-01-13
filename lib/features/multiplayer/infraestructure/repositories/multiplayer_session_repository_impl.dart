@@ -1,42 +1,51 @@
-import 'package:dio/dio.dart';
 import 'package:fpdart/fpdart.dart';
-import '../../domain/repositories/multiplayer_session_repository.dart';
-import '../../domain/entities/game_session.dart';
-import '../../domain/value_objects/qr_token.dart';
-import '../../domain/value_objects/session_pin.dart';
-import '../models/game_session_model.dart';
 import 'package:green_frontend/core/error/failures.dart';
+import 'package:green_frontend/core/mappers/exception_failure_mapper.dart'; // Importamos el mapper
+import 'package:green_frontend/features/multiplayer/domain/entities/game_session.dart';
+import 'package:green_frontend/features/multiplayer/domain/repositories/multiplayer_session_repository.dart';
+import 'package:green_frontend/features/multiplayer/domain/value_objects/qr_token.dart';
+import 'package:green_frontend/features/multiplayer/domain/value_objects/session_pin.dart';
+import 'package:green_frontend/features/multiplayer/infraestructure/datasources/multiplayer_rest_datasource.dart';
+import 'package:green_frontend/features/multiplayer/infraestructure/models/game_session_model.dart';
 
 class MultiplayerSessionRepositoryImpl implements MultiplayerSessionRepository {
-  final Dio _dio;
+  final MultiplayerRemoteDataSource remoteDataSource;
+  final ExceptionFailureMapper mapper; 
 
-  MultiplayerSessionRepositoryImpl(this._dio);
+  MultiplayerSessionRepositoryImpl({
+    required this.remoteDataSource,
+    required this.mapper,
+  });
 
   @override
   Future<Either<Failure, GameSession>> createSession({
-    required String kahootId, 
-    required String jwt
+    required String kahootId,
+    required String jwt,
   }) async {
     try {
-      final response = await _dio.post(
-        '/multiplayer-sessions',
-        data: {'kahootId': kahootId},
-        options: Options(headers: {'Authorization': 'Bearer $jwt'}),
+      final GameSessionModel model = await remoteDataSource.createSession(
+        kahootId: kahootId,
       );
-
-      return Right(GameSessionModel.fromJson(response.data));
-    } on DioException catch (e) {
-      return Left(ServerFailure(e.message ?? 'Error al crear sesión'));
+      final domain = model.toEntity();
+      return right(domain);      
+    } on Exception catch (e) {
+      return left(mapper.mapExceptionToFailure(e));
     }
   }
 
   @override
-  Future<Either<Failure, SessionPin>> getPinByQrToken({required QrToken qrToken}) async {
+  Future<Either<Failure, SessionPin>> getPinByQrToken({
+    required QrToken qrToken,
+  }) async {
     try {
-      final response = await _dio.get('/multiplayer-sessions/qr-token/${qrToken.value}');
-      return Right(SessionPin(response.data['sessionPin']));
-    } on DioException catch (_) {
-      return Left(ServerFailure('Código QR inválido o expirado'));
+      final String pin = await remoteDataSource.getPinByQrToken(
+        qrToken: qrToken.value,
+      );
+      return right(SessionPin(pin));
+    } on Exception catch (e) {
+      return left(mapper.mapExceptionToFailure(e));
     }
   }
+  
+
 }
