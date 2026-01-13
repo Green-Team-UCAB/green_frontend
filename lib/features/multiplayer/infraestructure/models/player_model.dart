@@ -28,4 +28,14 @@ class PlayerModel extends Player {
       if (previousRank != null) 'previousRank': previousRank,
     };
   }
+
+  Player toEntity() {
+    return Player(
+      playerId: playerId,
+      nickname: nickname,
+      score: score,
+      rank: rank,
+      previousRank: previousRank,
+    );
+  }
 }

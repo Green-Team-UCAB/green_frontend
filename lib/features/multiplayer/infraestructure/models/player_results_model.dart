@@ -30,4 +30,34 @@ class PlayerResultsModel extends PlayerResults{
     );
   }
 
+  Map<String, dynamic> toJson() {
+    return {
+      'isCorrect': isCorrect,
+      'pointsEarned': pointsEarned,
+      'totalScore': totalScore,
+      'rank': rank,
+      'previousRank': previousRank,
+      'streak': streak,
+      'correctAnswerIds': correctAnswerIds,
+      'current': current,
+      'total': total,
+      if (message != null) 'message': message,
+    };
+  }
+
+  PlayerResults toEntity() {
+    return PlayerResults(
+      isCorrect: isCorrect,
+      pointsEarned: pointsEarned,
+      totalScore: totalScore,
+      rank: rank,
+      previousRank: previousRank,
+      streak: streak,
+      correctAnswerIds: correctAnswerIds,
+      current: current,
+      total: total,
+      message: message,
+    );
+  }
+
 }

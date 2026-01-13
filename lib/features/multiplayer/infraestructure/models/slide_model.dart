@@ -30,4 +30,18 @@ class SlideModel extends Slide{
           .toList(),
     );
   }
+
+  Slide toEntity() {
+    return Slide(
+      id: id,
+      position: position,
+      type: type,
+      timeLimitSeconds: timeLimitSeconds,
+      questionText: questionText,
+      slideImageUrl: slideImageUrl,
+      pointsValue: pointsValue,
+      options: options.map((option) => (option as OptionModel).toEntity()).toList(),
+    );
+  }
+  
 }

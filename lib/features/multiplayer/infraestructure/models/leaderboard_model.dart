@@ -28,5 +28,15 @@ class LeaderboardModel extends LeaderboardEntry {
       'previousRank': previousRank,
     };
   }
+
+  LeaderboardEntry toEntity() {
+    return LeaderboardEntry(
+      playerId: playerId,
+      nickname: nickname,
+      score: score,
+      rank: rank,
+      previousRank: previousRank,
+    );
+  }
   
 }

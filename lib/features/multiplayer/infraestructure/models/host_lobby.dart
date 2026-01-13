@@ -24,4 +24,12 @@ class HostLobbyModel extends HostLobby {
       'numberOfPlayers': numberOfPlayers,
     };
   }
+
+  HostLobby toEntity() {
+    return HostLobby(
+      players: (players as List<PlayerModel>).map((playerModel) => playerModel.toEntity()).toList(),
+      numberOfPlayers: numberOfPlayers,
+    );
+  }
+
 }

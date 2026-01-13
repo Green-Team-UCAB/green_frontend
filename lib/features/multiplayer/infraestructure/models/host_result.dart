@@ -37,4 +37,17 @@ class HostResultModel extends HostResults {
       'isLastSlide': isLastSlide,
     };
   }
+
+  HostResults toEntity() {
+    return HostResults(
+      correctAnswerIds: correctAnswerIds,
+      leaderboard:
+          (leaderboard as List<LeaderboardModel>).map((e) => e.toEntity()).toList(),
+      distributionTop3: distributionTop3,
+      currentQuestion: currentQuestion,
+      totalQuestions: totalQuestions,
+      isLastSlide: isLastSlide,
+    );
+  }
+
 }

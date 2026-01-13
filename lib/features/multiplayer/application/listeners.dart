@@ -4,100 +4,93 @@ import 'package:green_frontend/features/multiplayer/domain/entities/slide.dart';
 import 'package:green_frontend/features/multiplayer/domain/entities/host_result.dart';
 import 'package:green_frontend/features/multiplayer/domain/entities/player_results.dart';
 import 'package:green_frontend/features/multiplayer/domain/entities/summary.dart';
+import 'package:green_frontend/core/error/failures.dart';
+import 'package:fpdart/fpdart.dart';
 
 /// --- Eventos principales del ciclo de juego ---
+
+class ListenRoomJoined {
+  final MultiplayerSocketRepository socketRepo;
+  ListenRoomJoined(this.socketRepo);
+
+  Stream<Either<Failure, Unit>> call() => socketRepo.onRoomJoined;
+}
 
 class ListenHostLobbyUpdate {
   final MultiplayerSocketRepository socketRepo;
   ListenHostLobbyUpdate(this.socketRepo);
 
-  Stream<HostLobby> call() => socketRepo.onHostLobbyUpdate();
+  Stream<HostLobby> call() => socketRepo.onHostLobbyUpdate;
 }
 
 class ListenQuestionStarted {
   final MultiplayerSocketRepository socketRepo;
   ListenQuestionStarted(this.socketRepo);
 
-  Stream<Slide> call() => socketRepo.onQuestionStarted();
+  Stream<Slide> call() => socketRepo.onQuestionStarted;
 }
 
 class ListenHostResults {
   final MultiplayerSocketRepository socketRepo;
   ListenHostResults(this.socketRepo);
 
-  Stream<HostResults> call() => socketRepo.onHostResults();
+  Stream<HostResults> call() => socketRepo.onHostResults;
 }
 
 class ListenPlayerResults {
   final MultiplayerSocketRepository socketRepo;
   ListenPlayerResults(this.socketRepo);
 
-  Stream<PlayerResults> call() => socketRepo.onPlayerResults();
+  Stream<PlayerResults> call() => socketRepo.onPlayerResults;
 }
 
 class ListenGameEnd {
   final MultiplayerSocketRepository socketRepo;
   ListenGameEnd(this.socketRepo);
 
-  Stream<Summary> call() => socketRepo.onGameEnd();
+  Stream<Summary> call() => socketRepo.onGameEnd;
 }
+
+
+///---Eventos de control de estado
 
 class ListenSessionClosed {
   final MultiplayerSocketRepository socketRepo;
   ListenSessionClosed(this.socketRepo);
-
-  Stream<Map<String, String>> call() => socketRepo.onSessionClosed();
+  // Avisa al usuario que la sesión terminó abruptamente
+  Stream<Map<String, dynamic>> call() => socketRepo.onSessionClosed;
 }
 
-/// --- Eventos de fiabilidad y métricas ---
-
-class ListenHostAnswerUpdate {
+class ListenPlayerLeft {
   final MultiplayerSocketRepository socketRepo;
-  ListenHostAnswerUpdate(this.socketRepo);
-
-  Stream<int> call() => socketRepo.onHostAnswerUpdate();
+  ListenPlayerLeft(this.socketRepo);
+  // Cuando alguien se va (player_left)
+  Stream<String> call() => socketRepo.onPlayerLeft;
 }
 
-class ListenPlayerLeftSession {
+class ListenAnswerUpdate {
   final MultiplayerSocketRepository socketRepo;
-  ListenPlayerLeftSession(this.socketRepo);
-
-  Stream<String> call() => socketRepo.onPlayerLeftSession();
+  ListenAnswerUpdate(this.socketRepo);
+  // Conteo de respuestas en tiempo real (Pág 61 - answer_update)
+  Stream<int> call() => socketRepo.onAnswerCountUpdate;
 }
 
-class ListenHostLeftSession {
+class ListenSocketError {
   final MultiplayerSocketRepository socketRepo;
-  ListenHostLeftSession(this.socketRepo);
+  ListenSocketError(this.socketRepo);
 
-  Stream<String> call() => socketRepo.onHostLeftSession();
+  Stream<Failure> call() => socketRepo.onSocketError;
 }
 
-class ListenHostReturnedToSession {
-  final MultiplayerSocketRepository socketRepo;
-  ListenHostReturnedToSession(this.socketRepo);
 
-  Stream<String> call() => socketRepo.onHostReturnedToSession();
-}
 
-/// --- Eventos de error ---
 
-class ListenGameError {
-  final MultiplayerSocketRepository socketRepo;
-  ListenGameError(this.socketRepo);
 
-  Stream<String> call() => socketRepo.onGameError();
-}
 
-class ListenConnectionError {
-  final MultiplayerSocketRepository socketRepo;
-  ListenConnectionError(this.socketRepo);
 
-  Stream<String> call() => socketRepo.onConnectionError();
-}
 
-class ListenSyncError {
-  final MultiplayerSocketRepository socketRepo;
-  ListenSyncError(this.socketRepo);
 
-  Stream<String> call() => socketRepo.onSyncError();
-}
+
+
+
+

@@ -46,4 +46,20 @@ class SummaryModel extends Summary {
       'finalStreak': finalStreak,
     };
   }
+
+  Summary toEntity() {
+    return Summary(
+      finalPodium: finalPodium
+          ?.map((e) => (e as LeaderboardModel).toEntity())
+          .toList(),
+      winner:
+          winner != null ? (winner as LeaderboardModel).toEntity() : null,
+      totalParticipants: totalParticipants,
+      rank: rank,
+      totalScore: totalScore,
+      isPodium: isPodium,
+      isWinner: isWinner,
+      finalStreak: finalStreak,
+    );
+  }
 }

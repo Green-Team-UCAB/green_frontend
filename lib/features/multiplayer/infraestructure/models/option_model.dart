@@ -14,4 +14,19 @@ class OptionModel extends SlideOption {
       mediaUrl: json['mediaUrl'] ?? false,
     );
   }
+  Map<String, dynamic> toJson() {
+    return {
+      'index': index,
+      'text': text,
+      'mediaUrl': mediaUrl,
+    };
+  }
+
+  SlideOption toEntity() {
+    return SlideOption(
+      index: index,
+      text: text,
+      mediaUrl: mediaUrl,
+    );
+  }
 }

@@ -33,90 +33,84 @@ class ResolvePinFromQr {
   }
 }
 
-class ConnectAsHost {
-  final MultiplayerSocketRepository socketRepo;
-  ConnectAsHost(this.socketRepo);
+class ConnectToGame {
+  final MultiplayerSocketRepository repository;
+
+  ConnectToGame(this.repository);
 
   Future<Either<Failure, Unit>> call({
-    required Uri wsBaseUrl,
+    required ClientRole role,
     required SessionPin pin,
     required String jwt,
   }) async {
-    final result = await socketRepo.connectToGameSession(
-      wsBaseUrl: wsBaseUrl,
-      role: ClientRole.host,
+    return await repository.connect(
+      role: role,
       pin: pin,
       jwt: jwt,
     );
-    return result.map((_) {
-      socketRepo.emitClientReady();
-      return unit;
-    });
   }
 }
 
-class ConnectAsPlayer {
-  final MultiplayerSocketRepository socketRepo;
-  ConnectAsPlayer(this.socketRepo);
+class JoinRoom {
+  final MultiplayerSocketRepository repository;
 
-  Future<Either<Failure, Unit>> call({
-    required Uri wsBaseUrl,
-    required SessionPin pin,
-    required String jwt,
-    required Nickname nickname,
-  }) async {
-    final result = await socketRepo.connectToGameSession(
-      wsBaseUrl: wsBaseUrl,
-      role: ClientRole.player,
-      pin: pin,
-      jwt: jwt,
-    );
-    return result.map((_) {
-      socketRepo.emitClientReady();
-      socketRepo.emitPlayerJoin(nickname);
-      return unit;
-    });
+  JoinRoom(this.repository);
+
+  Future<Either<Failure, Unit>> call(Nickname nickname) async {
+    repository.emitPlayerJoin(nickname);
+    return right(unit); 
   }
 }
-
-/// --- Flujo de juego (Host) ---
 
 class StartGame {
   final MultiplayerSocketRepository socketRepo;
   StartGame(this.socketRepo);
 
-  Either<Failure, Unit> call() => socketRepo.emitHostStartGame();
+  Future<Either<Failure, Unit>> call() async {
+
+    socketRepo.emitHostStartGame();
+    return right(unit);
+  }
 }
 
 class NextPhase {
   final MultiplayerSocketRepository socketRepo;
   NextPhase(this.socketRepo);
 
-  Either<Failure, Unit> call() => socketRepo.emitHostNextPhase();
+  Future<Either<Failure, Unit>> call() async {
+    socketRepo.emitHostNextPhase();
+    return right(unit);
+  }
+}
+
+class SubmitAnswer {
+  final MultiplayerSocketRepository repository;
+
+  SubmitAnswer(this.repository);
+
+  Future<Either<Failure, Unit>> call({
+    required String questionId,
+    required AnswerIds answerIds,
+    required TimeElapsedMs timeElapsedMs,
+  }) async {
+    repository.emitPlayerSubmitAnswer(
+      questionId: questionId,
+      answerIds: answerIds,
+      timeElapsedMs: timeElapsedMs,
+    );
+    return right(unit);
+  }
 }
 
 class EndSession {
-  final MultiplayerSocketRepository socketRepo;
-  EndSession(this.socketRepo);
+  final MultiplayerSocketRepository repository;
 
-  Either<Failure, Unit> call() => socketRepo.emitHostEndSession();
-}
+  EndSession(this.repository);
 
-/// --- Flujo de juego (Player) ---
-
-class SubmitPlayerAnswer {
-  final MultiplayerSocketRepository socketRepo;
-  SubmitPlayerAnswer(this.socketRepo);
-
-  Either<Failure, Unit> call({
-    required String questionId,
-    required AnswerIds answerIds,
-    required TimeElapsedMs elapsedMs,
-  }) {
-    return socketRepo.emitPlayerSubmitAnswer(
-      questionId: questionId,
-      answerIds: answerIds,
-      timeElapsedMs: elapsedMs,
-    );
+  Future<Either<Failure, Unit>> call() async {
+    await repository.disconnect();
+    return right(unit);
   }
 }
+
+

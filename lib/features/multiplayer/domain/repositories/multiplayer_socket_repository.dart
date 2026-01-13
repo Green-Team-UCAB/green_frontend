@@ -10,46 +10,65 @@ import 'package:green_frontend/features/multiplayer/domain/entities/summary.dart
 import 'package:green_frontend/core/error/failures.dart';
 import 'package:fpdart/fpdart.dart';
 
+
 enum SessionState { lobby, question, results, end }
 enum ClientRole { host, player }
 
-
 abstract interface class MultiplayerSocketRepository {
-// conxión al namespace del juego  
-  Future<Either<Failure, Unit>> connectToGameSession({required Uri wsBaseUrl, required ClientRole role, required SessionPin pin, required String jwt});
+
+  Future<Either<Failure, Unit>> connect({
+    required ClientRole role,
+    required SessionPin pin,
+    required String jwt,
+  });
   
-/// Señal de sincronización inicial 
-  Either<Failure, Unit> emitClientReady();
+  /// Evento 'join_room' 
+  void emitPlayerJoin(Nickname nickname);
+
+  /// Evento 'start_game' 
+  void emitHostStartGame();
+
+  /// Evento 'next_phase' 
+  void emitHostNextPhase();
+
+  /// Evento 'submit_answer' 
+  void emitPlayerSubmitAnswer({
+    required String questionId,
+    required AnswerIds answerIds,
+    required TimeElapsedMs timeElapsedMs,
+  });
+
+  /// Señal de sincronización (Handshake de Socket.io)
+  void emitClientReady();
+
+  /// Desconexión
+  Future<void> disconnect();
+
+  /// --- ESCUCHAS (STREAMS) ---
   
-/// --- Eventos que puede emitir el HOST --- 
-  Either<Failure, Unit> emitHostStartGame();
-  Either<Failure, Unit> emitHostNextPhase(); 
-  Either<Failure, Unit> emitHostEndSession();
+  /// onRoomJoined: Clave para saber que el PIN fue válido y entraste a la sala
+  Stream<Either<Failure, Unit>> get onRoomJoined;
 
-/// --- Eventos que puede emitir el JUGADOR --- 
-  Either<Failure, Unit> emitPlayerJoin(Nickname nickname); 
-  Either<Failure, Unit> emitPlayerSubmitAnswer({ required String questionId, required AnswerIds answerIds, required TimeElapsedMs timeElapsedMs, });
+  /// onHostLobbyUpdate: Lista de nicknames para el Host (Pág 58)
+  Stream<HostLobby> get onHostLobbyUpdate;
 
-/// --- Streams de eventos recibidos del servidor --- 
-  Stream<HostLobby> onHostLobbyUpdate(); 
-  Stream<Map<String, dynamic>> onPlayerConnectedToSession(); 
-  Stream<Slide> onQuestionStarted(); 
-  Stream<HostResults> onHostResults(); 
-  Stream<PlayerResults> onPlayerResults(); 
-  Stream<Summary> onGameEnd(); // sirve tanto para host como jugador 
-  Stream<Map<String, String>> onSessionClosed();
+  /// onQuestionStarted (Slide): Recibir la pregunta actual
+  Stream<Slide> get onQuestionStarted;
 
-/// --- Eventos de fiabilidad/UX extra --- 
-  Stream<int> onHostAnswerUpdate(); 
-  Stream<String> onPlayerLeftSession(); 
-  Stream<String> onHostLeftSession(); 
-  Stream<String> onHostReturnedToSession();
+  /// Resultados parciales (Pág 62)
+  Stream<HostResults> get onHostResults;
+  Stream<PlayerResults> get onPlayerResults;
+
+  /// Fin del juego (Pág 63)
+  Stream<Summary> get onGameEnd;
+
+  /// Errores técnicos del socket (Pág 11 de la API: 'exception' o 'error')
+  Stream<Failure> get onSocketError;
+
+  // Añadir estos a MultiplayerSocketRepository
+  Stream<Map<String, dynamic>> get onSessionClosed;
+  Stream<String> get onPlayerLeft;
+  Stream<int> get onAnswerCountUpdate; // Cantidad de respuestas recibidas
+
   
-/// --- Errores --- 
-  Stream<String> onGameError(); 
-  Stream<String> onConnectionError(); 
-  Stream<String> onSyncError();
-
-/// Desconexión del socket
-  Future<Either<Failure, Unit>> disconnectFromGameSession();
 }
