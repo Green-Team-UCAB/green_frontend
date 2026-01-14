@@ -26,8 +26,10 @@ import 'package:green_frontend/features/multiplayer/domain/value_objects/client_
 
 class MultiplayerSocketRepositoryImpl implements MultiplayerSocketRepository {
   final MultiplayerSocketDataSource dataSource;
+  final String baseUrl;
 
-  MultiplayerSocketRepositoryImpl({required this.dataSource});
+  MultiplayerSocketRepositoryImpl({required this.dataSource, required this.baseUrl});
+  
 
   @override
   Future<Either<Failure, Unit>> connect({
@@ -35,10 +37,9 @@ class MultiplayerSocketRepositoryImpl implements MultiplayerSocketRepository {
     required SessionPin pin,
     required String jwt,
   }) async {
+    print("DEBUG: Conectando con URL: $baseUrl");
     try {
-      // La URL se puede inyectar o venir de una config global
-      const String socketUrl = 'https://quizzy-backend-0wh2.onrender.com';
-      await dataSource.connect(url: socketUrl, jwt: jwt);
+      await dataSource.connect(url: baseUrl, jwt: jwt);
       return right(unit);
     } catch (e) {
       return left(ServerFailure('Error al conectar con el servidor de juegos'));

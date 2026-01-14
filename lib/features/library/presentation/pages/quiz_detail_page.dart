@@ -10,10 +10,11 @@ import 'package:green_frontend/features/single_player/presentation/screens/singl
 import 'package:green_frontend/features/single_player/presentation/bloc/game_event.dart';
 
 import 'package:green_frontend/features/multiplayer/presentation/bloc/multiplayer_bloc.dart';
-import 'package:green_frontend/features/multiplayer/presentation/screens/multiplayer_lobby_screen.dart';
+
 
 import 'package:green_frontend/core/network/api_client.dart'; 
 import 'package:green_frontend/core/storage/token_storage.dart';  
+import 'package:green_frontend/features/multiplayer/presentation/screens/multiplayer_lobby_screen.dart';
 
 class QuizDetailPage extends StatelessWidget {
   final dynamic quiz;
@@ -97,7 +98,29 @@ class _QuizDetailView extends StatelessWidget {
         ? quiz['category']
         : "General";
 
-    return Scaffold(
+    return BlocListener<MultiplayerBloc, MultiplayerState>(
+      listenWhen: (previous, current) => previous.status != current.status,
+      listener: (context, state) {
+        if (state.status == MultiplayerStatus.inLobby) {
+          // Si el estado cambia a inLobby, disparamos la navegación
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => BlocProvider.value(
+                value: context.read<MultiplayerBloc>(),
+                child: const MultiplayerLobbyScreen(),
+              ),
+            ),
+          );
+        }
+
+        if (state.status == MultiplayerStatus.error) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.failure?.message ?? "Error")),
+          );
+        }
+      },
+      child: Scaffold(
       backgroundColor: Colors.white,
       body: CustomScrollView(
         slivers: [
@@ -320,6 +343,7 @@ class _QuizDetailView extends StatelessWidget {
             ? _buildAdminControls(context)
             : _buildPlayerControls(context, quizId),
       ),
+    ),
     );
   }
 
@@ -353,30 +377,10 @@ class _QuizDetailView extends StatelessWidget {
   }
 
 Widget _buildAdminControls(BuildContext context) {
-  // 1. Obtenemos el ID del quiz de forma segura
+  // Se obtiene el ID del quiz
   final String quizId = (quiz is KahootSummary) ? quiz.id : quiz['id'];
 
-  return BlocListener<MultiplayerBloc, MultiplayerState>(
-    listener: (context, state) {
-      // 2. Si el estado cambia a inLobby, significa que ya tenemos PIN y conexión
-      if (state.status == MultiplayerStatus.inLobby) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => BlocProvider.value(
-              value: context.read<MultiplayerBloc>(), // Pasamos el bloc activo
-              child: const MultiplayerLobbyScreen(),
-            ),),
-        );
-      }
-
-      // 3. Manejo de errores
-      if (state.status == MultiplayerStatus.error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(state.failure?.message ?? "Error al crear sala")),
-        );
-      }
-    },
-    child: Column(
+  return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         // --- BOTÓN MULTIJUGADOR (HOST) ---
@@ -400,14 +404,14 @@ Widget _buildAdminControls(BuildContext context) {
                 ),
               );
             } else {
-            // Caso extremo: Si el token falló, mandamos al login
+            //  Si el token falló, mandamos al login
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text("Sesión inválida. Por favor ingresa de nuevo.")),
             );
              Navigator.pushReplacementNamed(context, '/login');
             }
           },
-          // Si está cargando, mostramos un spinner en lugar del icono
+          // Si está cargando,se muestra un spinner 
           icon: context.watch<MultiplayerBloc>().state.status == MultiplayerStatus.connecting
               ? const SizedBox(
                   width: 24,
@@ -423,7 +427,7 @@ Widget _buildAdminControls(BuildContext context) {
         
         const SizedBox(height: 12),
 
-        // --- BOTÓN EDITAR (Se queda igual por ahora) ---
+        // --- BOTÓN EDITAR  ---
         OutlinedButton.icon(
           style: OutlinedButton.styleFrom(
             foregroundColor: Colors.deepPurple,
@@ -442,7 +446,6 @@ Widget _buildAdminControls(BuildContext context) {
           ),
         ),
       ],
-    ),
   );
 }
   Widget _buildStat(IconData icon, String value, String label) {

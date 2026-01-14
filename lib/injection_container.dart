@@ -83,6 +83,9 @@ import 'core/mappers/exception_failure_mapper.dart';
 // Instancia global del Service Locator
 final sl = GetIt.instance;
 
+const String _baseUrl = 'https://quizzy-backend-0wh2.onrender.com';
+const String _apiSufix = '/api';
+
 Future<void> init() async {
   // ================================================================
   // 1. FEATURES
@@ -230,8 +233,8 @@ Future<void> init() async {
 );
 
   // Repository
-  sl.registerLazySingleton<MultiplayerSocketRepository>(
-    () => MultiplayerSocketRepositoryImpl(dataSource: sl()),
+  sl.registerFactory<MultiplayerSocketRepository>(
+    () => MultiplayerSocketRepositoryImpl(dataSource: sl(), baseUrl: _baseUrl),
   );
   sl.registerLazySingleton<MultiplayerSessionRepository>(
     () => MultiplayerSessionRepositoryImpl(remoteDataSource: sl(), mapper: sl()), 
@@ -287,7 +290,7 @@ Future<void> init() async {
   sl.registerLazySingleton(
     () => Dio(
       BaseOptions(
-        baseUrl: 'https://quizzy-backend-0wh2.onrender.com/api',
+        baseUrl: '$_baseUrl$_apiSufix',
         connectTimeout: const Duration(seconds: 30),
         receiveTimeout: const Duration(seconds: 30),
       ),

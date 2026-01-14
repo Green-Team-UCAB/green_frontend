@@ -15,7 +15,7 @@ enum SessionState { lobby, question, results, end }
 
 
 abstract interface class MultiplayerSocketRepository {
-
+  
   Future<Either<Failure, Unit>> connect({
     required ClientRole role,
     required SessionPin pin,
