@@ -8,6 +8,7 @@ import 'package:green_frontend/features/multiplayer/domain/value_objects/session
 import 'package:green_frontend/features/multiplayer/domain/value_objects/nickname.dart';
 import 'package:green_frontend/features/multiplayer/domain/value_objects/answer_id.dart';
 import 'package:green_frontend/features/multiplayer/domain/value_objects/time_elapsed_ms.dart';
+import 'package:green_frontend/features/multiplayer/domain/value_objects/client_role.dart';
 
 
 /// --- Preparación y conexión ---
@@ -83,10 +84,10 @@ class NextPhase {
   }
 }
 
-class SubmitAnswer {
+class SubmitSyncAnswer {
   final MultiplayerSocketRepository repository;
 
-  SubmitAnswer(this.repository);
+  SubmitSyncAnswer(this.repository);
 
   Future<Either<Failure, Unit>> call({
     required String questionId,

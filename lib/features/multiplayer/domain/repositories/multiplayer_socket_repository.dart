@@ -9,10 +9,10 @@ import 'package:green_frontend/features/multiplayer/domain/entities/player_resul
 import 'package:green_frontend/features/multiplayer/domain/entities/summary.dart';
 import 'package:green_frontend/core/error/failures.dart';
 import 'package:fpdart/fpdart.dart';
-
+import 'package:green_frontend/features/multiplayer/domain/value_objects/client_role.dart';
 
 enum SessionState { lobby, question, results, end }
-enum ClientRole { host, player }
+
 
 abstract interface class MultiplayerSocketRepository {
 

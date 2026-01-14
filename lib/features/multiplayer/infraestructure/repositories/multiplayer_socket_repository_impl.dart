@@ -19,10 +19,10 @@ import 'package:green_frontend/features/multiplayer/domain/entities/player_resul
 import 'package:green_frontend/features/multiplayer/infraestructure/models/host_result.dart';
 import 'package:green_frontend/features/multiplayer/infraestructure/models/player_results_model.dart';
 import 'package:green_frontend/features/multiplayer/infraestructure/models/summary_model.dart';
+import 'package:green_frontend/features/multiplayer/domain/value_objects/client_role.dart';
 
 
 
-// ... importa el resto de tus modelos y entidades
 
 class MultiplayerSocketRepositoryImpl implements MultiplayerSocketRepository {
   final MultiplayerSocketDataSource dataSource;

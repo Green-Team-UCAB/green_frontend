@@ -9,6 +9,12 @@ import 'package:green_frontend/features/single_player/presentation/bloc/game_blo
 import 'package:green_frontend/features/single_player/presentation/screens/single_player_game.dart';
 import 'package:green_frontend/features/single_player/presentation/bloc/game_event.dart';
 
+import 'package:green_frontend/features/multiplayer/presentation/bloc/multiplayer_bloc.dart';
+import 'package:green_frontend/features/multiplayer/presentation/screens/multiplayer_lobby_screen.dart';
+
+import 'package:green_frontend/core/network/api_client.dart'; 
+import 'package:green_frontend/core/storage/token_storage.dart';  
+
 class QuizDetailPage extends StatelessWidget {
   final dynamic quiz;
   final bool isAdmin; // ✅ Define si muestras controles de edición o solo jugar
@@ -30,6 +36,9 @@ class QuizDetailPage extends StatelessWidget {
         BlocProvider(
           create: (_) => sl<GameBloc>(),
         ),
+        BlocProvider(
+          create: (_) => sl<MultiplayerBloc>(),
+  ),
       ],
       child: _QuizDetailView(quiz: quiz, isAdmin: isAdmin),
     );
@@ -343,50 +352,88 @@ class _QuizDetailView extends StatelessWidget {
     );
   }
 
-  // --- MODO ADMIN ---
-  Widget _buildAdminControls(BuildContext context) {
-    return Column(
+Widget _buildAdminControls(BuildContext context) {
+  // 1. Obtenemos el ID del quiz de forma segura
+  final String quizId = (quiz is KahootSummary) ? quiz.id : quiz['id'];
+
+  return BlocListener<MultiplayerBloc, MultiplayerState>(
+    listener: (context, state) {
+      // 2. Si el estado cambia a inLobby, significa que ya tenemos PIN y conexión
+      if (state.status == MultiplayerStatus.inLobby) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => BlocProvider.value(
+              value: context.read<MultiplayerBloc>(), // Pasamos el bloc activo
+              child: const MultiplayerLobbyScreen(),
+            ),),
+        );
+      }
+
+      // 3. Manejo de errores
+      if (state.status == MultiplayerStatus.error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(state.failure?.message ?? "Error al crear sala")),
+        );
+      }
+    },
+    child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Botón QR
+        // --- BOTÓN MULTIJUGADOR (HOST) ---
         ElevatedButton.icon(
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.deepPurple,
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 16),
             minimumSize: const Size(double.infinity, 50),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
-          onPressed: () {
+          onPressed: () async {
+            String? token = sl<ApiClient>().authToken;
+            token ??= await TokenStorage.getToken();
+            if (!context.mounted) return;
+            if (token != null && token.isNotEmpty) {
+              context.read<MultiplayerBloc>().add(
+                OnCreateSessionStarted(
+                  kahootId: quizId,
+                  jwt: token,
+                ),
+              );
+            } else {
+            // Caso extremo: Si el token falló, mandamos al login
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Generando sala y código QR...")),
+              const SnackBar(content: Text("Sesión inválida. Por favor ingresa de nuevo.")),
             );
+             Navigator.pushReplacementNamed(context, '/login');
+            }
           },
-          icon: const Icon(Icons.qr_code_2, size: 28), // Icono QR
+          // Si está cargando, mostramos un spinner en lugar del icono
+          icon: context.watch<MultiplayerBloc>().state.status == MultiplayerStatus.connecting
+              ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                )
+              : const Icon(Icons.qr_code_2, size: 28),
           label: const Text(
             "Generar PIN y Código QR",
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
         ),
+        
         const SizedBox(height: 12),
 
-        // Botón Editar
+        // --- BOTÓN EDITAR (Se queda igual por ahora) ---
         OutlinedButton.icon(
-          style: ElevatedButton.styleFrom(
+          style: OutlinedButton.styleFrom(
             foregroundColor: Colors.deepPurple,
             side: const BorderSide(color: Colors.deepPurple, width: 2),
             padding: const EdgeInsets.symmetric(vertical: 14),
             minimumSize: const Size(double.infinity, 50),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
           onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Abriendo editor de Quiz...")),
-            );
+            // Lógica de edición
           },
           icon: const Icon(Icons.edit_outlined),
           label: const Text(
@@ -395,9 +442,9 @@ class _QuizDetailView extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-
+    ),
+  );
+}
   Widget _buildStat(IconData icon, String value, String label) {
     return Column(
       children: [
