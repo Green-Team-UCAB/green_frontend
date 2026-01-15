@@ -54,6 +54,7 @@ class MultiplayerLobbyScreen extends StatelessWidget {
 
   // Muestra el PIN y el título
   Widget _buildHeader(MultiplayerState state) {
+    final bool isHost = state.role == ClientRole.host;
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
       decoration: const BoxDecoration(
@@ -66,28 +67,22 @@ class MultiplayerLobbyScreen extends StatelessWidget {
       width: double.infinity,
       child: Column(
         children: [
-          const Text("¡Únete a la partida!", 
-            style: TextStyle(fontSize: 16, color: Colors.grey, fontWeight: FontWeight.w500)),
-          const SizedBox(height: 8),
+          Text(isHost ? "¡Únete a la partida!" : "¡Ya estás dentro!", 
+          style: const TextStyle(fontSize: 16, color: Colors.grey, fontWeight: FontWeight.w500)),
+        const SizedBox(height: 8),
+        
+        // CÓDIGO QR: Solo si es Host
+        if (isHost)
+          state.pin != null 
+            ? _buildQRCode(state.pin!.value) // Tu código de QrImageView
+            : const SizedBox(height: 180, child: Center(child: CircularProgressIndicator()))
+        else
+          // Si es jugador, mostramos un icono de éxito
+          const SizedBox(
+            height: 180, 
+            child: Icon(Icons.check_circle_outline, color: Colors.green, size: 100)
+          ),
           
-          // CÓDIGO QR GENERADO DINÁMICAMENTE
-          if (state.pin != null)
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade200),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: QrImageView(
-                data: state.pin!.value, // El contenido del QR es el PIN
-                version: QrVersions.auto,
-                size: 180.0,
-                eyeStyle: const QrEyeStyle(eyeShape: QrEyeShape.square, color: Color(0xFF46178F)),
-                dataModuleStyle: const QrDataModuleStyle(dataModuleShape: QrDataModuleShape.circle, color: Colors.black),
-              ),
-            )
-          else
-            const SizedBox(height: 180, child: Center(child: CircularProgressIndicator())),
 
           const SizedBox(height: 12),
           const Text("PIN del juego:", style: TextStyle(fontSize: 14, color: Colors.black54)),
@@ -163,4 +158,28 @@ class MultiplayerLobbyScreen extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildQRCode(String pinValue) {
+  return Container(
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      border: Border.all(color: Colors.grey.shade200),
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: QrImageView(
+      data: pinValue,
+      version: QrVersions.auto,
+      size: 180.0,
+      eyeStyle: const QrEyeStyle(
+        eyeShape: QrEyeShape.square, 
+        color: Color(0xFF46178F), 
+      ),
+      dataModuleStyle: const QrDataModuleStyle(
+        dataModuleShape: QrDataModuleShape.circle, 
+        color: Colors.black,
+      ),
+    ),
+  );
+}
 }

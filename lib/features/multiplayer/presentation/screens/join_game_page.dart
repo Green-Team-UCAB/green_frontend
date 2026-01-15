@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:green_frontend/features/multiplayer/presentation/bloc/multiplayer_bloc.dart';
-import 'package:green_frontend/features/multiplayer/presentation/screens/multiplayer_lobby_screen.dart';
 import 'package:green_frontend/core/storage/token_storage.dart';
 import 'package:green_frontend/features/multiplayer/domain/value_objects/session_pin.dart';
 import 'package:green_frontend/features/multiplayer/domain/value_objects/client_role.dart';
@@ -19,6 +18,7 @@ class _JoinGameScreenState extends State<JoinGameScreen> {
   bool isEnteringNickname = false;
   String pin = '';
   String nickname = '';
+  
   final MobileScannerController cameraController = MobileScannerController();
   final TextEditingController pinTextController = TextEditingController();
   final TextEditingController nicknameController = TextEditingController();
@@ -43,7 +43,7 @@ class _JoinGameScreenState extends State<JoinGameScreen> {
   void dispose() {
     cameraController.dispose();
     pinTextController.dispose();
-    nicknameController.dispose(); // <-- Corregido: Faltaba dispose
+    nicknameController.dispose();
     pinFocusNode.dispose();
     super.dispose();
   }
@@ -51,37 +51,29 @@ class _JoinGameScreenState extends State<JoinGameScreen> {
   void onQrScanned(String qrToken) {
     debugPrint('QR escaneado: $qrToken');
     setState(() {
-      pin = qrToken; 
-      isEnteringNickname = true; 
-  });
+      pin = qrToken;
+      isEnteringNickname = true;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    // Calculamos el bottomInset para el teclado
+    final double bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
     return BlocListener<MultiplayerBloc, MultiplayerState>(
       listener: (context, state) {
         if (state.status == MultiplayerStatus.inLobby) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (_) => BlocProvider.value(
-                value: context.read<MultiplayerBloc>(),
-                child: const MultiplayerLobbyScreen(),
-              ),
-            ),
-          );
+          Navigator.pushReplacementNamed(context, '/multiplayer_lobby');
         }
         if (state.status == MultiplayerStatus.error) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.failure?.message ?? "Error de conexión")),
+            SnackBar(content: Text(state.failure?.message ?? 'Error')),
           );
         }
       },
       child: Scaffold(
-        resizeToAvoidBottomInset: true,
-        backgroundColor: Colors.transparent,
+        resizeToAvoidBottomInset: false, // Lo manejamos manualmente con AnimatedPadding
         body: Stack(
           children: [
             Container(
@@ -108,7 +100,6 @@ class _JoinGameScreenState extends State<JoinGameScreen> {
                       ),
                     ),
                   ),
-                  // Solo mostramos las pestañas si NO estamos ingresando el nickname
                   if (!isEnteringNickname)
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 40),
@@ -140,8 +131,7 @@ class _JoinGameScreenState extends State<JoinGameScreen> {
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 300),
                       curve: Curves.easeOutCubic,
-                      padding: EdgeInsets.only(
-                          bottom: bottomInset > 0 ? bottomInset * 0.2 : 0),
+                      padding: EdgeInsets.only(bottom: bottomInset > 0 ? 20 : 0),
                       child: Center(
                         child: SingleChildScrollView(
                           physics: const NeverScrollableScrollPhysics(),
@@ -165,96 +155,84 @@ class _JoinGameScreenState extends State<JoinGameScreen> {
   }
 
   Widget _buildNicknameInputArea() {
-  return Column(
-    mainAxisAlignment: MainAxisAlignment.center,
-    children: [
-      const Text(
-        "INGRESA TU NICKNAME",
-        style: TextStyle(
-          color: Colors.white70, 
-          fontSize: 14, 
-          fontWeight: FontWeight.bold,
-          letterSpacing: 2, // Estilo "Cyberpunk/Moderno"
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Text(
+          "INGRESA TU NICKNAME",
+          style: TextStyle(
+            color: Colors.white70,
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 2,
+          ),
         ),
-      ),
-      const SizedBox(height: 20),
-      TextField(
-        controller: nicknameController,
-        autofocus: true,
-        textAlign: TextAlign.center,
-        textCapitalization: TextCapitalization.characters, // Todo en mayúsculas para impacto
-        onChanged: (val) => setState(() => nickname = val),
-        style: const TextStyle(
-          color: Colors.white, 
-          fontSize: 50, // Un poco más pequeño que el PIN para que quepan nombres largos
-          fontWeight: FontWeight.w900,
-          letterSpacing: 4, // Igual que el PIN
+        const SizedBox(height: 20),
+        TextField(
+          controller: nicknameController,
+          autofocus: true,
+          textAlign: TextAlign.center,
+          textCapitalization: TextCapitalization.characters,
+          onChanged: (val) => setState(() => nickname = val),
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 40,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 4,
+          ),
+          decoration: const InputDecoration(
+            hintText: "NICKNAME",
+            hintStyle: TextStyle(color: Colors.white12),
+            border: InputBorder.none,
+          ),
         ),
-        decoration: const InputDecoration(
-          hintText: "NICKNAME",
-          hintStyle: TextStyle(color: Colors.white12), // Muy sutil
-          border: InputBorder.none,
-        ),
-      ),
-      const SizedBox(height: 10),
-      // Línea decorativa debajo del nombre (opcional, queda muy bien)
-      Container(
-        width: 150,
-        height: 2,
-        color: Colors.white24,
-      ),
-      const SizedBox(height: 20),
-      TextButton.icon(
-        onPressed: () {
-          setState(() {
-            isEnteringNickname = false;
-            nickname = '';
-            nicknameController.clear();
-          });
-        },
-        icon: const Icon(Icons.edit, color: Colors.white54, size: 16),
-        label: const Text(
-          "EDITAR PIN / QR", 
-          style: TextStyle(color: Colors.white54, fontSize: 12)
-        ),
-      )
-    ],
-  );
-}
+        const SizedBox(height: 10),
+        Container(width: 150, height: 2, color: Colors.white24),
+        const SizedBox(height: 20),
+        TextButton.icon(
+          onPressed: () {
+            setState(() {
+              isEnteringNickname = false;
+              nickname = '';
+              nicknameController.clear();
+            });
+          },
+          icon: const Icon(Icons.edit, color: Colors.white54, size: 16),
+          label: const Text("EDITAR PIN / QR",
+              style: TextStyle(color: Colors.white54, fontSize: 12)),
+        )
+      ],
+    );
+  }
 
   Widget _buildPinInputArea() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          GestureDetector(
-            onTap: () => pinFocusNode.requestFocus(),
-            child: Text(
-              pin.isEmpty ? 'PIN' : _formatPinForDisplay(pin),
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: pin.isEmpty
-                    ? const Color.fromARGB(137, 232, 229, 229)
-                    : Colors.white,
-                fontSize: pin.length > 7 ? 50 : 70,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 4,
-              ),
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        GestureDetector(
+          onTap: () => pinFocusNode.requestFocus(),
+          child: Text(
+            pin.isEmpty ? 'PIN' : _formatPinForDisplay(pin),
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: pin.isEmpty ? Colors.white24 : Colors.white,
+              fontSize: pin.length > 7 ? 50 : 70,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 4,
             ),
           ),
-          SizedBox(
-            height: 0,
-            width: 0,
-            child: TextField(
-              controller: pinTextController,
-              focusNode: pinFocusNode,
-              keyboardType: TextInputType.number,
-              autofocus: true,
-              decoration: const InputDecoration(border: InputBorder.none),
-            ),
+        ),
+        SizedBox(
+          height: 0, width: 0,
+          child: TextField(
+            controller: pinTextController,
+            focusNode: pinFocusNode,
+            keyboardType: TextInputType.number,
+            autofocus: true,
+            decoration: const InputDecoration(border: InputBorder.none),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -262,99 +240,95 @@ class _JoinGameScreenState extends State<JoinGameScreen> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 40),
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 300, maxHeight: 300),
-            child: AspectRatio(
-              aspectRatio: 1,
-              child: Stack(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(30),
-                    child: MobileScanner(
-                      controller: cameraController,
-                      onDetect: (capture) {
-                        final barcode = capture.barcodes.first;
-                        if (barcode.rawValue != null) {
-                          onQrScanned(barcode.rawValue!);
-                        }
-                      },
-                    ),
+        Container(
+          constraints: const BoxConstraints(maxWidth: 280, maxHeight: 280),
+          child: AspectRatio(
+            aspectRatio: 1,
+            child: Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(30),
+                  child: MobileScanner(
+                    controller: cameraController,
+                    onDetect: (capture) {
+                      final barcode = capture.barcodes.first;
+                      if (barcode.rawValue != null) {
+                        onQrScanned(barcode.rawValue!);
+                      }
+                    },
                   ),
-                  Positioned.fill(
-                    child: CustomPaint(painter: _ScannerOverlayPainter()),
-                  ),
-                ],
-              ),
+                ),
+                Positioned.fill(
+                  child: CustomPaint(painter: _ScannerOverlayPainter()),
+                ),
+              ],
             ),
           ),
         ),
         const SizedBox(height: 25),
-        const Text(
-          "Align the QR code inside the box",
-          style: TextStyle(color: Colors.white, fontSize: 16),
-        ),
+        const Text("Alinea el código QR en el cuadro",
+            style: TextStyle(color: Colors.white, fontSize: 16)),
       ],
     );
   }
 
   Widget _buildJoinButton(double bottomInset) {
     bool isEnabled = isEnteringNickname
-        ? nickname.trim().length >= 6
-        : (pin.length >= 6 && pin.length <= 10);
+        ? (nickname.trim().length >= 3) // Ajusta el mínimo según prefieras
+        : (pin.length >= 6);
 
     return AnimatedPadding(
       duration: const Duration(milliseconds: 200),
-      padding: EdgeInsets.only(
-        bottom: bottomInset > 0 ? bottomInset + 20 : 40,
-        left: 30,
-        right: 30,
-      ),
-      child: SizedBox(
-        width: double.infinity,
-        height: 60,
-        child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: isEnabled ? Colors.white : Colors.white24,
-            foregroundColor: const Color(0xFF6E48AA),
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          ),
-          onPressed: isEnabled
-              ? () async {
-                  if (!isEnteringNickname) {
-                    setState(() => isEnteringNickname = true);
-                  } else {
-                    final token = await TokenStorage.getToken();
-                    if (token != null && mounted) {
-                      if (isPinSelected) {
-                        context.read<MultiplayerBloc>().add(
-                              OnConnectStarted(
-                                role: ClientRole.player,
-                                pin: SessionPin(pin),
-                                jwt: token,
-                                nickname: nickname, 
-                              ),
-                            );
-                      } else{
-                          context.read<MultiplayerBloc>().add(OnResolvePinStarted(
-                            qrToken: pin,
-                            jwt: token,
-                            nickname: nickname,
-                          ));
-                      }
-                    }
-                  }
-                }
-              : null,
-          child: Text(
-            isEnteringNickname ? '¡LISTO!' : 'SIGUIENTE',
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-        ),
+      padding: EdgeInsets.only(bottom: bottomInset + 20, left: 40, right: 40),
+      child: BlocBuilder<MultiplayerBloc, MultiplayerState>(
+        builder: (context, state) {
+          final bool isLoading = state.status == MultiplayerStatus.connecting;
+
+          return ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: const Color(0xFF6E48AA),
+              minimumSize: const Size(double.infinity, 60),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+              elevation: 5,
+            ),
+            onPressed: (isEnabled && !isLoading) ? _handleJoinAction : null,
+            child: isLoading
+                ? const CircularProgressIndicator(color: Color(0xFF6E48AA))
+                : Text(
+                    isEnteringNickname ? '¡A JUGAR!' : 'SIGUIENTE',
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+          );
+        },
       ),
     );
+  }
+
+  void _handleJoinAction() async {
+    if (!isEnteringNickname) {
+      setState(() => isEnteringNickname = true);
+    } else {
+      final token = await TokenStorage.getToken();
+      if (!mounted) return;
+      
+      final bloc = context.read<MultiplayerBloc>();
+      
+      if (isPinSelected) {
+        bloc.add(OnConnectStarted(
+          role: ClientRole.player,
+          pin: SessionPin(pin),
+          jwt: token ?? '',
+          nickname: nickname,
+        ));
+      } else {
+        bloc.add(OnResolvePinStarted(
+          qrToken: pin,
+          jwt: token ?? '',
+          nickname: nickname,
+        ));
+      }
+    }
   }
 
   Widget _buildPill(String text, bool selected, VoidCallback onTap) {

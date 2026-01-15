@@ -9,6 +9,7 @@ abstract class MultiplayerEvent extends Equatable {
 class OnCreateSessionStarted extends MultiplayerEvent {
   final String kahootId;
   final String jwt;
+  
   OnCreateSessionStarted({required this.kahootId, required this.jwt});
 
   @override
@@ -84,3 +85,23 @@ class _OnSocketErrorReceived extends MultiplayerEvent {
 }
 
 class _OnSessionClosedReceived extends MultiplayerEvent {}
+
+class OnResetMultiplayer extends MultiplayerEvent {}
+
+// En multiplayer_event.dart
+
+class _OnQuestionResultsReceived extends MultiplayerEvent {
+  final PlayerResults results;
+  _OnQuestionResultsReceived(this.results);
+}
+
+class _OnGameEndedReceived extends MultiplayerEvent {
+  final Summary podium;
+  _OnGameEndedReceived(this.podium);
+}
+
+// En multiplayer_event.dart
+class _OnHostResultsReceived extends MultiplayerEvent {
+  final HostResults results;
+  _OnHostResultsReceived(this.results);
+}

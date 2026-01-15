@@ -283,6 +283,9 @@ Future<void> init() async {
       listenAnswerCountUpdate: sl(),
       listenSocketError: sl(),
       listenSessionClosed: sl(),
+      listenQuestionResults: sl(),
+      listenGameResults: sl(),
+      listenHostResults: sl(),
     ),
   );
 
