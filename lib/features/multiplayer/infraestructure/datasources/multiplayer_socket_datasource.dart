@@ -58,22 +58,22 @@ Future<void> connect({
     .setTransports(['websocket']) 
     .enableForceNew()
     .enableAutoConnect()
-    // NestJS lee de aquí primero
+    // 1. Asegura que el PIN sea un String .toString()
+    // 2. Algunos servidores prefieren 'token' en lugar de 'jwt' en el auth
     .setAuth({
-      'pin': pin,
-      'role': role, // <--- DINÁMICO
+      'pin': pin.toString(), 
+      'role': role.toUpperCase(), 
       'jwt': jwt,
     })
-    // Query params por seguridad
     .setQuery({
-      'pin': pin,
-      'role': role, // <--- DINÁMICO
+      'pin': pin.toString(),
+      'role': role.toUpperCase(),
       'jwt': jwt,
     })
-    // Headers para replicar Postman
     .setExtraHeaders({
-      'pin': pin,
-      'role': role, // <--- DINÁMICO
+      'pin': pin.toString(),
+      'role': role.toUpperCase(),
+      'jwt': jwt,
       'Authorization': 'Bearer $jwt',
     })
     .build());
@@ -92,6 +92,16 @@ Future<void> connect({
     });
 
     _socket!.onDisconnect((reason) => print('🔌 [DATASOURCE] Socket Desconectado $reason'));
+
+    // Esto te dirá si el PIN es inválido o el JWT expiró
+_socket!.on('exception', (data) {
+  print('⚠️ EXCEPCIÓN DEL SERVIDOR: $data');
+});
+
+// Esto te dirá si hay un error de protocolo
+_socket!.onConnectError((data) {
+  print('❌ ERROR DE PROTOCOLO: $data');
+});
 
     // --- DEBUG: ATRAPA-TODO ---
     _socket!.onAny((event, data) {
