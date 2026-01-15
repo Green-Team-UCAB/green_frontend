@@ -201,16 +201,17 @@ on<_OnHostResultsReceived>((event, emit) {
   
   Nickname? validNickname;
   if (event.role == ClientRole.player) {
-    if (event.nickname == null || event.nickname!.length < 6) {
+    final name = event.nickname?.trim() ?? "";
+    if (event.nickname == null || name.length < 6 || name.length > 20) {
       emit(state.copyWith(
         status: MultiplayerStatus.error, 
-        failure: const ServerFailure("El nombre debe tener al menos 6 caracteres")
+        failure: const ServerFailure("El nickname debe tener entre 6 y 20 caracteres")
       ));
       return; 
     }
     validNickname = Nickname(event.nickname!);
   }
-  emit(state.copyWith(status: MultiplayerStatus.connecting, pin: event.pin));
+  emit(state.copyWith(status: MultiplayerStatus.connecting, pin: event.pin, role: event.role));
 
   // se inicia la conexión física
   final result = await _connectToGame(role: event.role, pin: event.pin, jwt: event.jwt);

@@ -4,7 +4,7 @@ import 'package:socket_io_client/socket_io_client.dart' as io;
 /// Interfaz del DataSource para el Socket.IO
 
 abstract class MultiplayerSocketDataSource {
-  Future<void> connect({required String url, required String jwt, required String pin});
+  Future<void> connect({required String url, required String jwt, required String pin, required String role});
   void emit(String event, dynamic data);
   void disconnect();
 
@@ -42,47 +42,43 @@ class MultiplayerSocketDataSourceImpl implements MultiplayerSocketDataSource {
   final _answerUpdateController = StreamController<Map<String, dynamic>>.broadcast();
 
   @override
-  Future<void> connect({required String url, required String jwt, required String pin}) async {
-    // El Completer es la clave: controla el retorno de la función
-    final completer = Completer<void>();
+  @override
+Future<void> connect({
+  required String url, 
+  required String jwt, 
+  required String pin,
+  required String role, // Ahora es dinámico
+}) async {
+  final completer = Completer<void>();
+  final socketUrl = 'wss://quizzy-backend-1-zpvc.onrender.com/multiplayer-sessions';
 
-    final socketUrl = 'wss://quizzy-backend-1-zpvc.onrender.com/multiplayer-sessions';
+  print('🔍 CONECTANDO COMO: $role AL PIN: $pin');
 
-    print('DEBUG: Conectando al Namespace: $socketUrl');
-
-       print('''
-  🔍 REVISANDO DATOS DE CONEXIÓN:
-  - URL: wss://quizzy-backend-1-zpvc.onrender.com/multiplayer-sessions
-  - JWT: ${jwt.substring(0, 10)}... (truncado)
-  - PIN: "$pin"
-  - ROLE: "host"
-  ''');
-
-    _socket = io.io(socketUrl, io.OptionBuilder()
+  _socket = io.io(socketUrl, io.OptionBuilder()
     .setTransports(['websocket']) 
     .enableForceNew()
     .enableAutoConnect()
-    // 1. Auth: NestJS suele leer el token de aquí (Pág 11)
+    // NestJS lee de aquí primero
     .setAuth({
       'pin': pin,
-      'role': 'HOST',
+      'role': role, // <--- DINÁMICO
       'jwt': jwt,
     })
+    // Query params por seguridad
     .setQuery({
       'pin': pin,
-      'role': 'HOST',
+      'role': role, // <--- DINÁMICO
       'jwt': jwt,
     })
-    // 2. ExtraHeaders: Aquí replicamos lo que pusiste en Postman
+    // Headers para replicar Postman
     .setExtraHeaders({
       'pin': pin,
-      'role': 'HOST',
+      'role': role, // <--- DINÁMICO
       'Authorization': 'Bearer $jwt',
-      'jwt': jwt,
     })
     .build());
-    
- 
+
+     
 
     // --- MANEJO DE CONEXIÓN FÍSICA --- 
     _socket!.onConnect((_) {

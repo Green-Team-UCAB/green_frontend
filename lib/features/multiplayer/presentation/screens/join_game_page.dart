@@ -170,6 +170,7 @@ class _JoinGameScreenState extends State<JoinGameScreen> {
         const SizedBox(height: 20),
         TextField(
           controller: nicknameController,
+          maxLength: 20,
           autofocus: true,
           textAlign: TextAlign.center,
           textCapitalization: TextCapitalization.characters,
@@ -186,6 +187,20 @@ class _JoinGameScreenState extends State<JoinGameScreen> {
             border: InputBorder.none,
           ),
         ),
+        Padding(
+        padding: const EdgeInsets.only(top: 8),
+        child: Text(
+          "${nickname.length} / 20 caracteres",
+          style: TextStyle(
+            // Cambia a rojo si está fuera de rango para alertar al usuario
+            color: (nickname.length >= 6 && nickname.length <= 20) 
+                ? Colors.white54 
+                : Colors.redAccent,
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
         const SizedBox(height: 10),
         Container(width: 150, height: 2, color: Colors.white24),
         const SizedBox(height: 20),
@@ -274,7 +289,7 @@ class _JoinGameScreenState extends State<JoinGameScreen> {
 
   Widget _buildJoinButton(double bottomInset) {
     bool isEnabled = isEnteringNickname
-        ? (nickname.trim().length >= 3) // Ajusta el mínimo según prefieras
+        ? (nickname.trim().length >= 6 && nickname.trim().length <= 20)
         : (pin.length >= 6);
 
     return AnimatedPadding(

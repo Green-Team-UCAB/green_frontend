@@ -12,7 +12,7 @@ class MultiplayerLobbyScreen extends StatelessWidget {
     return BlocConsumer<MultiplayerBloc, MultiplayerState>(
       listener: (context, state) {
         if (state.status == MultiplayerStatus.inQuestion) {
-          // Navigator.pushNamed(context, '/game_screen');
+          Navigator.pushNamed(context, '/multplayer_screen');
         }
         if (state.status == MultiplayerStatus.error) {
           ScaffoldMessenger.of(context).showSnackBar(
