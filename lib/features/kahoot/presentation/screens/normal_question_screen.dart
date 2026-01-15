@@ -100,14 +100,25 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
       final media = await mediaProvider.pickImageFromGallery();
       if (media != null) {
         setState(() {
+          // 🔴 CORRECCIÓN: Limpiar texto cuando se agrega imagen
+          _answerControllers[answerIndex].clear();
+          
           _answerMediaIds[answerIndex] = media.id;
           _answerLocalPaths[answerIndex] = media.localPath;
 
           // Actualizar la respuesta en la lista
           _answers[answerIndex] = _answers[answerIndex].copyWith(
+            text: '', // 🔴 Limpiar texto
             mediaId: media.id,
           );
         });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Imagen agregada. Recuerda que no puedes tener texto e imagen en la misma respuesta.'),
+            duration: Duration(seconds: 3),
+          ),
+        );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -148,6 +159,30 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
       _timeLimit = 20;
     }
 
+    // 🔴 VALIDACIÓN MEJORADA: Verificar que cada respuesta tenga texto O imagen, no ambos
+    for (var i = 0; i < _answers.length; i++) {
+      final answer = _answers[i];
+      final hasText = answer.text != null && answer.text!.isNotEmpty;
+      final hasMedia = answer.mediaId != null && answer.mediaId!.isNotEmpty;
+      
+      if (!hasText && !hasMedia) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('La respuesta ${i + 1} debe tener texto o imagen')),
+        );
+        return;
+      }
+      
+      if (hasText && hasMedia) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('La respuesta ${i + 1} no puede tener texto e imagen simultáneamente'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+        return;
+      }
+    }
+
     final hasCorrectAnswer = _answers.any((answer) => answer.isCorrect);
     if (!hasCorrectAnswer) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -158,9 +193,13 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
     }
 
     for (var i = 0; i < _answers.length; i++) {
-      if (_answers[i].text == null || _answers[i].text!.isEmpty) {
+      // 🔴 VALIDACIÓN MODIFICADA: Solo verificar si tiene texto O imagen
+      final hasText = _answers[i].text != null && _answers[i].text!.isNotEmpty;
+      final hasMedia = _answerMediaIds[i] != null;
+      
+      if (!hasText && !hasMedia) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('La respuesta ${i + 1} no puede estar vacía')),
+          SnackBar(content: Text('La respuesta ${i + 1} no puede estar vacía. Agrega texto o imagen.')),
         );
         return;
       }
@@ -321,34 +360,43 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
         if (_selectedMediaId != null && localPath != null)
           Container(
             margin: EdgeInsets.only(bottom: 10),
-            height: 120,
+            height: 180,
             width: double.infinity,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: Colors.grey[300]!),
+              color: Colors.grey[100],
             ),
             child: Stack(
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.file(
-                    File(localPath),
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                    height: double.infinity,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        color: Colors.grey[200],
-                        child: Center(
-                          child: Icon(Icons.broken_image, color: Colors.grey),
-                        ),
-                      );
-                    },
+                // 🔴 CORRECCIÓN: Imagen centrada con BoxFit.contain
+                Center(
+                  child: Container(
+                    constraints: BoxConstraints(
+                      maxHeight: 180,
+                      maxWidth: double.infinity,
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.file(
+                        File(localPath),
+                        fit: BoxFit.contain, // 🔴 CAMBIADO: de cover a contain
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            color: Colors.grey[200],
+                            child: Center(
+                              child: Icon(Icons.broken_image,
+                                  size: 40, color: Colors.grey),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
                   ),
                 ),
                 Positioned(
-                  top: 5,
-                  right: 5,
+                  top: 8,
+                  right: 8,
                   child: GestureDetector(
                     onTap: () {
                       setState(() {
@@ -357,11 +405,12 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
                     },
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.red,
+                        color: Colors.black.withOpacity(0.7),
                         shape: BoxShape.circle,
                       ),
-                      padding: EdgeInsets.all(4),
-                      child: Icon(Icons.close, color: Colors.white, size: 16),
+                      padding: EdgeInsets.all(6),
+                      child: Icon(Icons.close,
+                          color: Colors.white, size: 18),
                     ),
                   ),
                 ),
@@ -437,24 +486,58 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
                     decoration: InputDecoration(
                       labelText: 'Respuesta ${index + 1}',
                       border: InputBorder.none,
+                      hintText: hasMedia 
+                        ? 'Imagen seleccionada (no se puede agregar texto)' 
+                        : 'Ingresa el texto',
+                      enabled: !hasMedia,
                     ),
-                    onChanged: (value) =>
+                    onChanged: (value) {
+                      if (value.isNotEmpty && hasMedia) {
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: Text('Cambiar a texto'),
+                            content: Text('Al agregar texto se eliminará la imagen de esta respuesta. ¿Continuar?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: Text('Cancelar'),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  _removeMediaFromAnswer(index);
+                                  setState(() => _answers[index] = Answer(
+                                    id: _answers[index].id,
+                                    text: value,
+                                    mediaId: null,
+                                    isCorrect: _answers[index].isCorrect,
+                                  ));
+                                  Navigator.pop(context);
+                                },
+                                child: Text('Continuar'),
+                              ),
+                            ],
+                          ),
+                        );
+                      } else {
                         setState(() => _answers[index] = Answer(
-                              id: _answers[index].id,
-                              text: value,
-                              mediaId: _answers[index].mediaId,
-                              isCorrect: _answers[index].isCorrect,
-                            )),
+                          id: _answers[index].id,
+                          text: value,
+                          mediaId: null,
+                          isCorrect: _answers[index].isCorrect,
+                        ));
+                      }
+                    },
                   ),
                 ),
                 Checkbox(
                   value: answer.isCorrect,
                   onChanged: (value) => setState(() => _answers[index] = Answer(
-                        id: _answers[index].id,
-                        text: _answers[index].text,
-                        mediaId: _answers[index].mediaId,
-                        isCorrect: value!,
-                      )),
+                    id: _answers[index].id,
+                    text: _answers[index].text,
+                    mediaId: _answers[index].mediaId,
+                    isCorrect: value!,
+                  )),
                 ),
               ],
             ),
@@ -463,30 +546,38 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
             if (hasMedia && localPath != null)
               Container(
                 margin: EdgeInsets.only(top: 8),
-                height: 80,
+                height: 100,
                 width: double.infinity,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: Colors.grey[300]!),
+                  color: Colors.grey[50],
                 ),
                 child: Stack(
                   children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.file(
-                        File(localPath),
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        height: double.infinity,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            color: Colors.grey[200],
-                            child: Center(
-                              child:
-                                  Icon(Icons.broken_image, color: Colors.grey),
-                            ),
-                          );
-                        },
+                    // 🔴 CORRECCIÓN: Imagen centrada con BoxFit.contain
+                    Center(
+                      child: Container(
+                        constraints: BoxConstraints(
+                          maxHeight: 100,
+                          maxWidth: double.infinity,
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.file(
+                            File(localPath),
+                            fit: BoxFit.contain, // 🔴 CAMBIADO: de cover a contain
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                color: Colors.grey[200],
+                                child: Center(
+                                  child:
+                                      Icon(Icons.broken_image, size: 30, color: Colors.grey),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
                       ),
                     ),
                     Positioned(
@@ -496,7 +587,7 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
                         onTap: () => _removeMediaFromAnswer(index),
                         child: Container(
                           decoration: BoxDecoration(
-                            color: Colors.red,
+                            color: Colors.black.withOpacity(0.7),
                             shape: BoxShape.circle,
                           ),
                           padding: EdgeInsets.all(4),
@@ -514,8 +605,40 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
               alignment: Alignment.centerRight,
               child: TextButton.icon(
                 icon: Icon(hasMedia ? Icons.image : Icons.add_photo_alternate),
-                label: Text(hasMedia ? 'Cambiar imagen' : 'Agregar imagen'),
-                onPressed: () => _addMediaToAnswer(index),
+                label: Text(
+                  hasMedia ? 'Cambiar imagen' : 'Agregar imagen',
+                  style: TextStyle(
+                    color: _answerControllers[index].text.isNotEmpty 
+                      ? Colors.grey 
+                      : null,
+                  ),
+                ),
+                onPressed: () {
+                  if (_answerControllers[index].text.isNotEmpty) {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: Text('Cambiar a imagen'),
+                        content: Text('Al agregar una imagen se eliminará el texto de esta respuesta. ¿Continuar?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text('Cancelar'),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              _addMediaToAnswer(index);
+                            },
+                            child: Text('Continuar'),
+                          ),
+                        ],
+                      ),
+                    );
+                  } else {
+                    _addMediaToAnswer(index);
+                  }
+                },
               ),
             ),
           ],

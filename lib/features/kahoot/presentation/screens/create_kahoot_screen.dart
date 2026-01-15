@@ -193,7 +193,6 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
                     if (selectedTheme != null) {
                       setState(() {
                         _selectedThemeName = selectedTheme.name;
-                        // _selectedThemeId eliminado por no uso
                       });
                       kahootProvider.setThemeId(selectedTheme.id);
                     }
@@ -235,9 +234,7 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
             SizedBox(height: 16),
 
             if (kahootProvider.currentKahoot.questions.isNotEmpty)
-              ...kahootProvider.currentKahoot.questions.asMap().entries.map((
-                entry,
-              ) {
+              ...kahootProvider.currentKahoot.questions.asMap().entries.map((entry) {
                 final index = entry.key;
                 final question = entry.value;
                 return QuestionTile(
@@ -410,7 +407,7 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
         GestureDetector(
           onTap: _pickCoverImage,
           child: Container(
-            height: 150,
+            height: 200,
             width: double.infinity,
             decoration: BoxDecoration(
               color: _selectedCoverLocalPath == null ? Colors.grey[200] : null,
@@ -420,28 +417,47 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
                     ? Colors.grey[300]!
                     : Colors.transparent,
               ),
-              image: _selectedCoverLocalPath != null
-                  ? DecorationImage(
-                      image: FileImage(File(_selectedCoverLocalPath!)),
-                      fit: BoxFit.cover,
-                    )
-                  : null,
             ),
             child: _selectedCoverLocalPath == null
                 ? Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.add_photo_alternate,
-                          size: 40, color: Colors.grey[600]),
-                      SizedBox(height: 8),
+                          size: 50, color: Colors.grey[600]),
+                      SizedBox(height: 12),
                       Text(
-                        'Pulsa para añadir una imagen de portada',
-                        style: TextStyle(color: Colors.grey[600]),
+                        'Toca para añadir una imagen de portada',
+                        style: TextStyle(color: Colors.grey[600], fontSize: 14),
                       ),
                     ],
                   )
                 : Stack(
                     children: [
+                      // 🔴 CORRECCIÓN: Imagen con BoxFit.contain y centrada
+                      Center(
+                        child: Container(
+                          constraints: BoxConstraints(
+                            maxHeight: 200,
+                            maxWidth: double.infinity,
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.file(
+                              File(_selectedCoverLocalPath!),
+                              fit: BoxFit.contain, // 🔴 CAMBIADO: de cover a contain
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  color: Colors.grey[200],
+                                  child: Center(
+                                    child: Icon(Icons.broken_image,
+                                        size: 50, color: Colors.grey),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      ),
                       // Botón para eliminar imagen
                       Positioned(
                         top: 8,
@@ -450,7 +466,7 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
                           onTap: _removeCoverImage,
                           child: Container(
                             decoration: BoxDecoration(
-                              color: Colors.red,
+                              color: Colors.black.withOpacity(0.7),
                               shape: BoxShape.circle,
                             ),
                             padding: EdgeInsets.all(8),
@@ -465,16 +481,16 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
                         left: 8,
                         child: Container(
                           padding:
-                              EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
-                            color: Colors.black54,
-                            borderRadius: BorderRadius.circular(4),
+                            color: Colors.black.withOpacity(0.7),
+                            borderRadius: BorderRadius.circular(6),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.image, color: Colors.white, size: 14),
-                              SizedBox(width: 4),
+                              Icon(Icons.image, color: Colors.white, size: 16),
+                              SizedBox(width: 6),
                               Text(
                                 'Imagen de portada',
                                 style: TextStyle(

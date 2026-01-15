@@ -308,26 +308,40 @@ class _MediaSelectionScreenState extends State<MediaSelectionScreen> {
     if (media.isImage && media.localPath != null) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(8),
-        child: Image.file(
-          File(media.localPath!),
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return Container(
-              color: Colors.grey[200],
-              child: Icon(Icons.broken_image, color: Colors.grey),
-            );
-          },
+        child: Container(
+          color: Colors.grey[100], // Fondo para miniaturas
+          child: Center(
+            child: Image.file(
+              File(media.localPath!),
+              fit: BoxFit.contain, // 🔴 CAMBIADO: de cover a contain
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  color: Colors.grey[200],
+                  child: Center(
+                    child: Icon(Icons.broken_image, 
+                      size: 32, 
+                      color: Colors.grey),
+                  ),
+                );
+              },
+            ),
+          ),
         ),
       );
     } else if (media.thumbnailUrl != null) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(8),
-        child: Image.network(
-          media.thumbnailUrl!,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return _buildPlaceholder(media);
-          },
+        child: Container(
+          color: Colors.grey[100],
+          child: Center(
+            child: Image.network(
+              media.thumbnailUrl!,
+              fit: BoxFit.contain, // 🔴 CAMBIADO: de cover a contain
+              errorBuilder: (context, error, stackTrace) {
+                return _buildPlaceholder(media);
+              },
+            ),
+          ),
         ),
       );
     } else {
