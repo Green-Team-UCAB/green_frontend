@@ -84,11 +84,19 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
           _answerMediaIds[answerIndex] = media.id;
           _answerLocalPaths[answerIndex] = media.localPath;
 
-          // Actualizar la respuesta en la lista
+          // 🔴 CORRECCIÓN: Actualizar respuesta con imagen y sin texto
           _answers[answerIndex] = _answers[answerIndex].copyWith(
+            text: '', // 🔴 Limpiar texto
             mediaId: media.id,
           );
         });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Imagen agregada a la respuesta.'),
+            duration: Duration(seconds: 2),
+          ),
+        );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -126,6 +134,32 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
     // Asegurar que timeLimit sea positivo
     if (_timeLimit <= 0) {
       _timeLimit = 20;
+    }
+
+    // 🔴 VALIDACIÓN: Verificar que cada respuesta tenga solo texto O imagen
+    for (var i = 0; i < _answers.length; i++) {
+      final answer = _answers[i];
+      final hasText = answer.text != null && answer.text!.isNotEmpty;
+      final hasMedia = answer.mediaId != null && answer.mediaId!.isNotEmpty;
+      
+      if (hasText && hasMedia) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('La respuesta ${i + 1} no puede tener texto e imagen simultáneamente'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+        return;
+      }
+    }
+
+    // 🔴 VALIDACIÓN: Verificar que al menos una respuesta esté marcada como correcta
+    final hasCorrectAnswer = _answers.any((answer) => answer.isCorrect);
+    if (!hasCorrectAnswer) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Debe marcar una respuesta como correcta')),
+      );
+      return;
     }
 
     final kahootProvider = Provider.of<KahootProvider>(context, listen: false);
@@ -270,34 +304,43 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
         if (_selectedMediaId != null && localPath != null)
           Container(
             margin: EdgeInsets.only(bottom: 10),
-            height: 120,
+            height: 180,
             width: double.infinity,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: Colors.grey[300]!),
+              color: Colors.grey[100],
             ),
             child: Stack(
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.file(
-                    File(localPath),
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                    height: double.infinity,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        color: Colors.grey[200],
-                        child: Center(
-                          child: Icon(Icons.broken_image, color: Colors.grey),
-                        ),
-                      );
-                    },
+                // 🔴 CORRECCIÓN: Imagen centrada con BoxFit.contain
+                Center(
+                  child: Container(
+                    constraints: BoxConstraints(
+                      maxHeight: 180,
+                      maxWidth: double.infinity,
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.file(
+                        File(localPath),
+                        fit: BoxFit.contain, // 🔴 CAMBIADO: de cover a contain
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            color: Colors.grey[200],
+                            child: Center(
+                              child: Icon(Icons.broken_image,
+                                  size: 40, color: Colors.grey),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
                   ),
                 ),
                 Positioned(
-                  top: 5,
-                  right: 5,
+                  top: 8,
+                  right: 8,
                   child: GestureDetector(
                     onTap: () {
                       setState(() {
@@ -306,11 +349,12 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
                     },
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.red,
+                        color: Colors.black.withOpacity(0.7),
                         shape: BoxShape.circle,
                       ),
-                      padding: EdgeInsets.all(4),
-                      child: Icon(Icons.close, color: Colors.white, size: 16),
+                      padding: EdgeInsets.all(6),
+                      child: Icon(Icons.close,
+                          color: Colors.white, size: 18),
                     ),
                   ),
                 ),
@@ -370,13 +414,17 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
     final hasMedia = _answerMediaIds[index] != null;
     final localPath = _answerLocalPaths[index];
     final isCorrect = _answers[index].isCorrect;
+    final currentText = _answers[index].text;
 
     return Card(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ListTile(
-            title: Text(text, style: TextStyle(fontWeight: FontWeight.bold)),
+            title: Text(
+              hasMedia ? '$text (con imagen)' : text,
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
             trailing: Checkbox(
               value: isCorrect,
               onChanged: (value) => setState(() {
@@ -397,30 +445,38 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Container(
-                height: 80,
+                height: 100,
                 width: double.infinity,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: Colors.grey[300]!),
+                  color: Colors.grey[50],
                 ),
                 child: Stack(
                   children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.file(
-                        File(localPath),
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        height: double.infinity,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            color: Colors.grey[200],
-                            child: Center(
-                              child:
-                                  Icon(Icons.broken_image, color: Colors.grey),
-                            ),
-                          );
-                        },
+                    // 🔴 CORRECCIÓN: Imagen centrada con BoxFit.contain
+                    Center(
+                      child: Container(
+                        constraints: BoxConstraints(
+                          maxHeight: 100,
+                          maxWidth: double.infinity,
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.file(
+                            File(localPath),
+                            fit: BoxFit.contain, // 🔴 CAMBIADO: de cover a contain
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                color: Colors.grey[200],
+                                child: Center(
+                                  child:
+                                      Icon(Icons.broken_image, size: 30, color: Colors.grey),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
                       ),
                     ),
                     Positioned(
@@ -430,7 +486,7 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
                         onTap: () => _removeMediaFromAnswer(index),
                         child: Container(
                           decoration: BoxDecoration(
-                            color: Colors.red,
+                            color: Colors.black.withOpacity(0.7),
                             shape: BoxShape.circle,
                           ),
                           padding: EdgeInsets.all(4),
@@ -447,13 +503,50 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
           // Botón para agregar multimedia
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: TextButton.icon(
-                icon: Icon(hasMedia ? Icons.image : Icons.add_photo_alternate),
-                label: Text(hasMedia ? 'Cambiar imagen' : 'Agregar imagen'),
-                onPressed: () => _addMediaToAnswer(index),
-              ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                if (hasMedia)
+                  Expanded(
+                    child: Text(
+                      'Esta respuesta tiene imagen. El texto se ha deshabilitado.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.orange[700],
+                      ),
+                    ),
+                  ),
+                TextButton.icon(
+                  icon: Icon(hasMedia ? Icons.image : Icons.add_photo_alternate),
+                  label: Text(hasMedia ? 'Cambiar imagen' : 'Agregar imagen'),
+                  onPressed: () {
+                    if (hasMedia) {
+                      _addMediaToAnswer(index);
+                    } else {
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: Text('Agregar imagen'),
+                          content: Text('Al agregar una imagen se eliminará el texto de esta respuesta. ¿Continuar?'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: Text('Cancelar'),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                                _addMediaToAnswer(index);
+                              },
+                              child: Text('Continuar'),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+                  },
+                ),
+              ],
             ),
           ),
         ],

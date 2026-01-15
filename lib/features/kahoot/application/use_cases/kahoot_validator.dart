@@ -1,5 +1,3 @@
-
-
 import 'package:green_frontend/features/kahoot/domain/entities/question.dart';
 
 class KahootValidator {
@@ -25,7 +23,7 @@ class KahootValidator {
       }
 
       // Validar que el tiempo límite sea positivo
-      if (question.timeLimit <= 0) { // CAMBIADO: timeLimit en lugar de timeLimitSeconds
+      if (question.timeLimit <= 0) {
         return 'La pregunta ${i + 1} debe tener un tiempo límite positivo mayor a 0';
       }
 
@@ -33,6 +31,22 @@ class KahootValidator {
         return 'La pregunta ${i + 1} debe tener al menos una respuesta';
       }
 
+      // 🔴 NUEVA VALIDACIÓN: Verificar respuestas individualmente
+      for (var j = 0; j < question.answers.length; j++) {
+        final answer = question.answers[j];
+        final hasText = answer.text != null && answer.text!.isNotEmpty;
+        final hasMedia = answer.mediaId != null && answer.mediaId!.isNotEmpty;
+        
+        if (!hasText && !hasMedia) {
+          return 'La respuesta ${j + 1} de la pregunta ${i + 1} debe tener texto o imagen';
+        }
+        
+        if (hasText && hasMedia) {
+          return 'La respuesta ${j + 1} de la pregunta ${i + 1} no puede tener texto e imagen simultáneamente. Elige solo uno.';
+        }
+      }
+
+      // Validación de respuestas correctas para preguntas de quiz
       if (question.type == QuestionType.quiz) {
         final correctAnswers = question.answers.where((a) => a.isCorrect).length;
         if (correctAnswers == 0) {
