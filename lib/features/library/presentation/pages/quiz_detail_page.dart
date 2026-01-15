@@ -37,9 +37,6 @@ class QuizDetailPage extends StatelessWidget {
         BlocProvider(
           create: (_) => sl<GameBloc>(),
         ),
-        BlocProvider(
-          create: (_) => sl<MultiplayerBloc>(),
-  ),
       ],
       child: _QuizDetailView(quiz: quiz, isAdmin: isAdmin),
     );

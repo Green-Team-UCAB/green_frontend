@@ -4,11 +4,13 @@ import 'package:socket_io_client/socket_io_client.dart' as io;
 /// Interfaz del DataSource para el Socket.IO
 
 abstract class MultiplayerSocketDataSource {
-  Future<void> connect({required String url, required String jwt});
+  Future<void> connect({required String url, required String jwt, required String pin});
   void emit(String event, dynamic data);
   void disconnect();
 
   // Streams de datos crudos (Modelos/Maps)
+  Stream<Map<String, dynamic>> get onHostConnectedSuccess;
+  Stream<Map<String, dynamic>> get onPlayerConnectedSuccess;
   Stream<Map<String, dynamic>> get onRoomJoined;
   Stream<Map<String, dynamic>> get onPlayersUpdate;
   Stream<Map<String, dynamic>> get onQuestionStarted;
@@ -26,6 +28,8 @@ class MultiplayerSocketDataSourceImpl implements MultiplayerSocketDataSource {
   io.Socket? _socket;
   
   // Controladores para convertir eventos de socket a Streams de Dart
+  final _hostConnectedSuccessController = StreamController<Map<String, dynamic>>.broadcast();
+  final _playerConnectedSuccessController = StreamController<Map<String, dynamic>>.broadcast();
   final _roomJoinedController = StreamController<Map<String, dynamic>>.broadcast();
   final _playersUpdateController = StreamController<Map<String, dynamic>>.broadcast();
   final _questionStartedController = StreamController<Map<String, dynamic>>.broadcast();
@@ -38,20 +42,72 @@ class MultiplayerSocketDataSourceImpl implements MultiplayerSocketDataSource {
   final _answerUpdateController = StreamController<Map<String, dynamic>>.broadcast();
 
   @override
-  Future<void> connect({required String url, required String jwt}) async {
-    _socket = io.io(url, io.OptionBuilder()
-      .setTransports(['websocket']) 
-      .setAuth({'token': jwt})      
-      .enableAutoConnect()
-      .build());
+  Future<void> connect({required String url, required String jwt, required String pin}) async {
+    // El Completer es la clave: controla el retorno de la función
+    final completer = Completer<void>();
 
-    // 2. Escucha de eventos básicos de conexión
-    _socket!.onConnect((_) => print(' Socket Conectado'));
-    _socket!.onDisconnect((_) => print(' Socket Desconectado'));
+    final socketUrl = 'wss://quizzy-backend-1-zpvc.onrender.com/multiplayer-sessions';
 
-   
+    print('DEBUG: Conectando al Namespace: $socketUrl');
 
-    // 3. Mapeo de eventos de la API (Pág 57-60)
+       print('''
+  🔍 REVISANDO DATOS DE CONEXIÓN:
+  - URL: wss://quizzy-backend-1-zpvc.onrender.com/multiplayer-sessions
+  - JWT: ${jwt.substring(0, 10)}... (truncado)
+  - PIN: "$pin"
+  - ROLE: "host"
+  ''');
+
+    _socket = io.io(socketUrl, io.OptionBuilder()
+    .setTransports(['websocket']) 
+    .enableForceNew()
+    .enableAutoConnect()
+    // 1. Auth: NestJS suele leer el token de aquí (Pág 11)
+    .setAuth({
+      'pin': pin,
+      'role': 'HOST',
+      'jwt': jwt,
+    })
+    .setQuery({
+      'pin': pin,
+      'role': 'HOST',
+      'jwt': jwt,
+    })
+    // 2. ExtraHeaders: Aquí replicamos lo que pusiste en Postman
+    .setExtraHeaders({
+      'pin': pin,
+      'role': 'HOST',
+      'Authorization': 'Bearer $jwt',
+      'jwt': jwt,
+    })
+    .build());
+    
+ 
+
+    // --- MANEJO DE CONEXIÓN FÍSICA --- 
+    _socket!.onConnect((_) {
+      print('✅ [DATASOURCE] Socket Conectado físicamente');
+      if (!completer.isCompleted) completer.complete();
+    });
+
+    _socket!.onConnectError((data) {
+      print('❌ [DATASOURCE] Error de conexión: $data');
+      if (!completer.isCompleted) completer.completeError(data);
+    });
+
+    _socket!.onDisconnect((reason) => print('🔌 [DATASOURCE] Socket Desconectado $reason'));
+
+    // --- DEBUG: ATRAPA-TODO ---
+    _socket!.onAny((event, data) {
+      print('📩 [SOCKET_EVENT]: $event | Data: $data');
+    });
+
+    // --- MAPEOS SEGÚN PÁG 58-64 ---
+    _socket!.on('host_connected_success', (data) => _hostConnectedSuccessController.add(_toMap(data)));
+    _socket!.on('player_connected_to_session', (data) => _playerConnectedSuccessController.add(_toMap(data)));
+    _socket!.on('host_lobby_update', (data) => _playersUpdateController.add(_toMap(data)));
+    
+    // Otros eventos
     _socket!.on('room_joined', (data) => _roomJoinedController.add(_toMap(data)));
     _socket!.on('player_joined', (data) => _playersUpdateController.add(_toMap(data)));
     _socket!.on('question_started', (data) => _questionStartedController.add(_toMap(data)));
@@ -62,11 +118,10 @@ class MultiplayerSocketDataSourceImpl implements MultiplayerSocketDataSource {
     _socket!.on('player_left', (data) => _playerLeftController.add(_toMap(data)));
     _socket!.on('answer_update', (data) => _answerUpdateController.add(_toMap(data)));
     
-    // Captura de excepciones (Pág 64)
     _socket!.on('exception', (data) => _errorController.add(data)); 
-    _socket!.onConnectError((data) => _errorController.add(data));
-    
-    
+
+    // Esperar a que el evento onConnect ocurra antes de seguir
+    return completer.future;
   }
 
   // Helper para asegurar que la data es un Map
@@ -77,6 +132,7 @@ class MultiplayerSocketDataSourceImpl implements MultiplayerSocketDataSource {
 
   @override
   void emit(String event, dynamic data) {
+    print('📤 [EMIT]: $event | Data: $data');
     _socket?.emit(event, data);
   }
 
@@ -88,6 +144,8 @@ class MultiplayerSocketDataSourceImpl implements MultiplayerSocketDataSource {
   }
 
   void _closeControllers() {
+    _hostConnectedSuccessController.close();
+    _playerConnectedSuccessController.close();
     _roomJoinedController.close();
     _playersUpdateController.close();
     _questionStartedController.close();
@@ -101,6 +159,10 @@ class MultiplayerSocketDataSourceImpl implements MultiplayerSocketDataSource {
   }
 
   // Getters de los Streams
+  @override
+  Stream<Map<String, dynamic>> get onHostConnectedSuccess => _hostConnectedSuccessController.stream;
+  @override
+  Stream<Map<String, dynamic>> get onPlayerConnectedSuccess => _playerConnectedSuccessController.stream;
   @override
   Stream<Map<String, dynamic>> get onRoomJoined => _roomJoinedController.stream;
   @override

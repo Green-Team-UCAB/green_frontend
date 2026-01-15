@@ -39,7 +39,7 @@ class MultiplayerSocketRepositoryImpl implements MultiplayerSocketRepository {
   }) async {
     print("DEBUG: Conectando con URL: $baseUrl");
     try {
-      await dataSource.connect(url: baseUrl, jwt: jwt);
+      await dataSource.connect(url: baseUrl, jwt: jwt, pin: pin.value.toString());
       return right(unit);
     } catch (e) {
       return left(ServerFailure('Error al conectar con el servidor de juegos'));
@@ -54,8 +54,11 @@ class MultiplayerSocketRepositoryImpl implements MultiplayerSocketRepository {
   }
 
   @override
-  void emitClientReady() {
-    dataSource.emit('client_ready', {});
+  void emitClientReady(ClientRole role, SessionPin pin) {
+    dataSource.emit('client_ready', {
+      'role': role == ClientRole.host ? 'host' : 'player',
+      'pin': pin.value.toString(),
+    });
   }
 
   @override
@@ -82,6 +85,16 @@ class MultiplayerSocketRepositoryImpl implements MultiplayerSocketRepository {
   }
 
   // --- ESCUCHAS (Transformación de Datos) ---
+
+  @override
+  Stream<Unit> get onHostConnectedSuccess => dataSource.onHostConnectedSuccess.map(
+    (_) => unit
+  );
+
+  @override
+  Stream<Unit> get onPlayerConnectedSuccess => dataSource.onPlayerConnectedSuccess.map(
+    (_) => unit
+  );
 
   @override
   Stream<Either<Failure, Unit>> get onRoomJoined => dataSource.onRoomJoined.map(

@@ -16,6 +16,22 @@ class ListenRoomJoined {
   Stream<Either<Failure, Unit>> call() => socketRepo.onRoomJoined;
 }
 
+// Esta clase debería escuchar específicamente 'host_connected_success'
+class ListenHostConnectedSuccess {
+  final MultiplayerSocketRepository socketRepo;
+  ListenHostConnectedSuccess(this.socketRepo);
+
+  Stream<Unit> call() => socketRepo.onHostConnectedSuccess;
+}
+
+// Y esta 'player_connected_to_session'
+class ListenPlayerConnectedSuccess {
+  final MultiplayerSocketRepository socketRepo;
+  ListenPlayerConnectedSuccess(this.socketRepo);
+
+  Stream<Unit> call() => socketRepo.onPlayerConnectedSuccess;
+}
+
 class ListenHostLobbyUpdate {
   final MultiplayerSocketRepository socketRepo;
   ListenHostLobbyUpdate(this.socketRepo);

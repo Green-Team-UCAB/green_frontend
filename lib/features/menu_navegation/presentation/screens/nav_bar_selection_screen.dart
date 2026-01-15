@@ -9,15 +9,21 @@ import 'package:green_frontend/features/menu_navegation/presentation/screens/dis
 import 'package:green_frontend/features/menu_navegation/presentation/screens/home_screen.dart';
 import 'package:green_frontend/features/multiplayer/presentation/screens/join_game_page.dart';
 import 'package:green_frontend/features/library/presentation/pages/library_page.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:green_frontend/features/multiplayer/presentation/bloc/multiplayer_bloc.dart';
+import 'package:green_frontend/injection_container.dart';
 
 class NavBarSelectionScreen extends StatelessWidget {
-  const NavBarSelectionScreen({super.key});
+   NavBarSelectionScreen({super.key});
 
   // Lista actualizada: Solo 5 pantallas
-  final List<Widget> pages = const [
+  final List<Widget> pages = [
     ProfileScreen(), // 0: Inicio
     DiscoverScreen(), // 1: Descubre
-    JoinGameScreen(), // 2: Unirse (El botón central)
+    BlocProvider(
+    create: (_) => sl<MultiplayerBloc>(),
+    child: const JoinGameScreen(),
+  ),
     CreateScreen(), // 3: Crear
     LibraryPage(), // 4: Biblioteca (El nuevo Hub Principal)
   ];

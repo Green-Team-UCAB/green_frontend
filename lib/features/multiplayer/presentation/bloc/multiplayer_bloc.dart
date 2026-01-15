@@ -25,12 +25,15 @@ class MultiplayerBloc extends Bloc<MultiplayerEvent, MultiplayerState> {
  
   // Comandos sockets
   final ConnectToGame _connectToGame;
+  final ConfirmClientReady _confirmClientReady;
   final JoinRoom _joinRoom;
   final StartGame _startGame;
   final NextPhase _nextPhase;
   final SubmitSyncAnswer _submitAnswer;
 
   // Suscripciones
+  final ListenHostConnectedSuccess _listenHostSuccess;
+  final ListenPlayerConnectedSuccess _listenPlayerSuccess;
   final ListenRoomJoined _listenRoomJoined;
   final ListenHostLobbyUpdate _listenHostLobbyUpdate;
   final ListenQuestionStarted _listenQuestionStarted;
@@ -38,6 +41,8 @@ class MultiplayerBloc extends Bloc<MultiplayerEvent, MultiplayerState> {
   final ListenSocketError _listenSocketError;
   final ListenSessionClosed _listenSessionClosed;
 
+  StreamSubscription? _hostSuccessSub;
+  StreamSubscription? _playerSuccessSub;
   StreamSubscription? _roomJoinedSub;
   StreamSubscription? _lobbySub;
   StreamSubscription? _questionSub;
@@ -49,10 +54,13 @@ class MultiplayerBloc extends Bloc<MultiplayerEvent, MultiplayerState> {
     required CreateMultiplayerSession createSession,
     required ResolvePinFromQr resolvePinFromQr,
     required ConnectToGame connectToGame,
+    required ConfirmClientReady confirmClientReady,
     required JoinRoom joinRoom,
     required StartGame startGame,
     required NextPhase nextPhase,
     required SubmitSyncAnswer submitAnswer,
+    required ListenHostConnectedSuccess listenHostSuccess,  
+    required ListenPlayerConnectedSuccess listenPlayerSuccess,
     required ListenRoomJoined listenRoomJoined,
     required ListenHostLobbyUpdate listenHostLobbyUpdate,
     required ListenQuestionStarted listenQuestionStarted,
@@ -62,10 +70,13 @@ class MultiplayerBloc extends Bloc<MultiplayerEvent, MultiplayerState> {
   })  : _createSession = createSession,
         _resolvePinFromQr = resolvePinFromQr,
         _connectToGame = connectToGame,
+        _confirmClientReady = confirmClientReady,
         _joinRoom = joinRoom,
         _startGame = startGame,
         _nextPhase = nextPhase,
         _submitAnswer = submitAnswer,
+        _listenHostSuccess = listenHostSuccess,
+        _listenPlayerSuccess = listenPlayerSuccess,
         _listenRoomJoined = listenRoomJoined,
         _listenHostLobbyUpdate = listenHostLobbyUpdate,
         _listenQuestionStarted = listenQuestionStarted,
@@ -79,12 +90,20 @@ class MultiplayerBloc extends Bloc<MultiplayerEvent, MultiplayerState> {
     on<OnResolvePinStarted>(_onResolvePinStarted);
     on<OnConnectStarted>(_onConnectStarted);
 
+
+
     on<OnJoinRoom>(_onJoinRoom);
     on<OnStartGame>(_onStartGame);
     on<OnNextPhase>(_onNextPhase);
     on<OnSubmitAnswer>(_onSubmitAnswer);
     
     // Mapeo de eventos de Socket
+    on<_OnHostConnectedSuccess>((event, emit) {
+      print("🔥 NAVEGANDO AL LOBBY...");
+        emit(state.copyWith(status: MultiplayerStatus.inLobby));
+    });
+    on<_OnPlayerConnectedSuccess>((event, emit) => 
+        emit(state.copyWith(status: MultiplayerStatus.inLobby)));
     on<_OnRoomJoinedUpdate>((event, emit) => emit(state.copyWith(status: MultiplayerStatus.inLobby)));
     on<_OnLobbyUpdate>((event, emit) => emit(state.copyWith(lobby: event.lobby, status: MultiplayerStatus.inLobby)));
     on<_OnQuestionStarted>((event, emit) => emit(state.copyWith(currentSlide: event.slide, status: MultiplayerStatus.inQuestion, answersReceived: 0)));
@@ -125,31 +144,60 @@ class MultiplayerBloc extends Bloc<MultiplayerEvent, MultiplayerState> {
         add(OnConnectStarted(
           role: ClientRole.player, 
           pin: sessionPin, 
-          jwt: event.jwt
+          jwt: event.jwt,
+          nickname: event.nickname,
         ));
       },
     );
   }
 
   Future<void> _onConnectStarted(OnConnectStarted event, Emitter<MultiplayerState> emit) async {
-    emit(state.copyWith(status: MultiplayerStatus.connecting));
-    
-    // 1. Iniciar conexión física
-    final result = await _connectToGame(role: event.role, pin: event.pin, jwt: event.jwt);
-    
-    result.fold(
-      (failure) => add(_OnSocketErrorReceived(failure)),
-      (_) {
-        // 2. Si conecta, activamos todas las escuchas de la API (Pág 57-74)
-        _initSubscriptions();
-        emit(state.copyWith(status: MultiplayerStatus.inLobby));
-      },
-    );
+  
+  Nickname? validNickname;
+  if (event.role == ClientRole.player) {
+    if (event.nickname == null || event.nickname!.length < 6) {
+      emit(state.copyWith(
+        status: MultiplayerStatus.error, 
+        failure: const ServerFailure("El nombre debe tener al menos 6 caracteres")
+      ));
+      return; 
+    }
+    validNickname = Nickname(event.nickname!);
   }
+  _initSubscriptions();
+  emit(state.copyWith(status: MultiplayerStatus.connecting, pin: event.pin));
+
+  // se inicia la conexión física
+  final result = await _connectToGame(role: event.role, pin: event.pin, jwt: event.jwt);
+  
+  await result.fold(
+    (failure) async => add(_OnSocketErrorReceived(failure)),
+    (_) async {
+      // configurar listeners
+      _initSubscriptions();
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      // Handshake: Client Ready
+      print("DEBUG BLOC: Enviando Handshake: Client Ready");
+       _confirmClientReady(event.role, event.pin);
+
+      // Si es jugador, pedimos entrar a la sala
+      if (event.role == ClientRole.player && validNickname != null) {
+        print("DEBUG BLOC: Es jugador, enviando JoinRoom");
+        add(OnJoinRoom(validNickname));
+      }
+    },
+  );
+}
 
   void _initSubscriptions() {
+    _hostSuccessSub = _listenHostSuccess().listen((_) => add( _OnHostConnectedSuccess()));
+    _playerSuccessSub = _listenPlayerSuccess().listen((_) => add( _OnPlayerConnectedSuccess()));
     _roomJoinedSub = _listenRoomJoined().listen((res) => add(_OnRoomJoinedUpdate(res)));
-    _lobbySub = _listenHostLobbyUpdate().listen((lobby) => add(_OnLobbyUpdate(lobby)));
+    _lobbySub = _listenHostLobbyUpdate().listen((lobby) {
+       print("DEBUG BLOC: Lobby actualizado con ${lobby.players.length} jugadores");
+       add(_OnLobbyUpdate(lobby));
+    });
     _questionSub = _listenQuestionStarted().listen((slide) => add(_OnQuestionStarted(slide)));
     _answerCountSub = _listenAnswerCountUpdate().listen((count) => add(_OnAnswerCountUpdate(count)));
     _errorSub = _listenSocketError().listen((fail) => add(_OnSocketErrorReceived(fail)));
@@ -166,6 +214,8 @@ class MultiplayerBloc extends Bloc<MultiplayerEvent, MultiplayerState> {
 
   @override
   Future<void> close() {
+    _hostSuccessSub?.cancel();
+    _playerSuccessSub?.cancel();
     _roomJoinedSub?.cancel();
     _lobbySub?.cancel();
     _questionSub?.cancel();

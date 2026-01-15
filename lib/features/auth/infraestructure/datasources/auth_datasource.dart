@@ -14,7 +14,7 @@ abstract class AuthDataSource {
     required String password,
   });
 
-  Future<UserModel> login({required String email, required String password});
+  Future<UserModel> login({required String username, required String password});
 
   Future<void> logout();
 
@@ -107,15 +107,15 @@ class AuthRemoteDataSourceImpl implements AuthDataSource {
 
   @override
   Future<UserModel> login({
-    required String email,
+    required String username,
     required String password,
   }) async {
-    InputValidator.validateNotEmpty(email, 'email');
+    InputValidator.validateNotEmpty(username, 'username');
     InputValidator.validateNotEmpty(password, 'password');
 
     final response = await client.post<Map<String, dynamic>>(
       path: '$_authPath/login',
-      data: {"email": email, "password": password},
+      data: {"username": username, "password": password},
     );
 
     if (response.statusCode == 200 || response.statusCode == 201) {

@@ -83,7 +83,7 @@ import 'core/mappers/exception_failure_mapper.dart';
 // Instancia global del Service Locator
 final sl = GetIt.instance;
 
-const String _baseUrl = 'https://quizzy-backend-0wh2.onrender.com';
+const String _baseUrl = 'https://quizzy-backend-1-zpvc.onrender.com';
 const String _apiSufix = '/api';
 
 Future<void> init() async {
@@ -244,12 +244,15 @@ Future<void> init() async {
   sl.registerLazySingleton(() => CreateMultiplayerSession(sl()));
   sl.registerLazySingleton(() => ResolvePinFromQr(sl()));
   sl.registerLazySingleton(() => ConnectToGame(sl()));
+  sl.registerLazySingleton(() => ConfirmClientReady(sl()));
   sl.registerLazySingleton(() => JoinRoom(sl()));
   sl.registerLazySingleton(() => StartGame(sl()));
   sl.registerLazySingleton(() => NextPhase(sl()));
   sl.registerLazySingleton(() => SubmitSyncAnswer(sl()));
 
   // Use Cases (Suscripciones)
+  sl.registerLazySingleton(() => ListenHostConnectedSuccess(sl()));
+  sl.registerLazySingleton(() => ListenPlayerConnectedSuccess(sl()));
   sl.registerLazySingleton(() => ListenRoomJoined(sl()));
   sl.registerLazySingleton(() => ListenHostLobbyUpdate(sl()));
   sl.registerLazySingleton(() => ListenQuestionStarted(sl()));
@@ -262,15 +265,18 @@ Future<void> init() async {
   sl.registerLazySingleton(() => ListenPlayerLeft(sl()));
 
   // Bloc
-  sl.registerFactory(
+  sl.registerLazySingleton(
     () => MultiplayerBloc(
       createSession: sl(),
       resolvePinFromQr: sl(),
       connectToGame: sl(),
+      confirmClientReady: sl(),
       joinRoom: sl(),
       startGame: sl(),
       nextPhase: sl(),
       submitAnswer: sl(),
+      listenHostSuccess: sl(),
+      listenPlayerSuccess: sl(),
       listenRoomJoined: sl(),
       listenHostLobbyUpdate: sl(),
       listenQuestionStarted: sl(),

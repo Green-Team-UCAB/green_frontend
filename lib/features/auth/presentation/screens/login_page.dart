@@ -15,12 +15,12 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final formKey = GlobalKey<FormState>();
-  final emailController = TextEditingController();
+  final usernameController = TextEditingController();
   final passwordController = TextEditingController();
 
   @override
   void dispose() {
-    emailController.dispose();
+    usernameController.dispose();
     passwordController.dispose();
     super.dispose();
   }
@@ -29,7 +29,7 @@ class _LoginPageState extends State<LoginPage> {
     if (formKey.currentState!.validate()) {
       context.read<AuthBloc>().add(
         AuthLogin(
-          email: emailController.text.trim(),
+          username: usernameController.text.trim(),
           password: passwordController.text.trim(),
         ),
       );
@@ -53,7 +53,7 @@ class _LoginPageState extends State<LoginPage> {
                 } else if (state is AuthSuccess) {
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (_) => const NavBarSelectionScreen()),
+                    MaterialPageRoute(builder: (_) => NavBarSelectionScreen()),
                   );
                 }
               },
@@ -75,9 +75,9 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 32),
                       _buildTextField(
-                        controller: emailController,
-                        hintText: 'Email',
-                        keyboardType: TextInputType.emailAddress,
+                        controller: usernameController,
+                        hintText: 'Username',
+                        keyboardType: TextInputType.text,
                       ),
                       const SizedBox(height: 16),
                       _buildTextField(

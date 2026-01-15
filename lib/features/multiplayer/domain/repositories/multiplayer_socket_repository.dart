@@ -39,13 +39,20 @@ abstract interface class MultiplayerSocketRepository {
   });
 
   /// Señal de sincronización (Handshake de Socket.io)
-  void emitClientReady();
+  void emitClientReady(ClientRole role, SessionPin pin);
 
   /// Desconexión
   Future<void> disconnect();
 
   /// --- ESCUCHAS (STREAMS) ---
   
+  /// Para el HOST: Escucha 'host_connected_success'
+  Stream<Unit> get onHostConnectedSuccess;
+
+  /// Para el JUGADOR: Escucha 'player_connected_to_session'
+  Stream<Unit> get onPlayerConnectedSuccess;
+
+
   /// onRoomJoined: Clave para saber que el PIN fue válido y entraste a la sala
   Stream<Either<Failure, Unit>> get onRoomJoined;
 

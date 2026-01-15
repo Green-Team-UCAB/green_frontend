@@ -52,6 +52,16 @@ class ConnectToGame {
   }
 }
 
+class ConfirmClientReady {
+  final MultiplayerSocketRepository repository;
+  ConfirmClientReady(this.repository);
+
+  Future<Either<Failure, Unit>> call(ClientRole role, SessionPin pin) async {
+    repository.emitClientReady(role, pin);
+    return right(unit);
+  }
+}
+
 class JoinRoom {
   final MultiplayerSocketRepository repository;
 

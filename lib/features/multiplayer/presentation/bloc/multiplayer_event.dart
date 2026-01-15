@@ -19,10 +19,11 @@ class OnCreateSessionStarted extends MultiplayerEvent {
 class OnResolvePinStarted extends MultiplayerEvent {
   final String qrToken;
   final String jwt;
-  OnResolvePinStarted({required this.qrToken, required this.jwt});
+  final String nickname;
+  OnResolvePinStarted({required this.qrToken, required this.jwt, required this.nickname});
 
   @override
-  List<Object?> get props => [qrToken, jwt];
+  List<Object?> get props => [qrToken, jwt, nickname];
 }
 
 // --- Eventos disparados por el Usuario (UI) ---
@@ -30,7 +31,16 @@ class OnConnectStarted extends MultiplayerEvent {
   final ClientRole role;
   final SessionPin pin;
   final String jwt;
-  OnConnectStarted({required this.role, required this.pin, required this.jwt});
+  final String? nickname;
+  OnConnectStarted({required this.role, required this.pin, required this.jwt, this.nickname});
+}
+
+class _OnHostConnectedSuccess extends MultiplayerEvent {
+   _OnHostConnectedSuccess();
+}
+
+class _OnPlayerConnectedSuccess extends MultiplayerEvent {
+   _OnPlayerConnectedSuccess();
 }
 
 class OnJoinRoom extends MultiplayerEvent {

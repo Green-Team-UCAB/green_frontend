@@ -50,7 +50,7 @@ class _SplashPageState extends State<SplashPage>
     if (token != null) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const NavBarSelectionScreen()),
+        MaterialPageRoute(builder: (_) =>  NavBarSelectionScreen()),
       );
     } else {
       Navigator.pushReplacement(

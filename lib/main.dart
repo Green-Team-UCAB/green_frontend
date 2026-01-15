@@ -63,6 +63,8 @@ import 'package:green_frontend/features/discovery/application/providers/category
 import 'package:green_frontend/features/discovery/data/datasources/discovery_remote_data_source.dart';
 import 'package:green_frontend/features/multiplayer/presentation/screens/multiplayer_lobby_screen.dart';
 
+import 'package:green_frontend/features/multiplayer/presentation/bloc/multiplayer_bloc.dart'; 
+
 void main() async {
   // Configuración de inicialización
   WidgetsFlutterBinding.ensureInitialized();
@@ -192,6 +194,9 @@ void main() async {
             apiClient: di.sl<
                 ApiClient>(), // CORRECCIÓN: Usar di.sl<ApiClient>() en lugar de ApiClient(dio: dio)
           ),
+        ),
+        BlocProvider<MultiplayerBloc>(
+          create: (_) => di.sl<MultiplayerBloc>(),
         ),
       ],
       child: const MyApp(),
