@@ -1,11 +1,11 @@
 class ReportSummary {
   final String kahootId;
-  final String gameId; // Puede ser attemptId o sessionId
-  final String gameType; // "Singleplayer" | "Multiplayer"
+  final String gameId;
+  final String gameType;
   final String title;
   final DateTime completionDate;
-  final int finalScore;
-  final int? rankingPosition; // Null en singleplayer
+  final int? finalScore;
+  final int? rankingPosition;
 
   const ReportSummary({
     required this.kahootId,
@@ -13,7 +13,7 @@ class ReportSummary {
     required this.gameType,
     required this.title,
     required this.completionDate,
-    required this.finalScore,
+    this.finalScore,
     this.rankingPosition,
   });
 }

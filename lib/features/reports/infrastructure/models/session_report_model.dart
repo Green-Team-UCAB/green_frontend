@@ -2,7 +2,6 @@ import '../../domain/entities/session_report.dart';
 
 class SessionReportModel extends SessionReport {
   const SessionReportModel({
-    required super.reportId,
     required super.sessionId,
     required super.title,
     required super.executionDate,
@@ -12,22 +11,16 @@ class SessionReportModel extends SessionReport {
 
   factory SessionReportModel.fromJson(Map<String, dynamic> json) {
     return SessionReportModel(
-      reportId: json['reportId'] ?? '',
       sessionId: json['sessionId'] ?? '',
-      title: json['title'] ?? 'Reporte de Sesión',
-      executionDate: json['executionDate'] != null
-          ? DateTime.parse(json['executionDate'])
-          : DateTime.now(),
-      playerRanking:
-          (json['playerRanking'] as List?)
-              ?.map((e) => PlayerRankingItemModel.fromJson(e))
-              .toList() ??
-          [],
-      questionAnalysis:
-          (json['questionAnalysis'] as List?)
-              ?.map((e) => QuestionAnalysisItemModel.fromJson(e))
-              .toList() ??
-          [],
+      title: json['title'] ?? 'Sin título',
+      executionDate:
+          DateTime.tryParse(json['executionDate'] ?? '') ?? DateTime.now(),
+      playerRanking: (json['playerRanking'] as List? ?? [])
+          .map((e) => PlayerRankingItemModel.fromJson(e))
+          .toList(),
+      questionAnalysis: (json['questionAnalysis'] as List? ?? [])
+          .map((e) => QuestionAnalysisItemModel.fromJson(e))
+          .toList(),
     );
   }
 }
@@ -42,10 +35,10 @@ class PlayerRankingItemModel extends PlayerRankingItem {
 
   factory PlayerRankingItemModel.fromJson(Map<String, dynamic> json) {
     return PlayerRankingItemModel(
-      position: (json['position'] as num?)?.toInt() ?? 0,
+      position: json['position'] ?? 0,
       username: json['username'] ?? 'Anónimo',
-      score: (json['score'] as num?)?.toInt() ?? 0,
-      correctAnswers: (json['correctAnswers'] as num?)?.toInt() ?? 0,
+      score: json['score'] ?? 0,
+      correctAnswers: json['correctAnswers'] ?? 0,
     );
   }
 }
@@ -58,10 +51,12 @@ class QuestionAnalysisItemModel extends QuestionAnalysisItem {
   });
 
   factory QuestionAnalysisItemModel.fromJson(Map<String, dynamic> json) {
+    final num percentage = json['correctPercentage'] ?? 0.0;
+
     return QuestionAnalysisItemModel(
-      questionIndex: (json['questionIndex'] as num?)?.toInt() ?? 0,
+      questionIndex: json['questionIndex'] ?? 0,
       questionText: json['questionText'] ?? '',
-      correctPercentage: (json['correctPercentage'] as num?)?.toDouble() ?? 0.0,
+      correctPercentage: percentage.toDouble(),
     );
   }
 }

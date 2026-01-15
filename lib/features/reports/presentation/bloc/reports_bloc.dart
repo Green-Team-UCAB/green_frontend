@@ -1,9 +1,13 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
+
+// Use Cases
 import '../../application/get_my_reports_use_case.dart';
 import '../../application/get_session_report_use_case.dart';
 import '../../application/get_multiplayer_result_use_case.dart';
 import '../../application/get_singleplayer_result_use_case.dart';
+
+// Entities
 import '../../domain/entities/report_summary.dart';
 import '../../domain/entities/personal_report.dart';
 import '../../domain/entities/session_report.dart';
@@ -23,7 +27,7 @@ class ReportsBloc extends Bloc<ReportsEvent, ReportsState> {
     required this.getMultiplayerResultUseCase,
     required this.getSingleplayerResultUseCase,
   }) : super(ReportsInitial()) {
-    // Handler para cargar lista
+    // 1. CARGAR LISTA HISTORIAL
     on<LoadReportsHistoryEvent>((event, emit) async {
       emit(ReportsLoading());
       final result = await getMyReportSummariesUseCase(page: event.page);
@@ -33,31 +37,35 @@ class ReportsBloc extends Bloc<ReportsEvent, ReportsState> {
       );
     });
 
-    // Handler para cargar detalle (Router inteligente)
+    // 2. CARGAR DETALLE (ROUTER INTELIGENTE)
     on<LoadReportDetailEvent>((event, emit) async {
       emit(ReportDetailLoading());
 
-      if (event.gameType == 'Host') {
-        // H10.1: Reporte de Host
+      final type = event.gameType.trim();
+
+      if (type == 'Multiplayer_host') {
+        // --- CASO A: SOY EL HOST ---
         final result = await getSessionReportUseCase(event.gameId);
         result.fold(
           (failure) => emit(ReportDetailError(failure.message)),
           (report) => emit(SessionReportLoaded(report)),
         );
-      } else if (event.gameType == 'Singleplayer') {
-        // H10.3: Reporte Personal Singleplayer
+      } else if (type == 'Singleplayer') {
+        // --- CASO B: JUGUÉ SOLO ---
         final result = await getSingleplayerResultUseCase(event.gameId);
         result.fold(
           (failure) => emit(ReportDetailError(failure.message)),
           (report) => emit(PersonalReportLoaded(report)),
         );
-      } else {
-        // H10.3: Reporte Personal Multiplayer
+      } else if (type == 'Multiplayer_player') {
+        // --- CASO C: JUGUÉ MULTIPLAYER (Como jugador) ---
         final result = await getMultiplayerResultUseCase(event.gameId);
         result.fold(
           (failure) => emit(ReportDetailError(failure.message)),
           (report) => emit(PersonalReportLoaded(report)),
         );
+      } else {
+        emit(ReportDetailError("Tipo de juego desconocido: $type"));
       }
     });
   }

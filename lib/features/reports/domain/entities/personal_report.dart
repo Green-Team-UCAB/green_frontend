@@ -6,7 +6,7 @@ class PersonalReport {
   final int correctAnswers;
   final int totalQuestions;
   final int averageTimeMs;
-  final int? rankingPosition; // Null si es Singleplayer
+  final int? rankingPosition;
   final List<QuestionResultItem> questionResults;
 
   const PersonalReport({
@@ -27,7 +27,6 @@ class QuestionResultItem {
   final String questionText;
   final bool isCorrect;
   final int timeTakenMs;
-  // Listas de respuestas dadas por el usuario (Texto o URL de imagen)
   final List<String> answerTexts;
   final List<String> answerMediaIds;
 

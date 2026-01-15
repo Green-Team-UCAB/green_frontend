@@ -35,7 +35,6 @@ class ReportsView extends StatelessWidget {
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
-        // automaticallyImplyLeading: false, // Descomentar si es pantalla raíz del navbar
       ),
       body: BlocBuilder<ReportsBloc, ReportsState>(
         builder: (context, state) {
@@ -50,8 +49,8 @@ class ReportsView extends StatelessWidget {
             return RefreshIndicator(
               onRefresh: () async {
                 context.read<ReportsBloc>().add(
-                  const LoadReportsHistoryEvent(),
-                );
+                      const LoadReportsHistoryEvent(),
+                    );
               },
               child: ListView.separated(
                 padding: const EdgeInsets.all(16),
@@ -62,9 +61,7 @@ class ReportsView extends StatelessWidget {
 
                   return GestureDetector(
                     onTap: () {
-                      // Lógica para Anfitrión
-                      if (report.gameType == 'Hosted' ||
-                          report.gameType == 'Host') {
+                      if (report.gameType == 'Multiplayer_host') {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -73,7 +70,7 @@ class ReportsView extends StatelessWidget {
                           ),
                         );
                       } else {
-                        // Lógica para Jugador (Singleplayer / Multiplayer)
+                        // Singleplayer o Multiplayer_player
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -108,28 +105,28 @@ class _ReportCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Formato de fecha seguro
     String dateStr;
     try {
-      dateStr = DateFormat(
-        'dd/MM/yyyy, hh:mm a',
-        'es',
-      ).format(report.completionDate);
+      dateStr =
+          DateFormat('dd/MM/yyyy, hh:mm a', 'es').format(report.completionDate);
     } catch (e) {
       dateStr = 'Fecha inválida';
     }
 
-    // Estilos según tipo de juego
-    final isHost = report.gameType == 'Hosted' || report.gameType == 'Host';
-    final isMultiplayer = report.gameType == 'Multiplayer';
+    final isHost = report.gameType == 'Multiplayer_host';
+    final isMultiplayer = report.gameType == 'Multiplayer_player';
 
-    // Color distintivo para cada tipo
     Color cardColor = Colors.deepPurple; // Singleplayer por defecto
     if (isHost) {
       cardColor = Colors.orange[800]!;
     } else if (isMultiplayer) {
       cardColor = Colors.indigo;
     }
+
+    String typeLabel = "SINGLE";
+    if (isHost)
+      typeLabel = "HOST";
+    else if (isMultiplayer) typeLabel = "MULTI";
 
     return Card(
       color: cardColor,
@@ -148,16 +145,14 @@ class _ReportCard extends StatelessWidget {
                   style: const TextStyle(color: Colors.white70, fontSize: 12),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
-                  ),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
                     color: Colors.black26,
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
-                    report.gameType.toUpperCase(),
+                    typeLabel,
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 10,
@@ -185,7 +180,7 @@ class _ReportCard extends StatelessWidget {
                   const Icon(Icons.people, color: Colors.white, size: 20),
                   const SizedBox(width: 4),
                   const Text(
-                    'Ver Resultados',
+                    'Ver Resultados de Sala',
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -195,16 +190,14 @@ class _ReportCard extends StatelessWidget {
                   const Icon(Icons.stars, color: Colors.amber, size: 20),
                   const SizedBox(width: 4),
                   Text(
-                    '${report.finalScore} pts',
+                    '${report.finalScore ?? 0} pts',
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],
-
                 const Spacer(),
-
                 if (report.rankingPosition != null &&
                     report.rankingPosition! > 0) ...[
                   const Icon(Icons.emoji_events, color: Colors.white, size: 20),

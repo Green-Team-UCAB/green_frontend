@@ -1,5 +1,4 @@
 class SessionReport {
-  final String reportId;
   final String sessionId;
   final String title;
   final DateTime executionDate;
@@ -7,7 +6,6 @@ class SessionReport {
   final List<QuestionAnalysisItem> questionAnalysis;
 
   const SessionReport({
-    required this.reportId,
     required this.sessionId,
     required this.title,
     required this.executionDate,
@@ -33,8 +31,7 @@ class PlayerRankingItem {
 class QuestionAnalysisItem {
   final int questionIndex;
   final String questionText;
-  final double
-  correctPercentage; // Del 0.0 al 1.0 (o 0 a 100 según decidas visualizar)
+  final double correctPercentage;
 
   const QuestionAnalysisItem({
     required this.questionIndex,
