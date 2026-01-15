@@ -1,3 +1,3 @@
 class AnswerIds { 
-  final List<String> values; 
-  AnswerIds(this.values); }
+  final List<String> value; 
+  AnswerIds(this.value); }

@@ -14,6 +14,8 @@ class ApiClient {
   final Dio _dio;
   ApiClient(this._dio);
 
+  String? get authToken => _dio.options.headers['Authorization']?.toString().replaceFirst('Bearer ', '');
+
   factory ApiClient.withBaseUrl(String baseUrl, {Duration? timeout}) {
     final dio = Dio(
       BaseOptions(

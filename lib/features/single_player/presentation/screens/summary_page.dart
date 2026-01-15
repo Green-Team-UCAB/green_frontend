@@ -265,7 +265,7 @@ class SummaryPage extends StatelessWidget {
     // Navegar directamente a la pantalla principal
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(builder: (_) => const NavBarSelectionScreen()),
+      MaterialPageRoute(builder: (_) =>  NavBarSelectionScreen()),
       (route) => false,
     );
   }

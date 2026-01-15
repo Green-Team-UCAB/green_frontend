@@ -44,7 +44,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   Future<void> _onLogin(AuthLogin event, Emitter<AuthState> emit) async {
     emit(AuthLoading());
     final Either<Failure, User> result = await loginUser(
-      email: event.email,
+      username: event.username,
       password: event.password,
     );
     result.fold(

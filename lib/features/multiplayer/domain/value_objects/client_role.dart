@@ -1,0 +1,1 @@
+enum ClientRole { host, player }

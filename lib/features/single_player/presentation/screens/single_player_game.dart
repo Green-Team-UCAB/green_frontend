@@ -213,7 +213,7 @@ class _SinglePlayerGameScreenState extends State<SinglePlayerGameScreen> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 10, 20, 40),
                   child: isFeedback
-                      ? _buildFeedbackSection(state as GameAnswerFeedback)
+                      ? _buildFeedbackSection(state)
                       : _buildSubmitButton(
                           state as GameInProgress, slide.slideId),
                 ),

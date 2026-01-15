@@ -61,6 +61,9 @@ import 'package:green_frontend/features/single_player/presentation/provider/game
 
 import 'package:green_frontend/features/discovery/application/providers/category_provider.dart';
 import 'package:green_frontend/features/discovery/data/datasources/discovery_remote_data_source.dart';
+import 'package:green_frontend/features/multiplayer/presentation/screens/multiplayer_lobby_screen.dart';
+
+import 'package:green_frontend/features/multiplayer/presentation/bloc/multiplayer_bloc.dart'; 
 
 void main() async {
   // Configuración de inicialización
@@ -192,6 +195,9 @@ void main() async {
                 ApiClient>(), // CORRECCIÓN: Usar di.sl<ApiClient>() en lugar de ApiClient(dio: dio)
           ),
         ),
+        BlocProvider<MultiplayerBloc>(
+          create: (_) => di.sl<MultiplayerBloc>(),
+        ),
       ],
       child: const MyApp(),
     ),
@@ -272,6 +278,10 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Kahoot Clone',
         debugShowCheckedModeBanner: false,
+        routes: {
+        '/multiplayer_lobby': (context) => const MultiplayerLobbyScreen(),
+        // Aquí puedes añadir más rutas después: '/game': (context) => const GameScreen(),
+        },
         theme: ThemeData(
           scaffoldBackgroundColor: AppPallete.backgroundColor,
           colorScheme: ColorScheme.fromSeed(

@@ -9,9 +9,9 @@ class LoginUserUseCase {
   LoginUserUseCase(this.repository);
 
   Future<Either<Failure, User>> call({
-    required String email,
+    required String username,
     required String password,
   }) {
-    return repository.login(email: email, password: password);
+    return repository.login(username: username, password: password);
   }
 }

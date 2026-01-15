@@ -66,11 +66,25 @@ import 'features/single_player/application/start_attempt.dart';
 import 'features/single_player/application/submit_answer.dart';
 import 'features/single_player/application/get_summary.dart';
 
+// --- Feature: Multiplayer ---
+import 'features/multiplayer/infraestructure/datasources/multiplayer_socket_datasource.dart';
+import 'features/multiplayer/infraestructure/repositories/multiplayer_socket_repository_impl.dart';
+import 'features/multiplayer/domain/repositories/multiplayer_socket_repository.dart';
+import 'features/multiplayer/application/commands.dart';
+import 'features/multiplayer/application/subscriptions.dart';
+import 'features/multiplayer/presentation/bloc/multiplayer_bloc.dart';
+import 'features/multiplayer/infraestructure/repositories/multiplayer_session_repository_impl.dart';
+import 'features/multiplayer/domain/repositories/multiplayer_session_repository.dart';
+import 'features/multiplayer/infraestructure/datasources/multiplayer_rest_datasource.dart';
+
 // Core Mappers
 import 'core/mappers/exception_failure_mapper.dart';
 
 // Instancia global del Service Locator
 final sl = GetIt.instance;
+
+const String _baseUrl = 'https://quizzy-backend-1-zpvc.onrender.com';
+const String _apiSufix = '/api';
 
 Future<void> init() async {
   // ================================================================
@@ -207,6 +221,73 @@ Future<void> init() async {
     () => AsyncGameDataSourceImpl(dio: sl()),
   );
 
+  // --- Multiplayer ---
+  
+  // Data Source
+  sl.registerLazySingleton<MultiplayerSocketDataSource>(
+    () => MultiplayerSocketDataSourceImpl(),
+  );
+
+  sl.registerLazySingleton<MultiplayerRemoteDataSource>(
+  () => MultiplayerRemoteDataSourceImpl(dio: sl()), 
+);
+
+  // Repository
+  sl.registerFactory<MultiplayerSocketRepository>(
+    () => MultiplayerSocketRepositoryImpl(dataSource: sl(), baseUrl: _baseUrl),
+  );
+  sl.registerLazySingleton<MultiplayerSessionRepository>(
+    () => MultiplayerSessionRepositoryImpl(remoteDataSource: sl(), mapper: sl()), 
+  );
+
+  // Use Cases (Comandos)
+  sl.registerLazySingleton(() => CreateMultiplayerSession(sl()));
+  sl.registerLazySingleton(() => ResolvePinFromQr(sl()));
+  sl.registerLazySingleton(() => ConnectToGame(sl()));
+  sl.registerLazySingleton(() => ConfirmClientReady(sl()));
+  sl.registerLazySingleton(() => JoinRoom(sl()));
+  sl.registerLazySingleton(() => StartGame(sl()));
+  sl.registerLazySingleton(() => NextPhase(sl()));
+  sl.registerLazySingleton(() => SubmitSyncAnswer(sl()));
+
+  // Use Cases (Suscripciones)
+  sl.registerLazySingleton(() => ListenHostConnectedSuccess(sl()));
+  sl.registerLazySingleton(() => ListenPlayerConnectedSuccess(sl()));
+  sl.registerLazySingleton(() => ListenRoomJoined(sl()));
+  sl.registerLazySingleton(() => ListenHostLobbyUpdate(sl()));
+  sl.registerLazySingleton(() => ListenQuestionStarted(sl()));
+  sl.registerLazySingleton(() => ListenAnswerUpdate(sl()));
+  sl.registerLazySingleton(() => ListenSocketError(sl()));
+  sl.registerLazySingleton(() => ListenSessionClosed(sl()));
+  sl.registerLazySingleton(() => ListenHostResults(sl()));
+  sl.registerLazySingleton(() => ListenPlayerResults(sl()));
+  sl.registerLazySingleton(() => ListenGameEnd(sl()));
+  sl.registerLazySingleton(() => ListenPlayerLeft(sl()));
+
+  // Bloc
+  sl.registerLazySingleton(
+    () => MultiplayerBloc(
+      createSession: sl(),
+      resolvePinFromQr: sl(),
+      connectToGame: sl(),
+      confirmClientReady: sl(),
+      joinRoom: sl(),
+      startGame: sl(),
+      nextPhase: sl(),
+      submitAnswer: sl(),
+      listenHostSuccess: sl(),
+      listenPlayerSuccess: sl(),
+      listenRoomJoined: sl(),
+      listenHostLobbyUpdate: sl(),
+      listenQuestionStarted: sl(),
+      listenAnswerCountUpdate: sl(),
+      listenSocketError: sl(),
+      listenSessionClosed: sl(),
+    ),
+  );
+
+  
+
   // ================================================================
   // 2. CORE & EXTERNAL
   // ================================================================
@@ -215,7 +296,7 @@ Future<void> init() async {
   sl.registerLazySingleton(
     () => Dio(
       BaseOptions(
-        baseUrl: 'https://quizzy-backend-0wh2.onrender.com/api',
+        baseUrl: '$_baseUrl$_apiSufix',
         connectTimeout: const Duration(seconds: 30),
         receiveTimeout: const Duration(seconds: 30),
       ),

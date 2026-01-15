@@ -36,12 +36,12 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<Either<Failure, User>> login({
-    required String email,
+    required String username,
     required String password,
   }) async {
     try {
       final UserModel model = await dataSource.login(
-        email: email,
+        username: username,
         password: password,
       );
       final User domain = model.toEntity();
