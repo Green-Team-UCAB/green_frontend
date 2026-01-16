@@ -12,37 +12,46 @@ class EditProfileScreen extends StatefulWidget {
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
-  // Controladores con los nombres exactos de tu Entidad User
   late TextEditingController _nameController;
   late TextEditingController _emailController;
-  late TextEditingController _userNameController; // Coincide con tu Entidad
-  late TextEditingController _passwordController;
-  String _selectedType = "student"; 
+  late TextEditingController _userNameController;
+  
+  // Controladores para el cambio de contraseña según API
+  final _currentPasswordController = TextEditingController();
+  final _newPasswordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+
+  bool _passwordsMatch = false;
 
   @override
   void initState() {
     super.initState();
-    
-    // Recuperamos el estado actual para precargar los datos
     final state = context.read<ProfileBloc>().state;
     
     String initialName = "";
     String initialEmail = "";
     String initialUserName = "";
-    String initialType = "student";
 
     if (state is ProfileLoaded) {
       initialName = state.user.name;
       initialEmail = state.user.email;
-      initialUserName = state.user.userName; // Usando userName de tu Entidad
-      initialType = state.user.type;
+      initialUserName = state.user.userName;
     }
 
     _nameController = TextEditingController(text: initialName);
     _emailController = TextEditingController(text: initialEmail);
     _userNameController = TextEditingController(text: initialUserName);
-    _passwordController = TextEditingController();
-    _selectedType = initialType;
+
+    // Listener para validar contraseñas en tiempo real
+    _newPasswordController.addListener(_validatePasswords);
+    _confirmPasswordController.addListener(_validatePasswords);
+  }
+
+  void _validatePasswords() {
+    setState(() {
+      _passwordsMatch = _newPasswordController.text.isNotEmpty &&
+          _newPasswordController.text == _confirmPasswordController.text;
+    });
   }
 
   @override
@@ -50,24 +59,40 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _nameController.dispose();
     _emailController.dispose();
     _userNameController.dispose();
-    _passwordController.dispose();
+    _currentPasswordController.dispose();
+    _newPasswordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
   void _onSave() {
-    // Armamos el Map con las llaves que espera tu API (PATCH /user/profile/)
-    // Usamos los nombres de los controllers definidos arriba
     final Map<String, dynamic> updateData = {
       "name": _nameController.text.trim(),
-      "username": _userNameController.text.trim(), // La API espera 'username'
+      "username": _userNameController.text.trim(),
       "email": _emailController.text.trim(),
     };
 
-    if (_passwordController.text.isNotEmpty) {
-      updateData["password"] = _passwordController.text;
+    // Si el usuario intentó escribir una nueva contraseña
+    if (_newPasswordController.text.isNotEmpty) {
+      if (!_passwordsMatch) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Las contraseñas no coinciden")),
+        );
+        return;
+      }
+      if (_currentPasswordController.text.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Debes ingresar tu contraseña actual")),
+        );
+        return;
+      }
+
+      // Añadimos los campos exactos del JSON de tu API
+      updateData["currentPassword"] = _currentPasswordController.text;
+      updateData["newPassword"] = _newPasswordController.text;
+      updateData["confirmNewPassword"] = _confirmPasswordController.text;
     }
 
-    // Disparamos el evento al Bloc pasando el updateData
     context.read<ProfileBloc>().add(ProfileUpdateInfo(updateData));
   }
 
@@ -79,14 +104,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Perfil actualizado correctamente")),
           );
-          Navigator.pop(context); // Regresa a la pantalla anterior
+          Navigator.pop(context);
         }
         if (state is ProfileFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text("Error: ${state.message}"), 
-              backgroundColor: Colors.redAccent
-            ),
+            SnackBar(content: Text("Error: ${state.message}"), backgroundColor: Colors.redAccent),
           );
         }
       },
@@ -103,22 +125,40 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildLabel("Name"),
-                      _buildInputField(_nameController, Icons.person_outline),
+                      _buildLabel("Información Personal"),
+                      _buildInputField(_nameController, Icons.person_outline, "Full Name"),
+                      _buildInputField(_emailController, Icons.email_outlined, "Email Address"),
+                      _buildInputField(_userNameController, Icons.alternate_email, "Username"),
 
-                      _buildLabel("Email"),
-                      _buildInputField(_emailController, Icons.email_outlined),
-
-                      _buildLabel("Username"),
-                      _buildInputField(_userNameController, Icons.alternate_email),
-
-                      _buildLabel("New Password"),
-                      _buildInputField(_passwordController, Icons.lock_outline, obscureText: true),
-
+                      const SizedBox(height: 20),
+                      _buildLabel("Seguridad (Opcional)"),
+                      
+                      // Password Actual
+                      _buildInputField(
+                        _currentPasswordController, 
+                        Icons.lock_open_outlined, 
+                        "Current Password", 
+                        obscureText: true
+                      ),
+                      
+                      // Password Nueva con Check Verde
+                      _buildInputField(
+                        _newPasswordController, 
+                        Icons.lock_outline, 
+                        "New Password", 
+                        obscureText: true
+                      ),
+                      
+                      // Confirmación con Check Verde Dinámico
+                      _buildInputField(
+                        _confirmPasswordController, 
+                        _passwordsMatch ? Icons.check_circle : Icons.lock_reset_outlined, 
+                        "Confirm New Password", 
+                        obscureText: true,
+                        iconColor: _passwordsMatch ? Colors.green : const Color(0xFF9D50BB)
+                      ),
 
                       const SizedBox(height: 40),
-
-                      // Botón con manejo de estado Loading
                       _buildSubmitButton(state),
                       const SizedBox(height: 30),
                     ],
@@ -132,7 +172,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
-  // --- Widgets de soporte (manteniendo tu estilo visual) ---
+  // --- Widgets Refactorizados ---
 
   Widget _buildSubmitButton(ProfileState state) {
     return Container(
@@ -150,20 +190,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
         ),
         child: state is ProfileLoading
-            ? const SizedBox(
-                height: 20, 
-                width: 20, 
-                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
-              )
-            : const Text(
-                "Complete",
-                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-              ),
+            ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+            : const Text("Guardar Cambios", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
       ),
     );
   }
 
-  // Header decorativo original
   Widget _buildHeader(BuildContext context) {
     return Stack(
       children: [
@@ -181,24 +213,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ),
         ),
         SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            child: Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
-                  onPressed: () => Navigator.pop(context),
-                ),
-                const Expanded(
-                  child: Text(
-                    "Edit Profile",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
-                  ),
-                ),
-                const SizedBox(width: 48),
-              ],
-            ),
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () => Navigator.pop(context),
           ),
         ),
         Positioned(
@@ -222,62 +239,45 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Widget _buildLabel(String text) => Padding(
-    padding: const EdgeInsets.only(top: 20, bottom: 5),
-    child: Text(text, style: const TextStyle(color: Colors.grey, fontSize: 14, fontWeight: FontWeight.w500)),
+    padding: const EdgeInsets.only(top: 15, bottom: 5),
+    child: Text(text, style: const TextStyle(color: Color(0xFF6E48AA), fontSize: 15, fontWeight: FontWeight.bold)),
   );
 
-  Widget _buildInputField(TextEditingController controller, IconData icon, {bool obscureText = false}) {
-    return TextField(
-      controller: controller,
-      obscureText: obscureText,
-      decoration: InputDecoration(
-        enabledBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFFD1C4E9))),
-        focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF6E48AA), width: 2)),
-        suffixIcon: Icon(icon, color: const Color(0xFF9D50BB), size: 20),
-        contentPadding: const EdgeInsets.symmetric(vertical: 10),
+  Widget _buildInputField(
+    TextEditingController controller, 
+    IconData icon, 
+    String hint, 
+    {bool obscureText = false, Color? iconColor}
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: TextField(
+        controller: controller,
+        obscureText: obscureText,
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
+          enabledBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFFD1C4E9))),
+          focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF6E48AA), width: 2)),
+          suffixIcon: Icon(icon, color: iconColor ?? const Color(0xFF9D50BB), size: 22),
+          contentPadding: const EdgeInsets.symmetric(vertical: 10),
+        ),
       ),
-    );
-  }
-
-  Widget _buildTypeSelector() {
-    return Row(
-      children: [
-        Radio<String>(
-          value: "student",
-          groupValue: _selectedType,
-          activeColor: const Color(0xFF9D50BB),
-          onChanged: (v) => setState(() => _selectedType = v!),
-        ),
-        const Text("Student"),
-        const SizedBox(width: 20),
-        Radio<String>(
-          value: "teacher",
-          groupValue: _selectedType,
-          activeColor: const Color(0xFF9D50BB),
-          onChanged: (v) => setState(() => _selectedType = v!),
-        ),
-        const Text("Teacher"),
-      ],
     );
   }
 }
 
-
-// Esta clase debe ir al final del archivo, fuera de cualquier otra clase
 class HeaderClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     Path path = Path();
     path.lineTo(0, size.height - 60);
-    path.quadraticBezierTo(
-        size.width * 0.25, size.height, size.width * 0.5, size.height - 40);
-    path.quadraticBezierTo(
-        size.width * 0.8, size.height - 90, size.width, size.height - 20);
+    path.quadraticBezierTo(size.width * 0.25, size.height, size.width * 0.5, size.height - 40);
+    path.quadraticBezierTo(size.width * 0.8, size.height - 90, size.width, size.height - 20);
     path.lineTo(size.width, 0);
     path.close();
     return path;
   }
-
   @override
   bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }
