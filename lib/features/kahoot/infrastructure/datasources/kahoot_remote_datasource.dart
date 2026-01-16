@@ -7,7 +7,8 @@ import 'package:green_frontend/injection_container.dart' as di;
 
 class KahootRemoteDataSource {
   // 🔴 MODIFICADO: Usar URL base desde injection_container
-  final String baseUrl = di.apiBaseUrl;
+  // 🔴 MODIFICADO: Usar getter para URL base dinámica
+  String get baseUrl => di.apiBaseUrl;
 
   KahootRemoteDataSource();
 
@@ -33,7 +34,7 @@ class KahootRemoteDataSource {
         caseSensitive: false,
       );
       final isUuidValid = uuidRegex.hasMatch(kahoot.themeId);
-      
+
       if (!isUuidValid) {
         throw Exception(
           'El ID del tema no es un UUID válido: "${kahoot.themeId}"',
@@ -57,9 +58,10 @@ class KahootRemoteDataSource {
       final headers = await _getHeaders();
 
       if (kahootToSave.id != null && kahootToSave.id!.isNotEmpty) {
-        final Map<String, dynamic> dataForPut = Map<String, dynamic>.from(kahootData);
+        final Map<String, dynamic> dataForPut =
+            Map<String, dynamic>.from(kahootData);
         dataForPut.remove('id');
-        
+
         final response = await http.put(
           Uri.parse('$baseUrl/kahoots/${kahootToSave.id}'),
           headers: headers,
@@ -76,7 +78,7 @@ class KahootRemoteDataSource {
         }
       } else {
         kahootData.remove('id');
-        
+
         final response = await http.post(
           Uri.parse('$baseUrl/kahoots'),
           headers: headers,
@@ -85,13 +87,13 @@ class KahootRemoteDataSource {
 
         if (response.statusCode == 201) {
           final Map<String, dynamic> responseData = json.decode(response.body);
-          
+
           if (responseData["themeId"] == null) {
             if (kahootToSave.themeId.isNotEmpty) {
               responseData['themeId'] = kahootToSave.themeId;
             }
           }
-          
+
           return KahootMapper.fromMap(responseData);
         } else {
           throw Exception(
@@ -108,7 +110,7 @@ class KahootRemoteDataSource {
   Future<Kahoot> getKahoot(String kahootId) async {
     try {
       final headers = await _getHeaders();
-      
+
       final response = await http.get(
         Uri.parse('$baseUrl/kahoots/$kahootId'),
         headers: headers,
@@ -132,7 +134,7 @@ class KahootRemoteDataSource {
   Future<Kahoot> getKahootWithQuestions(String kahootId) async {
     try {
       final headers = await _getHeaders();
-      
+
       final response = await http.get(
         Uri.parse('$baseUrl/kahoots/$kahootId?include=questions'),
         headers: headers,
@@ -171,14 +173,14 @@ class KahootRemoteDataSource {
   Future<Kahoot> duplicateKahoot(String kahootId) async {
     try {
       final originalKahoot = await getKahoot(kahootId);
-      
+
       final duplicatedKahoot = originalKahoot.copyWith(
         id: null,
         title: '${originalKahoot.title} (Copia)',
         playCount: 0,
         createdAt: null,
       );
-      
+
       return await saveKahoot(duplicatedKahoot);
     } catch (e) {
       throw Exception('Error al duplicar kahoot: $e');

@@ -86,16 +86,10 @@ void main() async {
   Intl.defaultLocale = 'es'; // Opcional: define español como default
 
   // --- Inicialización y registro de dependencias Single Player ---
-  // 🔴 MODIFICADO: Usar URL base desde injection_container
-  final baseUrl = di.apiBaseUrl;
 
-  final dio = Dio(
-    BaseOptions(
-      baseUrl: baseUrl,
-      connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(seconds: 30),
-    ),
-  );
+  // 🔥 FIX: Usamos la instancia de Dio que ya registramos en el Service Locator
+  // Esto evita tener que llamar a 'di.apiBaseUrl' y asegura que usemos la misma configuración.
+  final dio = di.sl<Dio>();
 
   final dataSource = AsyncGameDataSourceImpl(dio: dio);
   final mapper = ExceptionFailureMapper();
@@ -169,7 +163,8 @@ void main() async {
         Provider<MediaRemoteDataSource>(
           create: (context) => MediaRemoteDataSource(
             client: http.Client(),
-            baseUrl: baseUrl, // 🔴 Usando URL centralizada
+            baseUrl: dio.options
+                .baseUrl, // 🔴 Usamos la URL base de la instancia de Dio
           ),
         ),
 

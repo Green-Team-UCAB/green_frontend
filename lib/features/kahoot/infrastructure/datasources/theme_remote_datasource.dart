@@ -5,7 +5,8 @@ import 'package:green_frontend/injection_container.dart' as di;
 
 class ThemeRemoteDataSource {
   // 🔴 MODIFICADO: Usar URL base desde injection_container
-  final String baseUrl = di.apiBaseUrl;
+  // 🔴 MODIFICADO: Usar getter para URL base dinámica
+  String get baseUrl => di.apiBaseUrl;
   final http.Client client;
 
   ThemeRemoteDataSource({required this.client});

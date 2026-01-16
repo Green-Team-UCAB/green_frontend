@@ -100,12 +100,35 @@ import 'core/mappers/exception_failure_mapper.dart';
 // Instancia global del Service Locator
 final sl = GetIt.instance;
 
-// 🔴 URL BASE CENTRALIZADA PARA TODA LA APLICACIÓN
-const String _baseUrl = 'https://quizzy-backend-1-zpvc.onrender.com';
-const String _apiSufix = '/api';
-//const String _baseUrl = 'https://backcomun-mzvy.onrender.com';
-//const String _apiSufix = '';
-const String apiBaseUrl = '$_baseUrl$_apiSufix';
+// ================================================================
+// 🔴 CONFIGURACIÓN DE MULTI-BACKEND
+// ================================================================
+
+// 1. Backend Principal (Quizzy)
+const String _mainUrl = 'https://quizzy-backend-1-zpvc.onrender.com/api';
+
+// 2. Backend Alternativo (Común) - Sin sufijo /api según tus comentarios
+const String _altUrl = 'https://backcomun-mzvy.onrender.com';
+
+// Variable global para controlar estado (False = Principal, True = Alternativo)
+bool isAlternativeServerActive = false;
+
+// Getter para obtener la URL base actual
+String get apiBaseUrl => isAlternativeServerActive ? _altUrl : _mainUrl;
+
+/// 🔥 FUNCIÓN PARA CAMBIAR EL BACKEND EN CALIENTE
+void switchBackend(bool useAlternative) {
+  isAlternativeServerActive = useAlternative;
+
+  // Determinamos cuál URL usar
+  final newUrl = useAlternative ? _altUrl : _mainUrl;
+
+  // Si Dio ya fue creado por GetIt, actualizamos su URL base
+  if (sl.isRegistered<Dio>()) {
+    sl<Dio>().options.baseUrl = newUrl;
+    debugPrint("🔄 [INJECTION] Backend cambiado dinámicamente a: $newUrl");
+  }
+}
 
 Future<void> init() async {
   // ================================================================
@@ -278,9 +301,16 @@ Future<void> init() async {
   );
 
   // Repository
+  // Nota: Pasamos el baseUrl actual para que el Socket sepa dónde conectarse
   sl.registerFactory<MultiplayerSocketRepository>(
-    () => MultiplayerSocketRepositoryImpl(dataSource: sl(), baseUrl: _baseUrl),
+    () => MultiplayerSocketRepositoryImpl(
+        dataSource: sl(),
+        baseUrl: isAlternativeServerActive
+            ? _altUrl
+            : _mainUrl.replaceAll('/api', '') // Socket usualmente va a la raíz
+        ),
   );
+
   sl.registerLazySingleton<MultiplayerSessionRepository>(
     () =>
         MultiplayerSessionRepositoryImpl(remoteDataSource: sl(), mapper: sl()),
@@ -366,7 +396,8 @@ Future<void> init() async {
   sl.registerLazySingleton(
     () => Dio(
       BaseOptions(
-        baseUrl: apiBaseUrl, // 🔴 USANDO URL CENTRALIZADA
+        // Inicia con la URL principal por defecto
+        baseUrl: _mainUrl,
         connectTimeout: const Duration(seconds: 30),
         receiveTimeout: const Duration(seconds: 30),
       ),
