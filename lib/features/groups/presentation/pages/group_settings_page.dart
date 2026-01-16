@@ -2,33 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../injection_container.dart';
 import '../../domain/entities/group.dart';
-import '../../domain/entities/group_leaderboard.dart';
+import '../../domain/entities/group_member.dart';
 import '../bloc/group_settings_bloc.dart';
 
 class GroupSettingsPage extends StatelessWidget {
   final Group group;
-  final List<GroupLeaderboardEntry> members;
 
   const GroupSettingsPage({
     super.key,
     required this.group,
-    required this.members,
   });
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => sl<GroupSettingsBloc>(),
-      child: _GroupSettingsView(group: group, members: members),
+      create: (_) => sl<GroupSettingsBloc>()
+        ..add(LoadGroupMembersEvent(groupId: group.id)),
+      child: _GroupSettingsView(group: group),
     );
   }
 }
 
 class _GroupSettingsView extends StatefulWidget {
   final Group group;
-  final List<GroupLeaderboardEntry> members;
 
-  const _GroupSettingsView({required this.group, required this.members});
+  const _GroupSettingsView({required this.group});
 
   @override
   State<_GroupSettingsView> createState() => _GroupSettingsViewState();
@@ -37,14 +35,14 @@ class _GroupSettingsView extends StatefulWidget {
 class _GroupSettingsViewState extends State<_GroupSettingsView> {
   late TextEditingController _nameController;
   late TextEditingController _descController;
-  late List<GroupLeaderboardEntry> _currentMembers;
+  List<GroupMember> _currentMembers = [];
+  bool _isLoadingMembers = true;
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.group.name);
     _descController = TextEditingController(text: widget.group.description);
-    _currentMembers = List.from(widget.members);
   }
 
   @override
@@ -69,9 +67,17 @@ class _GroupSettingsViewState extends State<_GroupSettingsView> {
         } else if (state is GroupDeleted) {
           Navigator.pop(context, {'action': 'delete'});
         } else if (state is GroupSettingsError) {
+          setState(() {
+            _isLoadingMembers = false;
+          });
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.message), backgroundColor: Colors.red),
           );
+        } else if (state is GroupMembersLoaded) {
+          setState(() {
+            _currentMembers = state.members;
+            _isLoadingMembers = false;
+          });
         }
       },
       child: Scaffold(
@@ -183,6 +189,9 @@ class _GroupSettingsViewState extends State<_GroupSettingsView> {
   }
 
   Widget _buildMembersList(BuildContext context) {
+    if (_isLoadingMembers) {
+      return const Center(child: CircularProgressIndicator());
+    }
     if (_currentMembers.isEmpty) {
       return const Center(child: Text("No hay miembros (solo tú)"));
     }
@@ -217,11 +226,12 @@ class _GroupSettingsViewState extends State<_GroupSettingsView> {
               member.name,
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
+            subtitle: member.email.isNotEmpty ? Text(member.email) : null,
             trailing: IconButton(
               icon: const Icon(Icons.person_remove, color: Colors.redAccent),
               tooltip: "Expulsar miembro",
               onPressed: () {
-                _showKickDialog(context, member.userId, member.name, index);
+                _showKickDialog(context, member.id, member.name, index);
               },
             ),
           );

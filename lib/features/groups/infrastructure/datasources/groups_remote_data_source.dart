@@ -1,7 +1,9 @@
+import 'dart:convert';
 import '../../../../core/network/api_client.dart';
 import '../models/group_model.dart';
 import '../models/group_quiz_assignment_model.dart';
 import '../models/group_leaderboard_entry_model.dart';
+import '../models/group_member_model.dart';
 
 abstract class GroupsRemoteDataSource {
   Future<List<GroupModel>> getMyGroups();
@@ -11,6 +13,7 @@ abstract class GroupsRemoteDataSource {
   // ✅ Métodos separados y tipados correctamente
   Future<List<GroupQuizAssignmentModel>> getGroupQuizzes(String groupId);
   Future<List<GroupLeaderboardEntryModel>> getGroupLeaderboard(String groupId);
+  Future<List<GroupMemberModel>> getGroupMembers(String groupId);
 
   Future<String> generateInvitationLink(String groupId);
 
@@ -87,6 +90,100 @@ class GroupsRemoteDataSourceImpl implements GroupsRemoteDataSource {
     return (response.data as List)
         .map((e) => GroupLeaderboardEntryModel.fromJson(e))
         .toList();
+  }
+
+  @override
+  Future<List<GroupMemberModel>> getGroupMembers(String groupId) async {
+    try {
+      final response = await apiClient.get(path: '/groups/$groupId/members');
+      print("🐛 JSON MEMBER LIST: ${jsonEncode(response.data)}");
+
+      final membersList = response.data as List;
+      final List<GroupMemberModel> enrichedMembers = [];
+
+      // Create a list of futures to fetch user profiles in parallel
+      final futures = membersList.map((memberJson) async {
+        final userId = memberJson['userId'] ?? memberJson['id'];
+        String name = 'Usuario';
+        String email = '';
+
+        if (userId != null) {
+          try {
+            // Since there is no public endpoint for getting another user's profile by ID in the docs provided,
+            // and /user/profile is only for the current user, this is a best-effort approach.
+            // However, based on the need to show names "arausyta" and "mafeee",
+            // we will attempt to fetch from /users/$userId which is a standard convention.
+            // If that fails, we fallback to the "name" from memberJson if it exists (it doesn't currently).
+            final userResponse = await apiClient.get(path: '/users/$userId');
+            if (userResponse.data != null) {
+              final userData = userResponse.data;
+              // Check various locations for name
+              name = userData['name'] ??
+                  userData['username'] ??
+                  userData['user']?['name'] ??
+                  userData['user']?['username'] ??
+                  'Usuario';
+              email = userData['email'] ?? userData['user']?['email'] ?? '';
+            }
+          } catch (e) {
+            print("⚠️ Could not fetch details for user $userId: $e");
+          }
+        }
+
+        // Construct the model merging the member role/joined info with the fetched user details
+        return GroupMemberModel.fromJson({
+          ...memberJson,
+          'name': name,
+          'email': email,
+        });
+      });
+
+      enrichedMembers.addAll(await Future.wait(futures));
+
+      // If we still have 'Usuario' names, try to enrich from leaderboard as last resort
+      // because the user reported names are visible in leaderboard
+      final bool anyDefaultName =
+          enrichedMembers.any((m) => m.name == 'Usuario');
+      if (anyDefaultName) {
+        try {
+          final leaderboardResponse =
+              await apiClient.get(path: '/groups/$groupId/leaderboard');
+          final leaderboard = leaderboardResponse.data as List;
+
+          for (var i = 0; i < enrichedMembers.length; i++) {
+            var member = enrichedMembers[i];
+            if (member.name == 'Usuario') {
+              // Find this user in leaderboards
+              final entry = leaderboard.firstWhere(
+                (l) => l['userId'] == member.id,
+                orElse: () => null,
+              );
+              if (entry != null && entry['name'] != null) {
+                // Reconstruct member with name from leaderboard
+                enrichedMembers[i] = GroupMemberModel(
+                  id: member.id,
+                  name: entry['name'],
+                  email: member.email,
+                  role: member.role,
+                );
+              }
+            }
+          }
+        } catch (e) {
+          print("⚠️ Could not fetch leaderboard for fallback names: $e");
+        }
+      }
+
+      return enrichedMembers;
+    } catch (e) {
+      print("🐛 ERROR FETCHING MEMBERS: $e");
+      // Fallback to leaderboard if members fails
+      final response =
+          await apiClient.get(path: '/groups/$groupId/leaderboard');
+      return (response.data as List)
+          .map((e) => GroupMemberModel.fromJson(e))
+          .toList();
+    }
   }
 
   @override

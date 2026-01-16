@@ -2,6 +2,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../application/update_group_use_case.dart';
 import '../../application/kick_member_use_case.dart';
 import '../../application/delete_group_use_case.dart';
+import '../../application/get_group_members_use_case.dart';
+import '../../domain/entities/group_member.dart';
 
 // EVENTOS
 abstract class GroupSettingsEvent {}
@@ -31,6 +33,11 @@ class DeleteGroupEvent extends GroupSettingsEvent {
   DeleteGroupEvent({required this.groupId});
 }
 
+class LoadGroupMembersEvent extends GroupSettingsEvent {
+  final String groupId;
+  LoadGroupMembersEvent({required this.groupId});
+}
+
 // ESTADOS
 abstract class GroupSettingsState {}
 
@@ -47,6 +54,11 @@ class MemberKicked extends GroupSettingsState {
 
 class GroupDeleted extends GroupSettingsState {}
 
+class GroupMembersLoaded extends GroupSettingsState {
+  final List<GroupMember> members;
+  GroupMembersLoaded(this.members);
+}
+
 class GroupSettingsError extends GroupSettingsState {
   final String message;
   GroupSettingsError(this.message);
@@ -57,11 +69,13 @@ class GroupSettingsBloc extends Bloc<GroupSettingsEvent, GroupSettingsState> {
   final UpdateGroupUseCase updateGroup;
   final KickMemberUseCase kickMember;
   final DeleteGroupUseCase deleteGroup;
+  final GetGroupMembersUseCase getGroupMembers;
 
   GroupSettingsBloc({
     required this.updateGroup,
     required this.kickMember,
     required this.deleteGroup,
+    required this.getGroupMembers,
   }) : super(GroupSettingsInitial()) {
     on<UpdateGroupInfoEvent>((event, emit) async {
       emit(GroupSettingsLoading());
@@ -90,6 +104,14 @@ class GroupSettingsBloc extends Bloc<GroupSettingsEvent, GroupSettingsState> {
       result.fold(
         (f) => emit(GroupSettingsError(f.message)),
         (_) => emit(GroupDeleted()),
+      );
+    });
+
+    on<LoadGroupMembersEvent>((event, emit) async {
+      final result = await getGroupMembers(event.groupId);
+      result.fold(
+        (f) => emit(GroupSettingsError(f.message)),
+        (members) => emit(GroupMembersLoaded(members)),
       );
     });
   }

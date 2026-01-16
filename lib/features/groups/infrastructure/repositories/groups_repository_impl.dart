@@ -6,6 +6,7 @@ import '../../../../core/error/exceptions.dart';
 import '../../domain/entities/group.dart';
 import '../../domain/entities/group_quiz_assignment.dart';
 import '../../domain/entities/group_leaderboard.dart';
+import '../../domain/entities/group_member.dart';
 import '../../domain/repositories/groups_repository.dart';
 
 // DataSource
@@ -64,6 +65,11 @@ class GroupsRepositoryImpl implements GroupsRepository {
   Future<Either<Failure, List<GroupLeaderboardEntry>>> getGroupLeaderboard(
       String groupId) {
     return _performRequest(() => remoteDataSource.getGroupLeaderboard(groupId));
+  }
+
+  @override
+  Future<Either<Failure, List<GroupMember>>> getGroupMembers(String groupId) {
+    return _performRequest(() => remoteDataSource.getGroupMembers(groupId));
   }
 
   // --- ACCIONES ADMINISTRATIVAS ---

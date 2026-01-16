@@ -77,21 +77,11 @@ class _GroupDetailView extends StatelessWidget {
                   icon: const Icon(Icons.settings),
                   tooltip: 'Configuración del Grupo',
                   onPressed: () async {
-                    final state = context.read<GroupDetailBloc>().state;
-                    List<GroupLeaderboardEntry> currentMembers = [];
-
-                    if (state is GroupDetailLoaded) {
-                      currentMembers = state.leaderboard;
-                    } else if (state is InvitationGenerated) {
-                      currentMembers = state.leaderboard;
-                    }
-
                     final result = await Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (_) => GroupSettingsPage(
                           group: group,
-                          members: currentMembers,
                         ),
                       ),
                     );
