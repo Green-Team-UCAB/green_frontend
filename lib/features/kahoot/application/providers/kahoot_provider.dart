@@ -4,21 +4,18 @@ import 'package:green_frontend/features/kahoot/domain/entities/kahoot.dart';
 import 'package:green_frontend/features/kahoot/domain/entities/question.dart';
 import 'package:green_frontend/features/kahoot/domain/entities/answer.dart';
 import 'package:green_frontend/core/network/ai_service.dart';
-import 'package:green_frontend/features/kahoot/infrastructure/repositories/kahoot_repository_impl.dart';
-import 'package:green_frontend/injection_container.dart';
 import 'package:green_frontend/features/kahoot/domain/repositories/ikahoot_repository.dart';
+import 'package:green_frontend/injection_container.dart';
 
 class KahootProvider with ChangeNotifier {
   Kahoot _currentKahoot = Kahoot.empty();
   bool _isLoading = false;
   String? _error;
   final SaveKahootUseCase _saveKahootUseCase;
-  final KahootRepository _kahootRepository; // 🔴 AÑADIDO
-
+  final KahootRepository _kahootRepository;
   bool _isGeneratingAi = false;
   bool get isGeneratingAi => _isGeneratingAi;
 
-  // 🔴 MODIFICADO: Ahora recibe KahootRepository
   KahootProvider(this._saveKahootUseCase, this._kahootRepository);
 
   Kahoot get currentKahoot => _currentKahoot;
@@ -229,20 +226,16 @@ class KahootProvider with ChangeNotifier {
     return null;
   }
 
-  // 🔴 MODIFICADO: Usar _kahootRepository que recibimos en el constructor
   Future<void> loadFullKahoot(String kahootId) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      if (_kahootRepository is KahootRepositoryImpl) {
-        final fullKahoot = await (_kahootRepository as KahootRepositoryImpl).getKahootById(kahootId);
-        _currentKahoot = fullKahoot;
-        notifyListeners();
-      } else {
-        throw Exception('Repositorio no soporta obtener kahoot por ID');
-      }
+      // Usar el método getKahootById directamente de la interfaz
+      final fullKahoot = await _kahootRepository.getKahootById(kahootId);
+      _currentKahoot = fullKahoot;
+      notifyListeners();
     } catch (e) {
       _error = 'Error al cargar el kahoot: $e';
       rethrow;

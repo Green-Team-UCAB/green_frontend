@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:green_frontend/features/kahoot/domain/entities/question.dart';
 import 'package:green_frontend/features/kahoot/domain/entities/theme_image.dart';
@@ -13,6 +14,7 @@ import 'package:green_frontend/features/kahoot/application/providers/theme_provi
 import 'package:green_frontend/features/media/application/providers/media_provider.dart';
 import 'package:green_frontend/features/discovery/application/providers/category_provider.dart';
 import 'package:green_frontend/features/kahoot/domain/entities/kahoot.dart';
+import 'package:green_frontend/features/kahoot/domain/repositories/ikahoot_repository.dart';
 
 class EditKahootScreen extends StatefulWidget {
   final Kahoot kahootToEdit;
@@ -31,6 +33,7 @@ class _EditKahootScreenState extends State<EditKahootScreen> {
   String? _selectedThemeName = 'Seleccionar tema';
   String? _selectedThemeId = '';
   String? _selectedCoverImageId;
+  String? _selectedCoverImageUrl;
   String? _selectedCoverLocalPath;
   bool _isLoadingTheme = false;
 
@@ -89,20 +92,42 @@ class _EditKahootScreenState extends State<EditKahootScreen> {
     _selectedCoverImageId = currentKahoot.coverImageId;
     
     if (_selectedCoverImageId != null && _selectedCoverImageId!.isNotEmpty) {
+      // Primero intentamos obtener la ruta local
       final localPath = mediaProvider.getLocalPath(_selectedCoverImageId!);
       
       if (localPath != null && await File(localPath).exists()) {
+        // Si existe localmente, la usamos
         setState(() {
           _selectedCoverLocalPath = localPath;
+          _selectedCoverImageUrl = null;
         });
       } else {
-        setState(() {
-          _selectedCoverLocalPath = null;
-        });
+        // Si no existe localmente, intentamos obtener desde el servidor
+        try {
+          final media = await mediaProvider.getMediaMetadata(_selectedCoverImageId!);
+          setState(() {
+            _selectedCoverImageUrl = media.url;
+            _selectedCoverLocalPath = media.localPath;
+          });
+        } catch (e) {
+          // Si falla, limpiamos los valores y mostramos solo el placeholder
+          if (kDebugMode) {
+            debugPrint('No se pudo cargar la imagen: $e');
+          }
+          setState(() {
+            _selectedCoverLocalPath = null;
+            _selectedCoverImageUrl = null;
+            _selectedCoverImageId = null; // Limpiamos el ID si no se puede cargar
+          });
+          
+          // También limpiamos en el provider
+          kahootProvider.setCoverImageId(null);
+        }
       }
     } else {
       setState(() {
         _selectedCoverLocalPath = null;
+        _selectedCoverImageUrl = null;
       });
     }
   }
@@ -141,6 +166,9 @@ class _EditKahootScreenState extends State<EditKahootScreen> {
         }
       }
     } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Error cargando datos adicionales: $e');
+      }
     } finally {
       if (mounted) {
         setState(() {
@@ -158,6 +186,7 @@ class _EditKahootScreenState extends State<EditKahootScreen> {
         setState(() {
           _selectedCoverImageId = media.id;
           _selectedCoverLocalPath = media.localPath;
+          _selectedCoverImageUrl = media.url;
         });
 
         final kahootProvider = Provider.of<KahootProvider>(context, listen: false);
@@ -178,10 +207,97 @@ class _EditKahootScreenState extends State<EditKahootScreen> {
     setState(() {
       _selectedCoverImageId = null;
       _selectedCoverLocalPath = null;
+      _selectedCoverImageUrl = null;
     });
 
     final kahootProvider = Provider.of<KahootProvider>(context, listen: false);
     kahootProvider.setCoverImageId(null);
+  }
+
+  Future<void> _deleteKahoot() async {
+    final kahootProvider = Provider.of<KahootProvider>(context, listen: false);
+    final currentKahoot = kahootProvider.currentKahoot;
+
+    if (currentKahoot.id == null || currentKahoot.id!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No se puede eliminar un kahoot sin ID')),
+      );
+      return;
+    }
+
+    bool confirmDelete = await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Eliminar Kahoot'),
+        content: Text(
+          '¿Estás seguro de que deseas eliminar este kahoot por completo?\n\n'
+          'Esta acción no se puede deshacer y eliminará todas las preguntas y respuestas asociadas.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(
+              'Eliminar',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmDelete != true) {
+      return;
+    }
+
+    try {
+      final kahootRepository = Provider.of<KahootRepository>(context, listen: false);
+      
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          content: Row(
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 16),
+              Text('Eliminando kahoot...'),
+            ],
+          ),
+        ),
+      );
+
+      await kahootRepository.deleteKahoot(currentKahoot.id!);
+
+      if (mounted) Navigator.pop(context);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Kahoot eliminado exitosamente'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
+
+      if (mounted) {
+        Navigator.pop(context);
+        Navigator.pop(context);
+      }
+
+    } catch (e) {
+      if (mounted) Navigator.pop(context);
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al eliminar el kahoot: $e'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
   }
 
   @override
@@ -195,6 +311,11 @@ class _EditKahootScreenState extends State<EditKahootScreen> {
       appBar: AppBar(
         title: Text('Editar Kahoot'),
         actions: [
+          IconButton(
+            icon: Icon(Icons.delete, color: Colors.red),
+            onPressed: _deleteKahoot,
+            tooltip: 'Eliminar kahoot',
+          ),
           IconButton(
             icon: Icon(Icons.save),
             onPressed: () async {
@@ -252,7 +373,7 @@ class _EditKahootScreenState extends State<EditKahootScreen> {
                       ),
                     ),
 
-                  _buildCoverImageSection(mediaProvider),
+                  _buildCoverImageSection(),
 
                   SizedBox(height: 24),
 
@@ -611,7 +732,7 @@ class _EditKahootScreenState extends State<EditKahootScreen> {
     );
   }
 
-  Widget _buildCoverImageSection(MediaProvider mediaProvider) {
+  Widget _buildCoverImageSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -626,110 +747,224 @@ class _EditKahootScreenState extends State<EditKahootScreen> {
             height: 200,
             width: double.infinity,
             decoration: BoxDecoration(
-              color: _selectedCoverLocalPath == null ? Colors.grey[200] : null,
+              color: _selectedCoverLocalPath == null && _selectedCoverImageUrl == null 
+                  ? Colors.grey[200] 
+                  : null,
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: _selectedCoverLocalPath == null
+                color: _selectedCoverLocalPath == null && _selectedCoverImageUrl == null
                     ? Colors.grey[300]!
                     : Colors.transparent,
               ),
             ),
-            child: _selectedCoverLocalPath == null
-                ? Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.add_photo_alternate,
-                          size: 50, color: Colors.grey[600]),
-                      SizedBox(height: 12),
-                      Text(
-                        'Toca para añadir/actualizar imagen de portada',
-                        style: TextStyle(color: Colors.grey[600], fontSize: 14),
-                      ),
-                    ],
-                  )
-                : Stack(
-                    children: [
-                      Center(
-                        child: Container(
-                          constraints: BoxConstraints(
-                            maxHeight: 200,
-                            maxWidth: double.infinity,
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.file(
-                              File(_selectedCoverLocalPath!),
-                              fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  color: Colors.grey[200],
-                                  child: Center(
-                                    child: Icon(Icons.broken_image,
-                                        size: 50, color: Colors.grey),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        top: 8,
-                        right: 8,
-                        child: GestureDetector(
-                          onTap: _removeCoverImage,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.7),
-                              shape: BoxShape.circle,
-                            ),
-                            padding: EdgeInsets.all(8),
-                            child: Icon(Icons.close,
-                                color: Colors.white, size: 20),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        bottom: 8,
-                        left: 8,
-                        child: Container(
-                          padding:
-                              EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.7),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.image, color: Colors.white, size: 16),
-                              SizedBox(width: 6),
-                              Text(
-                                'Imagen de portada',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+            child: _selectedCoverLocalPath != null
+                ? _buildLocalImage()
+                : _selectedCoverImageUrl != null
+                    ? _buildNetworkImage()
+                    : _buildPlaceholder(),
           ),
         ),
-        if (_selectedCoverLocalPath != null)
+        if (_selectedCoverLocalPath != null || _selectedCoverImageUrl != null)
           Padding(
             padding: const EdgeInsets.only(top: 8),
             child: Text(
-              'Nota: La imagen se ha guardado localmente y se usará para mostrar la portada',
+              'Nota: La imagen se usará para mostrar la portada',
               style: TextStyle(
                 color: Colors.green[700],
                 fontSize: 12,
               ),
             ),
           ),
+      ],
+    );
+  }
+
+  Widget _buildLocalImage() {
+    return Stack(
+      children: [
+        Center(
+          child: Container(
+            constraints: BoxConstraints(
+              maxHeight: 200,
+              maxWidth: double.infinity,
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.file(
+                File(_selectedCoverLocalPath!),
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    color: Colors.grey[200],
+                    child: Center(
+                      child: Icon(Icons.broken_image,
+                          size: 50, color: Colors.grey),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          top: 8,
+          right: 8,
+          child: GestureDetector(
+            onTap: _removeCoverImage,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.7),
+                shape: BoxShape.circle,
+              ),
+              padding: EdgeInsets.all(8),
+              child: Icon(Icons.close,
+                  color: Colors.white, size: 20),
+            ),
+          ),
+        ),
+        Positioned(
+          bottom: 8,
+          left: 8,
+          child: Container(
+            padding:
+                EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.7),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.image, color: Colors.white, size: 16),
+                SizedBox(width: 6),
+                Text(
+                  'Imagen de portada',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNetworkImage() {
+    return Stack(
+      children: [
+        Center(
+          child: Container(
+            constraints: BoxConstraints(
+              maxHeight: 200,
+              maxWidth: double.infinity,
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                _selectedCoverImageUrl!,
+                fit: BoxFit.contain,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Container(
+                    color: Colors.grey[200],
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        value: loadingProgress.expectedTotalBytes != null
+                            ? loadingProgress.cumulativeBytesLoaded /
+                                loadingProgress.expectedTotalBytes!
+                            : null,
+                      ),
+                    ),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  if (kDebugMode) {
+                    debugPrint('Error cargando imagen de red: $error');
+                  }
+                  return Container(
+                    color: Colors.grey[200],
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.broken_image, size: 40, color: Colors.grey),
+                          SizedBox(height: 8),
+                          Text(
+                            'No se pudo cargar la imagen',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          top: 8,
+          right: 8,
+          child: GestureDetector(
+            onTap: _removeCoverImage,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.7),
+                shape: BoxShape.circle,
+              ),
+              padding: EdgeInsets.all(8),
+              child: Icon(Icons.close,
+                  color: Colors.white, size: 20),
+            ),
+          ),
+        ),
+        Positioned(
+          bottom: 8,
+          left: 8,
+          child: Container(
+            padding:
+                EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.7),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.image, color: Colors.white, size: 16),
+                SizedBox(width: 6),
+                Text(
+                  'Imagen de portada',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPlaceholder() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(Icons.add_photo_alternate,
+            size: 50, color: Colors.grey[600]),
+        SizedBox(height: 12),
+        Text(
+          'Toca para añadir/actualizar imagen de portada',
+          style: TextStyle(color: Colors.grey[600], fontSize: 14),
+        ),
       ],
     );
   }

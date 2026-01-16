@@ -22,7 +22,7 @@ class KahootRepositoryImpl implements KahootRepository {
     await remoteDataSource.deleteKahoot(id);
   }
 
-  // ✅ NUEVO: Obtener un kahoot por ID
+  @override
   Future<Kahoot> getKahootById(String id) async {
     return await remoteDataSource.getKahoot(id);
   }

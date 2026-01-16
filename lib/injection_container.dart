@@ -7,6 +7,12 @@ import 'package:flutter/foundation.dart';
 import 'core/network/api_client.dart';
 import 'core/storage/token_storage.dart';
 
+// --- Feature: Kahoot ---
+import 'features/kahoot/domain/repositories/ikahoot_repository.dart';
+import 'features/kahoot/infrastructure/repositories/kahoot_repository_impl.dart';
+import 'features/kahoot/infrastructure/datasources/kahoot_remote_datasource.dart';
+import 'features/kahoot/application/use_cases/save_kahoot_use_case.dart';
+
 //--- Feature: User ---
 import 'features/user/presentation/profile_bloc.dart';
 import 'features/auth/application/get_user_profile.dart';
@@ -93,14 +99,34 @@ import 'core/mappers/exception_failure_mapper.dart';
 final sl = GetIt.instance;
 
 // 🔴 URL BASE CENTRALIZADA PARA TODA LA APLICACIÓN
-const String _baseUrl ='https://quizzy-backend-1-zpvc.onrender.com';//' // 'https://quizzy-backend-1-zpvc.onrender.com';//'
+const String _baseUrl ='https://quizzy-backend-1-zpvc.onrender.com'; // 'https://backcomun-mzvy.onrender.com'; // 
 const String _apiSufix = '/api';
-const String apiBaseUrl = '$_baseUrl$_apiSufix';
+const String apiBaseUrl = '$_baseUrl$_apiSufix'; //
+//const String apiBaseUrl = '$_baseUrl'; 
 
 Future<void> init() async {
   // ================================================================
   // 1. FEATURES
   // ================================================================
+
+  // --- Kahoot (Épica de creación/edición) ---
+  // Data Source
+  sl.registerLazySingleton<KahootRemoteDataSource>(
+    () => KahootRemoteDataSource(),
+  );
+
+  // Repository
+  sl.registerLazySingleton<KahootRepository>(
+    () => KahootRepositoryImpl(sl<KahootRemoteDataSource>()),
+  );
+
+  // También registrar la implementación por si acaso se necesita
+  sl.registerLazySingleton<KahootRepositoryImpl>(
+    () => KahootRepositoryImpl(sl<KahootRemoteDataSource>()),
+  );
+
+  // Use Cases
+  sl.registerLazySingleton(() => SaveKahootUseCase(sl<KahootRepository>()));
 
   // --- Discovery (H6.1) ---
   sl.registerFactory(() => DiscoveryBloc(repository: sl()));
