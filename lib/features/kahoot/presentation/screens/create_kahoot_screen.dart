@@ -38,6 +38,8 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
       final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
       final categoryProvider =
           Provider.of<CategoryProvider>(context, listen: false);
+      final kahootProvider =
+          Provider.of<KahootProvider>(context, listen: false);
 
       if (themeProvider.themes.isEmpty) {
         themeProvider.loadThemes();
@@ -46,6 +48,17 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
       if (categoryProvider.categories.isEmpty) {
         categoryProvider.loadCategories();
       }
+
+      // Populate fields if Kahoot data exists (e.g. from AI)
+      final currentKahoot = kahootProvider.currentKahoot;
+
+      if (currentKahoot.title.isNotEmpty) {
+        _titleController.text = currentKahoot.title;
+      }
+
+      if (currentKahoot.description?.isNotEmpty ?? false) {
+        _descriptionController.text = currentKahoot.description!;
+      }
     });
   }
 
@@ -53,6 +66,7 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
     final mediaProvider = Provider.of<MediaProvider>(context, listen: false);
     try {
       final media = await mediaProvider.pickImageFromGallery();
+      if (!mounted) return;
       if (media != null) {
         setState(() {
           _selectedCoverImageId = media.id;
@@ -195,7 +209,7 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
                         _selectedThemeName = selectedTheme.name;
                         _selectedThemeId = selectedTheme.id;
                       });
-                      
+
                       kahootProvider.setThemeId(selectedTheme.id);
                     }
                   },
@@ -240,7 +254,10 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 padding: EdgeInsets.zero,
-                children: kahootProvider.currentKahoot.questions.asMap().entries.map((entry) {
+                children: kahootProvider.currentKahoot.questions
+                    .asMap()
+                    .entries
+                    .map((entry) {
                   final index = entry.key;
                   final question = entry.value;
                   return QuestionTile(
@@ -285,7 +302,9 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
                                 kahootProvider.removeQuestion(index);
                                 Navigator.pop(context);
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Pregunta eliminada correctamente')),
+                                  SnackBar(
+                                      content: Text(
+                                          'Pregunta eliminada correctamente')),
                                 );
                               },
                               child: Text(
@@ -301,7 +320,8 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
                     onDuplicate: () {
                       kahootProvider.duplicateQuestion(index);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Pregunta duplicada correctamente')),
+                        SnackBar(
+                            content: Text('Pregunta duplicada correctamente')),
                       );
                     },
                     // ✅ NUEVO: Funcionalidad para cambiar puntuación (H2.12)
@@ -310,14 +330,14 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
                         context: context,
                         builder: (context) {
                           final pointsController = TextEditingController(
-                            text: question.points.toString()
-                          );
+                              text: question.points.toString());
                           return AlertDialog(
                             title: Text('Cambiar puntuación'),
                             content: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text('Puntuación actual: ${question.points} pts'),
+                                Text(
+                                    'Puntuación actual: ${question.points} pts'),
                                 const SizedBox(height: 10),
                                 TextField(
                                   controller: pointsController,
@@ -331,12 +351,14 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
                                 const SizedBox(height: 10),
                                 Wrap(
                                   spacing: 8,
-                                  children: [500, 1000, 1500, 2000].map((points) {
+                                  children:
+                                      [500, 1000, 1500, 2000].map((points) {
                                     return ChoiceChip(
                                       label: Text('$points pts'),
                                       selected: false,
                                       onSelected: (_) {
-                                        pointsController.text = points.toString();
+                                        pointsController.text =
+                                            points.toString();
                                       },
                                     );
                                   }).toList(),
@@ -350,16 +372,23 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
                               ),
                               TextButton(
                                 onPressed: () {
-                                  final newPoints = int.tryParse(pointsController.text) ?? question.points;
+                                  final newPoints =
+                                      int.tryParse(pointsController.text) ??
+                                          question.points;
                                   if (newPoints > 0) {
-                                    kahootProvider.changeQuestionPoints(index, newPoints);
+                                    kahootProvider.changeQuestionPoints(
+                                        index, newPoints);
                                     Navigator.pop(context);
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text('Puntuación actualizada a $newPoints puntos')),
+                                      SnackBar(
+                                          content: Text(
+                                              'Puntuación actualizada a $newPoints puntos')),
                                     );
                                   } else {
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text('La puntuación debe ser mayor a 0')),
+                                      SnackBar(
+                                          content: Text(
+                                              'La puntuación debe ser mayor a 0')),
                                     );
                                   }
                                 },

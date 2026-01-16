@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 
 class AiService {
   // Tu API Key (Validada ✅)
-  static const String _apiKey = 'AIzaSyC9gR85mTN5vzH3dfSjjh8y4dmVtqm31Eo';
+  static const String _apiKey = 'AIzaSyBT8BPJ9jjieKgqTxHHvCULOHLX6_i8zwU';
 
   // ✅ USAMOS EL ALIAS QUE FUNCIONÓ EN POWERSHELL
   static const String _baseUrl =
