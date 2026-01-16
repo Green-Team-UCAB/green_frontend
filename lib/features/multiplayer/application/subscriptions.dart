@@ -7,7 +7,9 @@ import 'package:green_frontend/features/multiplayer/domain/entities/summary.dart
 import 'package:green_frontend/core/error/failures.dart';
 import 'package:fpdart/fpdart.dart';
 
-/// --- Eventos principales del ciclo de juego ---
+/// ---------------------------------------------------------------------------
+/// EVENTOS PRINCIPALES DEL CICLO DE JUEGO
+/// ---------------------------------------------------------------------------
 
 class ListenRoomJoined {
   final MultiplayerSocketRepository socketRepo;
@@ -16,7 +18,7 @@ class ListenRoomJoined {
   Stream<Either<Failure, Unit>> call() => socketRepo.onRoomJoined;
 }
 
-// Esta clase debería escuchar específicamente 'host_connected_success'
+/// HOST: host_connected_success
 class ListenHostConnectedSuccess {
   final MultiplayerSocketRepository socketRepo;
   ListenHostConnectedSuccess(this.socketRepo);
@@ -24,14 +26,15 @@ class ListenHostConnectedSuccess {
   Stream<Unit> call() => socketRepo.onHostConnectedSuccess;
 }
 
-// Y esta 'player_connected_to_session'
-class ListenPlayerConnectedSuccess {
+/// PLAYER: player_connected_to_session (evento correcto)
+class ListenPlayerConnectedToSession {
   final MultiplayerSocketRepository socketRepo;
-  ListenPlayerConnectedSuccess(this.socketRepo);
+  ListenPlayerConnectedToSession(this.socketRepo);
 
-  Stream<Unit> call() => socketRepo.onPlayerConnectedSuccess;
+  Stream<Unit> call() => socketRepo.onPlayerConnectedToSession;
 }
 
+/// LOBBY UPDATE
 class ListenHostLobbyUpdate {
   final MultiplayerSocketRepository socketRepo;
   ListenHostLobbyUpdate(this.socketRepo);
@@ -39,6 +42,7 @@ class ListenHostLobbyUpdate {
   Stream<HostLobby> call() => socketRepo.onHostLobbyUpdate;
 }
 
+/// QUESTION STARTED
 class ListenQuestionStarted {
   final MultiplayerSocketRepository socketRepo;
   ListenQuestionStarted(this.socketRepo);
@@ -46,6 +50,7 @@ class ListenQuestionStarted {
   Stream<Slide> call() => socketRepo.onQuestionStarted;
 }
 
+/// HOST RESULTS
 class ListenHostResults {
   final MultiplayerSocketRepository socketRepo;
   ListenHostResults(this.socketRepo);
@@ -53,6 +58,7 @@ class ListenHostResults {
   Stream<HostResults> call() => socketRepo.onHostResults;
 }
 
+/// PLAYER RESULTS
 class ListenPlayerResults {
   final MultiplayerSocketRepository socketRepo;
   ListenPlayerResults(this.socketRepo);
@@ -60,6 +66,7 @@ class ListenPlayerResults {
   Stream<PlayerResults> call() => socketRepo.onPlayerResults;
 }
 
+/// GAME END
 class ListenGameEnd {
   final MultiplayerSocketRepository socketRepo;
   ListenGameEnd(this.socketRepo);
@@ -67,27 +74,28 @@ class ListenGameEnd {
   Stream<Summary> call() => socketRepo.onGameEnd;
 }
 
-
-///---Eventos de control de estado
+/// ---------------------------------------------------------------------------
+/// EVENTOS DE CONTROL DE ESTADO
+/// ---------------------------------------------------------------------------
 
 class ListenSessionClosed {
   final MultiplayerSocketRepository socketRepo;
   ListenSessionClosed(this.socketRepo);
-  // Avisa al usuario que la sesión terminó abruptamente
+
   Stream<Map<String, dynamic>> call() => socketRepo.onSessionClosed;
 }
 
 class ListenPlayerLeft {
   final MultiplayerSocketRepository socketRepo;
   ListenPlayerLeft(this.socketRepo);
-  // Cuando alguien se va (player_left)
+
   Stream<String> call() => socketRepo.onPlayerLeft;
 }
 
 class ListenAnswerUpdate {
   final MultiplayerSocketRepository socketRepo;
   ListenAnswerUpdate(this.socketRepo);
-  // Conteo de respuestas en tiempo real (Pág 61 - answer_update)
+
   Stream<int> call() => socketRepo.onAnswerCountUpdate;
 }
 
@@ -97,16 +105,3 @@ class ListenSocketError {
 
   Stream<Failure> call() => socketRepo.onSocketError;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

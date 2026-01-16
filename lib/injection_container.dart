@@ -269,42 +269,43 @@ Future<void> init() async {
 
   // Use Cases (Suscripciones)
   sl.registerLazySingleton(() => ListenHostConnectedSuccess(sl()));
-  sl.registerLazySingleton(() => ListenPlayerConnectedSuccess(sl()));
-  sl.registerLazySingleton(() => ListenRoomJoined(sl()));
-  sl.registerLazySingleton(() => ListenHostLobbyUpdate(sl()));
-  sl.registerLazySingleton(() => ListenQuestionStarted(sl()));
-  sl.registerLazySingleton(() => ListenAnswerUpdate(sl()));
-  sl.registerLazySingleton(() => ListenSocketError(sl()));
-  sl.registerLazySingleton(() => ListenSessionClosed(sl()));
-  sl.registerLazySingleton(() => ListenHostResults(sl()));
-  sl.registerLazySingleton(() => ListenPlayerResults(sl()));
-  sl.registerLazySingleton(() => ListenGameEnd(sl()));
-  sl.registerLazySingleton(() => ListenPlayerLeft(sl()));
+sl.registerLazySingleton(() => ListenPlayerConnectedToSession(sl()));
+sl.registerLazySingleton(() => ListenRoomJoined(sl()));
+sl.registerLazySingleton(() => ListenHostLobbyUpdate(sl()));
+sl.registerLazySingleton(() => ListenQuestionStarted(sl()));
+sl.registerLazySingleton(() => ListenAnswerUpdate(sl()));
+sl.registerLazySingleton(() => ListenSocketError(sl()));
+sl.registerLazySingleton(() => ListenSessionClosed(sl()));
+sl.registerLazySingleton(() => ListenPlayerResults(sl()));
+sl.registerLazySingleton(() => ListenGameEnd(sl()));
+sl.registerLazySingleton(() => ListenHostResults(sl()));
 
   // Bloc
   sl.registerLazySingleton(
-    () => MultiplayerBloc(
-      createSession: sl(),
-      resolvePinFromQr: sl(),
-      connectToGame: sl(),
-      confirmClientReady: sl(),
-      joinRoom: sl(),
-      startGame: sl(),
-      nextPhase: sl(),
-      submitAnswer: sl(),
-      listenHostSuccess: sl(),
-      listenPlayerSuccess: sl(),
-      listenRoomJoined: sl(),
-      listenHostLobbyUpdate: sl(),
-      listenQuestionStarted: sl(),
-      listenAnswerCountUpdate: sl(),
-      listenSocketError: sl(),
-      listenSessionClosed: sl(),
-      listenQuestionResults: sl(),
-      listenGameResults: sl(),
-      listenHostResults: sl(),
-    ),
-  );
+  () => MultiplayerBloc(
+    createSession: sl(),
+    resolvePinFromQr: sl(),
+    connectToGame: sl(),
+    confirmClientReady: sl(),
+    joinRoom: sl(),
+    startGame: sl(),
+    nextPhase: sl(),
+    submitAnswer: sl(),
+
+    // LISTENERS CORRECTOS
+    listenHostSuccess: sl(),
+    listenPlayerConnectedToSession: sl(),
+    listenRoomJoined: sl(),
+    listenHostLobbyUpdate: sl(),
+    listenQuestionStarted: sl(),
+    listenAnswerCountUpdate: sl(),
+    listenSocketError: sl(),
+    listenSessionClosed: sl(),
+    listenPlayerResults: sl(),
+    listenGameEnd: sl(),
+    listenHostResults: sl(),
+  ),
+);
 
   // ================================================================
   // AUTH & PROFILE FEATURE

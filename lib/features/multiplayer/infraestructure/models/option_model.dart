@@ -1,32 +1,30 @@
 import 'package:green_frontend/features/multiplayer/domain/entities/slide_option.dart';
 
-class OptionModel extends SlideOption {
+
+class OptionModel {
+  final int index;
+  final String? text;
+  final String? mediaURL;
+
   OptionModel({
-    required super.index,
-    required super.text,
-    required super.mediaUrl,
+    required this.index,
+    this.text,
+    this.mediaURL,
   });
 
   factory OptionModel.fromJson(Map<String, dynamic> json) {
     return OptionModel(
-      index: json['index'] ?? 0,
-      text: json['text'] ?? '',
-      mediaUrl: json['mediaUrl'] ?? false,
+      index: json['index'],
+      text: json['text'],
+      mediaURL: json['mediaURL'],
     );
   }
-  Map<String, dynamic> toJson() {
-    return {
-      'index': index,
-      'text': text,
-      'mediaUrl': mediaUrl,
-    };
-  }
 
-  SlideOption toEntity() {
-    return SlideOption(
+  Option toEntity() {
+    return Option(
       index: index,
-      text: text,
-      mediaUrl: mediaUrl,
+      text: text ?? '',
+      mediaUrl: mediaURL,
     );
   }
 }

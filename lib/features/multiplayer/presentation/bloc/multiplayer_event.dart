@@ -105,3 +105,5 @@ class _OnHostResultsReceived extends MultiplayerEvent {
   final HostResults results;
   _OnHostResultsReceived(this.results);
 }
+
+class _OnPlayerConnectedToSession extends MultiplayerEvent {}

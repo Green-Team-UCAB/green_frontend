@@ -156,7 +156,7 @@ class MultiplayerGameScreen extends StatelessWidget {
   }
 
   void _submitAnswer(
-      BuildContext context, MultiplayerState state, int optionIndex) {
+      BuildContext context, MultiplayerState state, String optionIndex) {
     final String qId = state.currentSlide?.id ?? "";
 
     final startTime = state.questionStartTime ?? DateTime.now();
@@ -165,7 +165,7 @@ class MultiplayerGameScreen extends StatelessWidget {
     context.read<MultiplayerBloc>().add(
           OnSubmitAnswer(
             questionId: qId,
-            answerIds: AnswerIds([optionIndex.toString()]),
+            answerIds: AnswerIds([optionIndex]),
             timeElapsedMs: TimeElapsedMs(elapsed),
           ),
         );

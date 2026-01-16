@@ -13,69 +13,79 @@ import 'package:green_frontend/features/multiplayer/domain/value_objects/client_
 
 enum SessionState { lobby, question, results, end }
 
-
 abstract interface class MultiplayerSocketRepository {
-  
+  // ------------------------------------------------------------
+  // CONEXIÓN
+  // ------------------------------------------------------------
   Future<Either<Failure, Unit>> connect({
     required ClientRole role,
     required SessionPin pin,
     required String jwt,
   });
-  
-  /// Evento 'join_room' 
+
+  Future<void> disconnect();
+
+  // ------------------------------------------------------------
+  // EMISORES (CLIENT → SERVER)
+  // ------------------------------------------------------------
+
+  /// Evento: player_join
   void emitPlayerJoin(Nickname nickname);
 
-  /// Evento 'start_game' 
+  /// Evento: host_start_game
   void emitHostStartGame();
 
-  /// Evento 'next_phase' 
+  /// Evento: next_phase
   void emitHostNextPhase();
 
-  /// Evento 'submit_answer' 
+  /// Evento: submit_answer
   void emitPlayerSubmitAnswer({
     required String questionId,
     required AnswerIds answerIds,
     required TimeElapsedMs timeElapsedMs,
   });
 
-  /// Señal de sincronización (Handshake de Socket.io)
+  /// Evento: client_ready (handshake)
   void emitClientReady(ClientRole role, SessionPin pin);
 
-  /// Desconexión
-  Future<void> disconnect();
+  // ------------------------------------------------------------
+  // LISTENERS (SERVER → CLIENT)
+  // ------------------------------------------------------------
 
-  /// --- ESCUCHAS (STREAMS) ---
-  
-  /// Para el HOST: Escucha 'host_connected_success'
+  /// HOST: host_connected_success
   Stream<Unit> get onHostConnectedSuccess;
 
-  /// Para el JUGADOR: Escucha 'player_connected_to_session'
-  Stream<Unit> get onPlayerConnectedSuccess;
+  /// PLAYER: player_connected_to_session
+  /// (NO confundir con player_connected_to_server)
+  Stream<Unit> get onPlayerConnectedToSession;
 
-
-  /// onRoomJoined: Clave para saber que el PIN fue válido y entraste a la sala
+  /// room_joined → confirma que el PIN es válido
   Stream<Either<Failure, Unit>> get onRoomJoined;
 
-  /// onHostLobbyUpdate: Lista de nicknames para el Host (Pág 58)
+  /// host_lobby_update → lista de jugadores
   Stream<HostLobby> get onHostLobbyUpdate;
 
-  /// onQuestionStarted (Slide): Recibir la pregunta actual
+  /// question_started → slide actual
   Stream<Slide> get onQuestionStarted;
 
-  /// Resultados parciales (Pág 62)
+  /// host_results → resultados parciales para el host
   Stream<HostResults> get onHostResults;
+
+  /// player_results → resultados parciales para el jugador
   Stream<PlayerResults> get onPlayerResults;
 
-  /// Fin del juego (Pág 63)
+  /// game_end → resumen final
   Stream<Summary> get onGameEnd;
 
-  /// Errores técnicos del socket (Pág 11 de la API: 'exception' o 'error')
+  /// exception / error
   Stream<Failure> get onSocketError;
 
-  // Añadir estos a MultiplayerSocketRepository
+  /// session_closed → la sesión terminó
   Stream<Map<String, dynamic>> get onSessionClosed;
-  Stream<String> get onPlayerLeft;
-  Stream<int> get onAnswerCountUpdate; // Cantidad de respuestas recibidas
 
-  
+  /// player_left → un jugador abandonó la sala
+  Stream<String> get onPlayerLeft;
+
+  /// answer_update → conteo de respuestas recibidas
+  Stream<int> get onAnswerCountUpdate;
 }

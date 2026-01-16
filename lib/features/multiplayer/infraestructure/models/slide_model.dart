@@ -1,47 +1,55 @@
 import 'package:green_frontend/features/multiplayer/domain/entities/slide.dart';
 import 'package:green_frontend/features/multiplayer/infraestructure/models/option_model.dart';
 
-class SlideModel extends Slide{
+// infrastructure/models/slide_model.dart
+
+
+class SlideModel {
+  final String id;
+  final int position;
+  final String slideType;
+  final int timeLimitSeconds;
+  final String questionText;
+  final String? slideImageURL;
+  final int pointsValue;
+  final List<OptionModel> options;
+
   SlideModel({
-    required super.id,
-    required super.position,
-    required super.type,
-    required super.timeLimitSeconds,
-    required super.questionText,
-    super.slideImageUrl,
-    super.pointsValue,
-    required super.options,
+    required this.id,
+    required this.position,
+    required this.slideType,
+    required this.timeLimitSeconds,
+    required this.questionText,
+    required this.slideImageURL,
+    required this.pointsValue,
+    required this.options,
   });
 
   factory SlideModel.fromJson(Map<String, dynamic> json) {
-  return SlideModel(
-    id: json['id'] ?? '',
-    position: json['position'] ?? 0,
-    type: QuestionType.values.firstWhere(
-      (e) => e.toString() == 'QuestionType.${(json['slideType'] ?? '').toString().toLowerCase()}',
-      orElse: () => QuestionType.single,
-    ),
-    timeLimitSeconds: json['timeLimitSeconds'] ?? 0,
-    questionText: json['questionText'] ?? '',
-    slideImageUrl: json['slideImageURL'], // 👈 coincide con el backend
-    pointsValue: json['pointsValue'],
-    options: (json['options'] as List<dynamic>? ?? [])
-        .map((optionJson) =>
-            OptionModel.fromJson(optionJson as Map<String, dynamic>))
-        .toList(),
-  );
-}
+    return SlideModel(
+      id: json['id'],
+      position: json['position'],
+      slideType: json['slideType'],
+      timeLimitSeconds: json['timeLimitSeconds'],
+      questionText: json['questionText'],
+      slideImageURL: json['slideImageURL'],
+      pointsValue: json['pointsValue'],
+      options: (json['options'] as List)
+          .map((o) => OptionModel.fromJson(o))
+          .toList(),
+    );
+  }
+
   Slide toEntity() {
     return Slide(
       id: id,
       position: position,
-      type: type,
+      slideType: slideType,
       timeLimitSeconds: timeLimitSeconds,
       questionText: questionText,
-      slideImageUrl: slideImageUrl,
+      slideImageUrl: slideImageURL,
       pointsValue: pointsValue,
-      options: options.map((option) => (option as OptionModel).toEntity()).toList(),
+      options: options.map((o) => o.toEntity()).toList(),
     );
   }
-  
 }

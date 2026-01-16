@@ -1,11 +1,12 @@
-class SlideOption { 
-  final String index;  
-  final String? text; 
-  final String? mediaUrl; 
+// domain/entities/option.dart
+class Option {
+  final int index;
+  final String text;
+  final String? mediaUrl;
 
-  const SlideOption({
-    required this.index, 
-    this.text, 
-    this.mediaUrl
-  }); 
+  Option({
+    required this.index,
+    required this.text,
+    this.mediaUrl,
+  });
 }
