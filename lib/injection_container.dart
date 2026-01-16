@@ -10,6 +10,7 @@ import 'core/storage/token_storage.dart';
 //--- Feature: User ---
 import 'features/user/presentation/profile_bloc.dart';
 import 'features/auth/application/get_user_profile.dart';
+import 'features/auth/application/update_profile.dart';
 
 // --- Feature: Discovery (H6.1) ---
 import 'features/discovery/data/datasources/discovery_remote_data_source.dart';
@@ -309,11 +310,16 @@ Future<void> init() async {
   // AUTH & PROFILE FEATURE
   // ================================================================
 
-  // 1. Bloc: Se registra como Factory porque queremos una instancia nueva cada vez
-  sl.registerFactory(() => ProfileBloc(getUserProfile: sl()));
-
-  // 2. Use Cases: Se registran como Singletons ya que no guardan estado
+  
   sl.registerLazySingleton(() => GetUserProfileUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateProfileUseCase(sl()));
+
+  sl.registerFactory(
+  () => ProfileBloc(
+    getUserProfile: sl<GetUserProfileUseCase>(),
+    updateUserProfile: sl<UpdateProfileUseCase>(), // Añade esta dependencia
+  ),
+);
 
   // 3. Repository: Debes registrar la interfaz vinculada a su implementación
   sl.registerLazySingleton<AuthRepository>(

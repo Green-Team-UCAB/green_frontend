@@ -24,7 +24,7 @@ abstract class AuthRepository {
     required String email,
   });
 
-  Future<Either<Failure, User>> updateProfile(User user);
+  Future<Either<Failure, User>> updateProfile(Map<String, dynamic> updateData);
 
   Future<Either<Failure, User>> getUserProfile();
 }
