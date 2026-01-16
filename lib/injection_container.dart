@@ -103,6 +103,8 @@ final sl = GetIt.instance;
 // 🔴 URL BASE CENTRALIZADA PARA TODA LA APLICACIÓN
 const String _baseUrl = 'https://quizzy-backend-1-zpvc.onrender.com';
 const String _apiSufix = '/api';
+//const String _baseUrl = 'https://backcomun-mzvy.onrender.com';
+//const String _apiSufix = '';
 const String apiBaseUrl = '$_baseUrl$_apiSufix';
 
 Future<void> init() async {

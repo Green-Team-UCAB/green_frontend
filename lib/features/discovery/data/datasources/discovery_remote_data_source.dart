@@ -55,16 +55,15 @@ class DiscoveryRemoteDataSourceImpl implements DiscoveryRemoteDataSource {
 
       final data = response.data;
 
-      // ✅ CAMBIO: Si el back responde, devolvemos lo que hay (aunque sea vacío)
+      // Soporte para ambos backends en búsqueda
       if (data is List) {
         return data;
       } else if (data is Map && data['data'] is List) {
         return data['data'] as List;
       }
 
-      return []; // Si el formato es raro pero no dio error, devolvemos vacío.
+      return [];
     } catch (e) {
-      // ⚠️ SOLO EN CASO DE ERROR REAL (Sin conexión/Timeout) usamos Mocks
       log('⚠️ Error Backend /explore: $e. Usando MOCK DATA.');
       await Future.delayed(const Duration(milliseconds: 800));
       return _generateMockQuizzes(10, titlePrefix: "Resultado");
@@ -84,7 +83,7 @@ class DiscoveryRemoteDataSourceImpl implements DiscoveryRemoteDataSource {
 
       final data = response.data;
 
-      // ✅ CAMBIO: Devolvemos lista real (vacía o llena)
+      // Soporte para ambos backends en destacados
       if (data is List) {
         return data;
       } else if (data is Map && data['data'] is List) {
@@ -93,13 +92,13 @@ class DiscoveryRemoteDataSourceImpl implements DiscoveryRemoteDataSource {
 
       return [];
     } catch (e) {
-      // ⚠️ SOLO EN CASO DE ERROR REAL usamos Mocks
       log('⚠️ Error Backend /explore/featured: $e. Usando MOCK DATA.');
       await Future.delayed(const Duration(milliseconds: 800));
       return _generateMockQuizzes(5, titlePrefix: "Destacado");
     }
   }
 
+  // 🔥 AQUÍ ESTÁ EL ARREGLO IMPORTANTE PARA LAS CATEGORÍAS 🔥
   @override
   Future<List<String>> getCategories() async {
     try {
@@ -110,15 +109,34 @@ class DiscoveryRemoteDataSourceImpl implements DiscoveryRemoteDataSource {
       );
 
       final data = response.data;
+      List<dynamic> rawList = [];
+
+      // Lógica de unificación:
+
+      // CASO 1: Backend Negro (Array directo) -> [ {...}, {...} ]
       if (data is List) {
-        // Convertimos a lista de Strings
-        return List<String>.from(data.map((e) => e['name'] ?? e.toString()));
+        rawList = data;
+      }
+      // CASO 2: Backend Azul (Objeto con clave) -> { "categories": [ ... ] }
+      else if (data is Map && data['categories'] is List) {
+        rawList = data['categories'] as List;
+      }
+
+      // Procesar la lista limpia
+      if (rawList.isNotEmpty) {
+        return List<String>.from(rawList.map((e) {
+          // Si el elemento es un mapa {"name": "Arte"}
+          if (e is Map) {
+            return e['name']?.toString() ?? 'Sin Nombre';
+          }
+          // Si el elemento es un string directo "Arte"
+          return e.toString();
+        }));
       }
 
       return [];
     } catch (e) {
       log('⚠️ Error Backend /explore/categories: $e. Usando MOCK DATA.');
-      // ⚠️ SOLO EN CASO DE ERROR REAL usamos Mocks de categorías
       return [
         "Matemáticas",
         "Ciencias",
@@ -134,7 +152,7 @@ class DiscoveryRemoteDataSourceImpl implements DiscoveryRemoteDataSource {
     }
   }
 
-  // --- GENERADOR DE DATOS FALSOS (Solo para emergencias) ---
+  // --- GENERADOR DE DATOS FALSOS ---
   List<dynamic> _generateMockQuizzes(int count, {String titlePrefix = "Quiz"}) {
     return List.generate(
       count,
@@ -151,9 +169,8 @@ class DiscoveryRemoteDataSourceImpl implements DiscoveryRemoteDataSource {
           "name": "Profesor Mock",
           "avatarUrl": null,
         },
-        "createdAt": DateTime.now()
-            .subtract(Duration(days: index))
-            .toIso8601String(),
+        "createdAt":
+            DateTime.now().subtract(Duration(days: index)).toIso8601String(),
         "questionsCount": 10 + index,
       },
     );
