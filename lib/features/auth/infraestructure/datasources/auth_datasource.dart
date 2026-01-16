@@ -1,6 +1,5 @@
 import 'package:green_frontend/features/auth/infraestructure/models/user_model.dart';
 import 'package:green_frontend/core/error/exceptions.dart';
-import 'package:flutter/foundation.dart';
 import '../../../../core/storage/token_storage.dart';
 import '../../../../core/network/api_client.dart';
 import 'package:green_frontend/core/network/input_validator.dart';
@@ -12,6 +11,10 @@ abstract class AuthDataSource {
     required String userName,
     required String email,
     required String password,
+    required String name,           
+    required String type,           
+    String? description,            
+    String? avatarAssetUrl,         
   });
 
   Future<UserModel> login({required String username, required String password});
@@ -64,46 +67,35 @@ class AuthRemoteDataSourceImpl implements AuthDataSource {
 */
 
   @override
-  Future<UserModel> register({
-    required String userName,
-    required String email,
-    required String password,
-  }) async {
-    InputValidator.validateUsername(userName);
-    InputValidator.validateNotEmpty(email, 'email');
-    InputValidator.validatePassword(password);
+  @override
+Future<UserModel> register({
+  required String userName,
+  required String email,
+  required String password,
+  required String name,
+  required String type,
+  String? description,
+  String? avatarAssetUrl,
+}) async {
+  // El "Esqueleto JSON (Request)" pide estos campos específicos
+  final response = await client.post<Map<String, dynamic>>(
+    path: '/user/register', 
+    data: {
+      "email": email,
+      "username": userName,
+      "password": password,
+      "name": name,
+      "type": type,
+    },
+  );
 
-    final response = await client.post<Map<String, dynamic>>(
-      path: '$_authPath/register',
-      data: {
-        "name": userName,
-        "email": email,
-        "password": password,
-        "userType": "student",
-      },
-    );
-
-    // Log detallado de la respuesta
-    debugPrint(
-      "Register response => status=${response.statusCode}, data=${response.data}",
-    );
-
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      final data = response.data;
-      final userJson = data['user'] as Map<String, dynamic>;
-      final token = data['accessToken'] as String;
-
-      client.setAuthToken(token);
-      await TokenStorage.saveToken(token); 
-
-      return UserModel.fromJson(userJson);
-    }
-
-    debugPrint(
-      "Register failed => status=${response.statusCode}, data=${response.data}",
-    );
-    throw ServerException('Unexpected status: ${response.statusCode}');
+  if (response.statusCode == 201) {
+    // Retorna el usuario con sus datos
+    return UserModel.fromJson(response.data);
   }
+  
+  throw ServerException('Error 400: Datos incorrectos'); 
+}
 
   @override
   Future<UserModel> login({

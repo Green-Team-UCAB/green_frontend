@@ -32,25 +32,34 @@ class MultiplayerSocketRepositoryImpl implements MultiplayerSocketRepository {
   
 
   @override
-  Future<Either<Failure, Unit>> connect({
-    required ClientRole role,
-    required SessionPin pin,
-    required String jwt,
-  }) async {
-    print("DEBUG: Conectando con URL: $baseUrl");
-    try {
-      await dataSource.connect(url: baseUrl, jwt: jwt, pin: pin.value.toString());
-      return right(unit);
-    } catch (e) {
-      return left(ServerFailure('Error al conectar con el servidor de juegos'));
-    }
+Future<Either<Failure, Unit>> connect({
+  required ClientRole role,
+  required SessionPin pin,
+  required String jwt,
+}) async {
+  print("DEBUG: Conectando con URL: $baseUrl");
+  try {
+    // CONVERSIÓN AQUÍ: Pasamos el nombre del rol en mayúsculas
+    final roleString = role.toString().split('.').last.toUpperCase();
+
+    await dataSource.connect(
+      url: baseUrl, 
+      jwt: jwt, 
+      role: roleString, // Ahora sí es un String ("HOST" o "PLAYER")
+      pin: pin.value.toString(),
+    );
+    
+    return right(unit);
+  } catch (e) {
+    return left(ServerFailure('Error al conectar con el servidor de juegos'));
   }
+}
 
   // --- EMISORES (Acciones del usuario) ---
 
   @override
   void emitPlayerJoin(Nickname nickname) {
-    dataSource.emit('join_room', {'nickname': nickname.value});
+    dataSource.emit('player_join', {'nickname': nickname.value});
   }
 
   @override
@@ -81,7 +90,7 @@ class MultiplayerSocketRepositoryImpl implements MultiplayerSocketRepository {
 
   @override
   void emitHostStartGame() {
-    dataSource.emit('start_game', {});
+    dataSource.emit('host_start_game', {});
   }
 
   // --- ESCUCHAS (Transformación de Datos) ---
@@ -112,9 +121,10 @@ class MultiplayerSocketRepositoryImpl implements MultiplayerSocketRepository {
   );
 
   @override
-  Stream<HostResults> get onHostResults => dataSource.onHostResults.map(
-    (data) => HostResultModel.fromJson(data).toEntity()
-  );
+Stream<HostResults> get onHostResults =>
+    dataSource.onHostResults
+      .where((data) => data.isNotEmpty) // evita {}
+      .map((data) => HostResultModel.fromJson(data).toEntity());
 
   @override
   Stream<PlayerResults> get onPlayerResults => dataSource.onPlayerResults.map(

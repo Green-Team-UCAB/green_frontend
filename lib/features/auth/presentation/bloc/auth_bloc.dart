@@ -23,21 +23,32 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
   Future<void> _onSignUp(AuthSignUp event, Emitter<AuthState> emit) async {
     emit(AuthLoading());
-    dev.log("Bloc: SignUp event recibido => userName=${event.userName}, email=${event.email}, password=${event.password}");
-    final Either<Failure, User> result = await registerUser(
+    
+    // 1. Ejecutar el registro
+    final result = await registerUser(
       userName: event.userName,
       email: event.email,
       password: event.password,
+      name: event.name,
+      type: event.type,
+      description: event.description,
+      avatarAssetUrl: event.avatarAssetUrl,
     );
-    result.fold(
-      (failure){
-        debugPrint("ERROR: ${failure.runtimeType} - ${failure.message}");
+
+    await result.fold(
+      (failure) async {
         emit(AuthFailure(failure.message));
       },
-      (user) {
-        debugPrint("SUCCESS: User registered with ID ${user.id}");
-        emit(AuthSuccess(user));
-      }
+      (user) async {
+        debugPrint("Registro exitoso: ${user.name}. Procediendo al login automático...");
+        
+        // 2. Disparar el login inmediatamente después del éxito
+        // Usamos el username y password que vienen del evento de registro
+        add(AuthLogin(
+          username: event.userName,
+          password: event.password,
+        ));
+      },
     );
   }
 

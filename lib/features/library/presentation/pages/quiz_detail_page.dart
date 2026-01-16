@@ -390,6 +390,7 @@ Widget _buildAdminControls(BuildContext context) {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
           onPressed: () async {
+            context.read<MultiplayerBloc>().add(OnResetMultiplayer());
             String? token = sl<ApiClient>().authToken;
             token ??= await TokenStorage.getToken();
             if (!context.mounted) return;

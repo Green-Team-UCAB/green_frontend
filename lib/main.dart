@@ -63,8 +63,12 @@ import 'package:green_frontend/features/single_player/presentation/provider/game
 // --- Feature: Discovery (Para categorías) ---
 import 'package:green_frontend/features/discovery/application/providers/category_provider.dart';
 import 'package:green_frontend/features/multiplayer/presentation/screens/multiplayer_lobby_screen.dart';
+import 'package:green_frontend/features/multiplayer/presentation/screens/multiplayer_game_screen.dart';
+import 'package:green_frontend/features/multiplayer/presentation/screens/multiplayer_result_screen.dart';
+import 'package:green_frontend/features/multiplayer/presentation/screens/multiplayer_podium_screen.dart';
 
 import 'package:green_frontend/features/multiplayer/presentation/bloc/multiplayer_bloc.dart';
+
 
 void main() async {
   // Configuración de inicialización
@@ -283,6 +287,11 @@ class MyApp extends StatelessWidget {
         title: 'Kahoot Clone',
         debugShowCheckedModeBanner: false,
         routes: {
+        '/multiplayer_lobby': (context) => const MultiplayerLobbyScreen(),
+        '/multiplayer_game': (context) => const MultiplayerGameScreen(),
+        '/multiplayer_results': (context) => const MultiplayerResultsScreen(),
+        '/multiplayer_podium': (context) => const MultiplayerPodiumScreen(),
+        
           '/multiplayer_lobby': (context) => const MultiplayerLobbyScreen(),
         },
         theme: ThemeData(
