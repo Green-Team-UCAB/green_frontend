@@ -14,25 +14,35 @@ class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl({required this.dataSource, required this.mapper});
 
   @override
-  Future<Either<Failure, User>> register({
-    required String userName,
-    required String email,
-    required String password,
-  }) async {
-    try {
-      final model = await dataSource.register(
-        userName: userName,
-        email: email,
-        password: password,
-      );
-      return right(model.toEntity());
-    } on Exception catch (e) {
-      debugPrint("AuthRepositoryImpl.register EXCEPTION => $e");
-      // debugPrintStack(stackTrace: st);
-      final failure = mapper.mapExceptionToFailure(e);
-      return left(failure);
-    }
+  @override
+Future<Either<Failure, User>> register({
+  required String userName,
+  required String email,
+  required String password,
+  required String name,           
+  required String type,           
+  String? description,            
+  String? avatarAssetUrl,         
+}) async {
+  try {
+    
+    final model = await dataSource.register(
+      userName: userName,
+      email: email,
+      password: password,
+      name: name,
+      type: type,
+      description: description,
+      avatarAssetUrl: avatarAssetUrl,
+    );
+    
+    return right(model.toEntity());
+  } on Exception catch (e) {
+    debugPrint("AuthRepositoryImpl.register EXCEPTION => $e");
+    final failure = mapper.mapExceptionToFailure(e);
+    return left(failure);
   }
+}
 
   @override
   Future<Either<Failure, User>> login({

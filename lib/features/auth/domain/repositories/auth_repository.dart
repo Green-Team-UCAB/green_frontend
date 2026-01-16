@@ -7,6 +7,10 @@ abstract class AuthRepository {
     required String userName,
     required String email,
     required String password,
+    required String name,           
+    required String type,           
+    String? description,            
+    String? avatarAssetUrl,         
   });
 
   Future<Either<Failure, User>> login({

@@ -16,31 +16,36 @@ class SignUpPage extends StatefulWidget {
 
 class _SignUpPageState extends State<SignUpPage> {
   final formKey = GlobalKey<FormState>();
+  final userNameController = TextEditingController();
   final nameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+  String selectedType = 'STUDENT'; // Default type
 
   @override
   void dispose() {
+    userNameController.dispose();
     nameController.dispose();
     emailController.dispose();
     passwordController.dispose();
     super.dispose();
   }
 
-void _onSignUp() {
-  if (formKey.currentState!.validate()) {
-    dev.log("UI inputs => name=${nameController.text}, email=${emailController.text}, password=${passwordController.text}");
-    context.read<AuthBloc>().add(
-      AuthSignUp(
-        userName: nameController.text.trim(),
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
-      ),
-    );
+  void _onSignUp() {
+    if (formKey.currentState!.validate()) {
+      dev.log(
+          "UI inputs => userName=${userNameController.text}, name=${nameController.text}, email=${emailController.text}, password=${passwordController.text}, type=$selectedType");
+      context.read<AuthBloc>().add(
+            AuthSignUp(
+              userName: userNameController.text.trim(),
+              name: nameController.text.trim(),
+              email: emailController.text.trim(),
+              password: passwordController.text.trim(),
+              type: selectedType,
+            ),
+          );
+    }
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +62,7 @@ void _onSignUp() {
                     SnackBar(content: Text(state.message)),
                   );
                 } else if (state is AuthSuccess) {
-                  // Navegar a la pantalla para iniciar sesión 
+                  // Navegar a la pantalla para iniciar sesión
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(builder: (_) => const LoginPage()),
@@ -82,6 +87,11 @@ void _onSignUp() {
                       ),
                       const SizedBox(height: 32),
                       _buildTextField(
+                        controller: userNameController,
+                        hintText: 'Username',
+                      ),
+                      const SizedBox(height: 16),
+                      _buildTextField(
                         controller: nameController,
                         hintText: 'Name',
                       ),
@@ -97,6 +107,8 @@ void _onSignUp() {
                         hintText: 'Password',
                         obscureText: true,
                       ),
+                      const SizedBox(height: 16),
+                      _buildTypeDropdown(),
                       const SizedBox(height: 32),
                       _buildGradientButton(
                         text: 'Sign Up',
@@ -107,7 +119,8 @@ void _onSignUp() {
                         onTap: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (_) => const LoginPage()),
+                            MaterialPageRoute(
+                                builder: (_) => const LoginPage()),
                           );
                         },
                         child: RichText(
@@ -152,7 +165,8 @@ void _onSignUp() {
       decoration: InputDecoration(
         hintText: hintText,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       ),
     );
   }
@@ -182,6 +196,29 @@ void _onSignUp() {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildTypeDropdown() {
+    return DropdownButtonFormField<String>(
+      value: selectedType,
+      onChanged: (String? newValue) {
+        setState(() {
+          selectedType = newValue!;
+        });
+      },
+      items: const [
+        DropdownMenuItem(value: 'STUDENT', child: Text('Student')),
+        DropdownMenuItem(value: 'TEACHER', child: Text('Teacher')),
+      ],
+      decoration: InputDecoration(
+        hintText: 'Type',
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      ),
+      validator: (value) =>
+          value == null || value.isEmpty ? 'Required field' : null,
     );
   }
 }

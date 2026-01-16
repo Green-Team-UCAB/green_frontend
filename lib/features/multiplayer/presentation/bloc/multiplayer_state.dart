@@ -19,7 +19,12 @@ class MultiplayerState extends Equatable {
   final Slide? currentSlide;      // La pregunta actual
   final int answersReceived;      // Contador para el Host
   final Failure? failure;         // Para mostrar errores en la UI
-
+  final DateTime? questionStartTime;
+  final bool hasAnswered; // Nuevo campo para saber si el jugador ya respondió
+  final PlayerResults? lastQuestionResult; // Resultado de la última pregunta
+  final Summary? podium; // Resultados finales al terminar la partida
+  final HostResults? lastHostResult;
+  
   const MultiplayerState({
     this.status = MultiplayerStatus.initial,
     this.role,
@@ -28,6 +33,11 @@ class MultiplayerState extends Equatable {
     this.currentSlide,
     this.answersReceived = 0,
     this.failure,
+    this.questionStartTime,
+    this.hasAnswered = false,
+    this.lastQuestionResult,
+    this.podium,
+    this.lastHostResult,
   });
 
   // El copyWith es vital para no perder datos al cambiar de estado
@@ -39,6 +49,11 @@ class MultiplayerState extends Equatable {
     Slide? currentSlide,
     int? answersReceived,
     Failure? failure,
+    DateTime? questionStartTime,
+    bool? hasAnswered,
+    PlayerResults? lastQuestionResult,
+    Summary? podium,
+    HostResults? lastHostResult,
   }) {
     return MultiplayerState(
       status: status ?? this.status,
@@ -48,6 +63,11 @@ class MultiplayerState extends Equatable {
       currentSlide: currentSlide ?? this.currentSlide,
       answersReceived: answersReceived ?? this.answersReceived,
       failure: failure ?? this.failure,
+      questionStartTime: questionStartTime ?? this.questionStartTime,
+      hasAnswered: hasAnswered ?? this.hasAnswered,
+      lastQuestionResult: lastQuestionResult ?? this.lastQuestionResult,
+      podium: podium ?? this.podium,
+      lastHostResult: lastHostResult ?? this.lastHostResult,
     );
   }
 
@@ -59,6 +79,11 @@ class MultiplayerState extends Equatable {
         lobby, 
         currentSlide, 
         answersReceived, 
-        failure
+        failure,
+        questionStartTime,
+        hasAnswered,
+        lastQuestionResult,
+        podium,
+        lastHostResult,
       ];
 }

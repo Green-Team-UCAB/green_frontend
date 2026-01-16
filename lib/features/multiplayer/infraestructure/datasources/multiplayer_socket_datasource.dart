@@ -4,7 +4,7 @@ import 'package:socket_io_client/socket_io_client.dart' as io;
 /// Interfaz del DataSource para el Socket.IO
 
 abstract class MultiplayerSocketDataSource {
-  Future<void> connect({required String url, required String jwt, required String pin});
+  Future<void> connect({required String url, required String jwt, required String pin, required String role});
   void emit(String event, dynamic data);
   void disconnect();
 
@@ -42,47 +42,43 @@ class MultiplayerSocketDataSourceImpl implements MultiplayerSocketDataSource {
   final _answerUpdateController = StreamController<Map<String, dynamic>>.broadcast();
 
   @override
-  Future<void> connect({required String url, required String jwt, required String pin}) async {
-    // El Completer es la clave: controla el retorno de la función
-    final completer = Completer<void>();
+  @override
+Future<void> connect({
+  required String url, 
+  required String jwt, 
+  required String pin,
+  required String role, // Ahora es dinámico
+}) async {
+  final completer = Completer<void>();
+  final socketUrl = 'wss://quizzy-backend-1-zpvc.onrender.com/multiplayer-sessions';
 
-    final socketUrl = 'wss://quizzy-backend-1-zpvc.onrender.com/multiplayer-sessions';
+  print('🔍 CONECTANDO COMO: $role AL PIN: $pin');
 
-    print('DEBUG: Conectando al Namespace: $socketUrl');
-
-       print('''
-  🔍 REVISANDO DATOS DE CONEXIÓN:
-  - URL: wss://quizzy-backend-1-zpvc.onrender.com/multiplayer-sessions
-  - JWT: ${jwt.substring(0, 10)}... (truncado)
-  - PIN: "$pin"
-  - ROLE: "host"
-  ''');
-
-    _socket = io.io(socketUrl, io.OptionBuilder()
+  _socket = io.io(socketUrl, io.OptionBuilder()
     .setTransports(['websocket']) 
     .enableForceNew()
     .enableAutoConnect()
-    // 1. Auth: NestJS suele leer el token de aquí (Pág 11)
+    // 1. Asegura que el PIN sea un String .toString()
+    // 2. Algunos servidores prefieren 'token' en lugar de 'jwt' en el auth
     .setAuth({
-      'pin': pin,
-      'role': 'HOST',
+      'pin': pin.toString(), 
+      'role': role.toUpperCase(), 
       'jwt': jwt,
     })
     .setQuery({
-      'pin': pin,
-      'role': 'HOST',
+      'pin': pin.toString(),
+      'role': role.toUpperCase(),
       'jwt': jwt,
     })
-    // 2. ExtraHeaders: Aquí replicamos lo que pusiste en Postman
     .setExtraHeaders({
-      'pin': pin,
-      'role': 'HOST',
-      'Authorization': 'Bearer $jwt',
+      'pin': pin.toString(),
+      'role': role.toUpperCase(),
       'jwt': jwt,
+      'Authorization': 'Bearer $jwt',
     })
     .build());
-    
- 
+
+     
 
     // --- MANEJO DE CONEXIÓN FÍSICA --- 
     _socket!.onConnect((_) {
@@ -97,6 +93,16 @@ class MultiplayerSocketDataSourceImpl implements MultiplayerSocketDataSource {
 
     _socket!.onDisconnect((reason) => print('🔌 [DATASOURCE] Socket Desconectado $reason'));
 
+    // Esto te dirá si el PIN es inválido o el JWT expiró
+_socket!.on('exception', (data) {
+  print('⚠️ EXCEPCIÓN DEL SERVIDOR: $data');
+});
+
+// Esto te dirá si hay un error de protocolo
+_socket!.onConnectError((data) {
+  print('❌ ERROR DE PROTOCOLO: $data');
+});
+
     // --- DEBUG: ATRAPA-TODO ---
     _socket!.onAny((event, data) {
       print('📩 [SOCKET_EVENT]: $event | Data: $data');
@@ -104,7 +110,7 @@ class MultiplayerSocketDataSourceImpl implements MultiplayerSocketDataSource {
 
     // --- MAPEOS SEGÚN PÁG 58-64 ---
     _socket!.on('host_connected_success', (data) => _hostConnectedSuccessController.add(_toMap(data)));
-    _socket!.on('player_connected_to_session', (data) => _playerConnectedSuccessController.add(_toMap(data)));
+    _socket!.on('player_connected_to_server', (data) => _playerConnectedSuccessController.add(_toMap(data)));
     _socket!.on('host_lobby_update', (data) => _playersUpdateController.add(_toMap(data)));
     
     // Otros eventos
