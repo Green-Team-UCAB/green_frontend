@@ -40,7 +40,14 @@ class KahootProvider with ChangeNotifier {
   }
 
   void setThemeId(String themeId) {
+    print('🔴 [DEBUG provider] setThemeId llamado:');
+    print('   themeId recibido: "$themeId"');
+    print('   Longitud: ${themeId.length}');
+    print('   ¿Es UUID válido?: ${RegExp(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', caseSensitive: false).hasMatch(themeId)}');
+    
     _currentKahoot = _currentKahoot.copyWith(themeId: themeId);
+    
+    print('   themeId después de copyWith: "${_currentKahoot.themeId}"');
     notifyListeners();
   }
 
@@ -71,6 +78,50 @@ class KahootProvider with ChangeNotifier {
   void updateQuestion(int index, Question question) {
     final updatedQuestions = List<Question>.from(_currentKahoot.questions);
     updatedQuestions[index] = question;
+    _currentKahoot = _currentKahoot.copyWith(questions: updatedQuestions);
+    notifyListeners();
+  }
+
+  // ✅ NUEVO: Duplicar una pregunta específica
+  void duplicateQuestion(int index) {
+    if (index < 0 || index >= _currentKahoot.questions.length) return;
+    
+    final questionToDuplicate = _currentKahoot.questions[index];
+    final duplicatedQuestion = questionToDuplicate.duplicate();
+    
+    final updatedQuestions = List<Question>.from(_currentKahoot.questions);
+    updatedQuestions.insert(index + 1, duplicatedQuestion);
+    
+    _currentKahoot = _currentKahoot.copyWith(questions: updatedQuestions);
+    notifyListeners();
+  }
+
+  // ✅ NUEVO: Cambiar puntuación de una pregunta
+  void changeQuestionPoints(int index, int newPoints) {
+    if (index < 0 || index >= _currentKahoot.questions.length) return;
+    
+    if (newPoints <= 0) {
+      _error = 'La puntuación debe ser mayor a 0';
+      notifyListeners();
+      return;
+    }
+    
+    final question = _currentKahoot.questions[index];
+    final updatedQuestion = question.copyWith(points: newPoints);
+    
+    updateQuestion(index, updatedQuestion);
+  }
+
+  // ✅ NUEVO: Reordenar preguntas
+  void reorderQuestions(int oldIndex, int newIndex) {
+    if (oldIndex < newIndex) {
+      newIndex -= 1;
+    }
+    
+    final updatedQuestions = List<Question>.from(_currentKahoot.questions);
+    final question = updatedQuestions.removeAt(oldIndex);
+    updatedQuestions.insert(newIndex, question);
+    
     _currentKahoot = _currentKahoot.copyWith(questions: updatedQuestions);
     notifyListeners();
   }
@@ -144,7 +195,14 @@ class KahootProvider with ChangeNotifier {
     notifyListeners();
 
     try {
+      // 🔴 DEBUG ANTES DE GUARDAR
+      print('🔴 [DEBUG provider saveKahoot] Antes de guardar:');
+      print('   Título: ${_currentKahoot.title}');
+      print('   ThemeId: "${_currentKahoot.themeId}"');
+      print('   ¿ThemeId está vacío?: ${_currentKahoot.themeId.isEmpty}');
+      
       if (_currentKahoot.themeId.isEmpty) {
+        print('   ⚠️⚠️⚠️ ERROR: themeId está VACÍO!');
         throw Exception('Debe seleccionar un tema para el Kahoot');
       }
 
@@ -165,7 +223,35 @@ class KahootProvider with ChangeNotifier {
   }
 
   void loadKahoot(Kahoot kahoot) {
+    print('🔴 [DEBUG provider] loadKahoot llamado:');
+    print('   Kahoot ID: ${kahoot.id}');
+    print('   ThemeId del kahoot cargado: "${kahoot.themeId}"');
+    
     _currentKahoot = kahoot;
     notifyListeners();
+  }
+
+  // ✅ NUEVO: Validar si el kahoot está listo para guardar
+  String? validate() {
+    if (_currentKahoot.title.isEmpty) {
+      return 'El título es requerido';
+    }
+    
+    if (_currentKahoot.themeId.isEmpty) {
+      return 'Debe seleccionar un tema';
+    }
+    
+    if (_currentKahoot.questions.isEmpty) {
+      return 'Debe agregar al menos una pregunta';
+    }
+    
+    for (var i = 0; i < _currentKahoot.questions.length; i++) {
+      final question = _currentKahoot.questions[i];
+      if (!question.isValid()) {
+        return 'La pregunta ${i + 1} no es válida';
+      }
+    }
+    
+    return null;
   }
 }

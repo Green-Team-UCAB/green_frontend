@@ -23,9 +23,21 @@ class KahootRepositoryImpl implements KahootRepository {
     await remoteDataSource.deleteKahoot(id);
   }
 
-  // Nuevo método para obtener un kahoot por ID
+  // ✅ NUEVO: Obtener un kahoot por ID
   Future<Kahoot> getKahootById(String id) async {
     return await remoteDataSource.getKahoot(id);
   }
-}
 
+  // ✅ NUEVO: Actualizar un kahoot existente
+  Future<Kahoot> updateKahoot(Kahoot kahoot) async {
+    if (kahoot.id == null || kahoot.id!.isEmpty) {
+      throw Exception('No se puede actualizar un kahoot sin ID');
+    }
+    return await remoteDataSource.updateKahoot(kahoot);
+  }
+
+  // ✅ NUEVO: Duplicar un kahoot
+  Future<Kahoot> duplicateKahoot(String kahootId) async {
+    return await remoteDataSource.duplicateKahoot(kahootId);
+  }
+}
