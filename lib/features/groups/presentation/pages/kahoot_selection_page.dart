@@ -12,7 +12,7 @@ class KahootSelectionPage extends StatelessWidget {
     return BlocProvider(
       create: (_) => sl<KahootSelectionBloc>()..add(LoadMyKahootsEvent()),
       child: Scaffold(
-        backgroundColor: Colors.grey[50], // Fondo consistente con el resto
+        backgroundColor: Colors.grey[50],
         appBar: AppBar(
           title: const Text(
             "Seleccionar Actividad",
@@ -111,7 +111,7 @@ class _KahootSelectionCard extends StatelessWidget {
     final now = DateTime.now();
     final pickedDate = await showDatePicker(
       context: context,
-      initialDate: now.add(const Duration(days: 7)), // Por defecto 1 semana
+      initialDate: now.add(const Duration(days: 7)),
       firstDate: now,
       lastDate: now.add(const Duration(days: 365)),
       helpText: "FECHA LÍMITE DE ENTREGA",
@@ -127,7 +127,6 @@ class _KahootSelectionCard extends StatelessWidget {
     );
 
     if (pickedDate != null) {
-      // Devolvemos el ID y la fecha seleccionada (al final del día)
       final endOfDay = DateTime(
         pickedDate.year,
         pickedDate.month,

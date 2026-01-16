@@ -1,6 +1,6 @@
 import 'package:dartz/dartz.dart';
 import '../../../../core/error/failures.dart';
-import '../domain/entities/group_entity.dart';
+import '../domain/entities/group.dart';
 import '../domain/repositories/groups_repository.dart';
 
 class GetMyGroupsUseCase {
@@ -8,7 +8,7 @@ class GetMyGroupsUseCase {
 
   GetMyGroupsUseCase(this.repository);
 
-  Future<Either<Failure, List<GroupEntity>>> call() {
+  Future<Either<Failure, List<Group>>> call() {
     return repository.getMyGroups();
   }
 }

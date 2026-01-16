@@ -28,7 +28,7 @@ class KahootSelectionBloc
   final GetMyKahootsUseCase getMyKahoots;
 
   KahootSelectionBloc({required this.getMyKahoots})
-    : super(KahootSelectionLoading()) {
+      : super(KahootSelectionLoading()) {
     on<LoadMyKahootsEvent>(_onLoadMyKahoots);
   }
 

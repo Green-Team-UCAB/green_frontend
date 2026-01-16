@@ -29,11 +29,14 @@ class KahootRemoteDataSource {
 
       // Validar UUID del themeId
       final uuidRegex = RegExp(
-          r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
-          caseSensitive: false);
+        r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
+        caseSensitive: false,
+      );
+      
       if (!uuidRegex.hasMatch(kahoot.themeId)) {
         throw Exception(
-            'El ID del tema no es un UUID válido: ${kahoot.themeId}');
+          'El ID del tema no es un UUID válido: ${kahoot.themeId}',
+        );
       }
 
       final Map<String, dynamic> kahootData = KahootMapper.toMap(kahoot);
@@ -59,7 +62,8 @@ class KahootRemoteDataSource {
           return KahootMapper.fromMap(responseData);
         } else {
           throw Exception(
-              'Error al actualizar kahoot: ${response.statusCode} - ${response.body}');
+            'Error al actualizar kahoot: ${response.statusCode} - ${response.body}',
+          );
         }
       } else {
         // En creación, no se envía el id
@@ -75,7 +79,8 @@ class KahootRemoteDataSource {
           return KahootMapper.fromMap(responseData);
         } else {
           throw Exception(
-              'Error al guardar kahoot: ${response.statusCode} - ${response.body}');
+            'Error al guardar kahoot: ${response.statusCode} - ${response.body}',
+          );
         }
       }
     } catch (e) {

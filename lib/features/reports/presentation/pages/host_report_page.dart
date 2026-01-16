@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../injection_container.dart';
 import '../../domain/entities/session_report.dart';
-import '../bloc/reports_bloc.dart'; // Usamos el BLoC unificado
+import '../bloc/reports_bloc.dart';
 
 // PAGE
 class HostReportPage extends StatelessWidget {
@@ -13,9 +13,10 @@ class HostReportPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) =>
-          sl<ReportsBloc>()
-            ..add(LoadReportDetailEvent(gameId: sessionId, gameType: 'Host')),
+      create: (context) => sl<ReportsBloc>()
+        // ⚠️ Enviamos el tipo exacto que espera el Bloc
+        ..add(LoadReportDetailEvent(
+            gameId: sessionId, gameType: 'Multiplayer_host')),
       child: const HostReportView(),
     );
   }
@@ -59,14 +60,12 @@ class HostReportView extends StatelessWidget {
                     style: TextStyle(color: Colors.grey[600]),
                   ),
                   const SizedBox(height: 24),
-
                   const Text(
                     "Tabla de posiciones",
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 12),
                   _LeaderboardCard(players: state.report.playerRanking),
-
                   const SizedBox(height: 24),
                   const Text(
                     "Exactitud de la pregunta",
@@ -94,7 +93,7 @@ class HostReportView extends StatelessWidget {
 }
 
 class _LeaderboardCard extends StatelessWidget {
-  final List<PlayerRankingItem> players; // Usamos la entidad definida en domain
+  final List<PlayerRankingItem> players;
 
   const _LeaderboardCard({required this.players});
 
@@ -117,9 +116,8 @@ class _LeaderboardCard extends StatelessWidget {
           return ListTile(
             leading: CircleAvatar(
               backgroundColor: _getRankColor(player.position),
-              foregroundColor: player.position <= 3
-                  ? Colors.white
-                  : Colors.black54,
+              foregroundColor:
+                  player.position <= 3 ? Colors.white : Colors.black54,
               child: Text("${player.position}"),
             ),
             title: Text(
@@ -160,11 +158,17 @@ class _QuestionAnalysisList extends StatelessWidget {
 
     return Column(
       children: questions.map((q) {
-        final percentage = (q.correctPercentage * 100).toInt();
+        final double rawValue = q.correctPercentage;
+        final double normalizedValue = rawValue > 1.0
+            ? (rawValue / 100.0).clamp(0.0, 1.0)
+            : rawValue.clamp(0.0, 1.0);
+
+        final int displayPercentage = (normalizedValue * 100).toInt();
+
         Color barColor = Colors.green;
-        if (q.correctPercentage < 0.5) {
+        if (normalizedValue < 0.5) {
           barColor = Colors.redAccent;
-        } else if (q.correctPercentage < 0.8) {
+        } else if (normalizedValue < 0.8) {
           barColor = Colors.orangeAccent;
         }
 
@@ -189,7 +193,7 @@ class _QuestionAnalysisList extends StatelessWidget {
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(4),
                         child: LinearProgressIndicator(
-                          value: q.correctPercentage,
+                          value: normalizedValue,
                           color: barColor,
                           backgroundColor: Colors.grey[200],
                           minHeight: 10,
@@ -198,7 +202,7 @@ class _QuestionAnalysisList extends StatelessWidget {
                     ),
                     const SizedBox(width: 12),
                     Text(
-                      "$percentage%",
+                      "$displayPercentage%",
                       style: TextStyle(
                         color: barColor,
                         fontWeight: FontWeight.bold,
@@ -208,7 +212,9 @@ class _QuestionAnalysisList extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  percentage < 50 ? "Pregunta difícil" : "Bien contestada",
+                  displayPercentage < 50
+                      ? "Pregunta difícil"
+                      : "Bien contestada",
                   style: TextStyle(fontSize: 12, color: barColor),
                 ),
               ],

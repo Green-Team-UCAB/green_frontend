@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../injection_container.dart';
-import '../../domain/entities/group_entity.dart';
+import '../../domain/entities/group.dart';
 import '../bloc/groups_bloc.dart';
-import 'group_detail_page.dart'; // Importante para la navegación
+import 'group_detail_page.dart';
 
 class GroupsListPage extends StatelessWidget {
   const GroupsListPage({super.key});
@@ -35,12 +35,11 @@ class GroupsListView extends StatelessWidget {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.message), backgroundColor: Colors.red),
           );
-          // Intentamos recargar si hubo un error crítico
           context.read<GroupsBloc>().add(LoadGroupsEvent());
         }
       },
       child: Scaffold(
-        backgroundColor: Colors.grey[50], // Fondo limpio estilo Kahoot
+        backgroundColor: Colors.grey[50],
         appBar: AppBar(
           title: const Text(
             'Mis Grupos de Estudio',
@@ -56,16 +55,15 @@ class GroupsListView extends StatelessWidget {
             if (state is GroupsLoading || state is GroupOperationSuccess) {
               return const Center(child: CircularProgressIndicator());
             } else if (state is GroupsLoaded) {
-              // ✅ PULL TO REFRESH INTEGRADO
               return RefreshIndicator(
                 color: Colors.deepPurple,
                 backgroundColor: Colors.white,
                 onRefresh: () async {
                   context.read<GroupsBloc>().add(LoadGroupsEvent());
-                  await Future.delayed(const Duration(seconds: 1)); // UX
+                  await Future.delayed(const Duration(seconds: 1));
                 },
                 child: state.groups.isEmpty
-                    ? _buildEmptyStateScrollable() // Scrollable para permitir refresh
+                    ? _buildEmptyStateScrollable()
                     : ListView.separated(
                         padding: const EdgeInsets.all(16),
                         physics: const AlwaysScrollableScrollPhysics(),
@@ -90,13 +88,12 @@ class GroupsListView extends StatelessWidget {
     );
   }
 
-  // Widget vacío que permite scroll para el refresh
   Widget _buildEmptyStateScrollable() {
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
-      children: [
-        SizedBox(height: 200), // Espacio para centrar visualmente
-        const Center(
+      children: const [
+        SizedBox(height: 200),
+        Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -257,7 +254,7 @@ class GroupsListView extends StatelessWidget {
 }
 
 class _GroupCard extends StatelessWidget {
-  final GroupEntity group;
+  final Group group;
 
   const _GroupCard({required this.group});
 
@@ -268,17 +265,13 @@ class _GroupCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: () async {
-        // ✅ NAVEGACIÓN INTELIGENTE: Esperamos resultado
         final result = await Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => GroupDetailPage(group: group)),
         );
 
-        // Si devuelve true (significa que se borró o modificó drásticamente), recargamos
-        if (result == true) {
-          if (context.mounted) {
-            context.read<GroupsBloc>().add(LoadGroupsEvent());
-          }
+        if (result == true && context.mounted) {
+          context.read<GroupsBloc>().add(LoadGroupsEvent());
         }
       },
       child: Card(

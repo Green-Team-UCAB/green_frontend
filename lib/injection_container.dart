@@ -47,7 +47,8 @@ import 'features/groups/presentation/bloc/kahoot_selection_bloc.dart';
 import 'features/groups/application/get_my_groups_use_case.dart';
 import 'features/groups/application/create_group_use_case.dart';
 import 'features/groups/application/join_group_use_case.dart';
-import 'features/groups/application/get_group_details_use_case.dart';
+import 'features/groups/application/get_group_quizzes_use_case.dart';
+import 'features/groups/application/get_group_leaderboard_use_case.dart';
 import 'features/groups/application/generate_invitation_use_case.dart';
 import 'features/groups/application/assign_quiz_use_case.dart';
 import 'features/groups/application/update_group_use_case.dart';
@@ -163,7 +164,10 @@ Future<void> init() async {
   sl.registerLazySingleton(() => GetMyGroupsUseCase(sl()));
   sl.registerLazySingleton(() => CreateGroupUseCase(sl()));
   sl.registerLazySingleton(() => JoinGroupUseCase(sl()));
-  sl.registerLazySingleton(() => GetGroupDetailsUseCase(sl()));
+
+  sl.registerLazySingleton(() => GetGroupQuizzesUseCase(sl()));
+  sl.registerLazySingleton(() => GetGroupLeaderboardUseCase(sl()));
+
   sl.registerLazySingleton(() => GenerateInvitationUseCase(sl()));
   sl.registerLazySingleton(() => AssignQuizUseCase(sl()));
   sl.registerLazySingleton(() => UpdateGroupUseCase(sl()));
@@ -174,13 +178,16 @@ Future<void> init() async {
   sl.registerFactory(
     () => GroupsBloc(getMyGroups: sl(), createGroup: sl(), joinGroup: sl()),
   );
+
   sl.registerFactory(
     () => GroupDetailBloc(
-      getDetails: sl(),
+      getGroupQuizzes: sl(),
+      getGroupLeaderboard: sl(),
       generateInvite: sl(),
       assignQuiz: sl(),
     ),
   );
+
   sl.registerFactory(
     () => GroupSettingsBloc(
       updateGroup: sl(),
@@ -222,22 +229,23 @@ Future<void> init() async {
   );
 
   // --- Multiplayer ---
-  
+
   // Data Source
   sl.registerLazySingleton<MultiplayerSocketDataSource>(
     () => MultiplayerSocketDataSourceImpl(),
   );
 
   sl.registerLazySingleton<MultiplayerRemoteDataSource>(
-  () => MultiplayerRemoteDataSourceImpl(dio: sl()), 
-);
+    () => MultiplayerRemoteDataSourceImpl(dio: sl()),
+  );
 
   // Repository
   sl.registerFactory<MultiplayerSocketRepository>(
     () => MultiplayerSocketRepositoryImpl(dataSource: sl(), baseUrl: _baseUrl),
   );
   sl.registerLazySingleton<MultiplayerSessionRepository>(
-    () => MultiplayerSessionRepositoryImpl(remoteDataSource: sl(), mapper: sl()), 
+    () =>
+        MultiplayerSessionRepositoryImpl(remoteDataSource: sl(), mapper: sl()),
   );
 
   // Use Cases (Comandos)
@@ -288,8 +296,6 @@ Future<void> init() async {
       listenHostResults: sl(),
     ),
   );
-
-  
 
   // ================================================================
   // 2. CORE & EXTERNAL

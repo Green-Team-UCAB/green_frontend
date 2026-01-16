@@ -6,12 +6,15 @@ import 'package:http/http.dart' as http;
 import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
 
+// -- Imports para manejo de fechas en español
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
+
 // --- Core & Dependency Injection ---
 import 'injection_container.dart' as di;
 import 'package:green_frontend/core/theme/app_pallete.dart';
 
 // --- Feature: Navigation ---
-
 import 'features/menu_navegation/presentation/providers/navigation_provider.dart';
 
 // --- Feature: Auth ---
@@ -58,14 +61,13 @@ import 'package:green_frontend/features/single_player/infraestructure/datasource
 import 'package:green_frontend/features/single_player/presentation/provider/game_provider.dart';
 
 // --- Feature: Discovery (Para categorías) ---
-
 import 'package:green_frontend/features/discovery/application/providers/category_provider.dart';
 import 'package:green_frontend/features/multiplayer/presentation/screens/multiplayer_lobby_screen.dart';
 import 'package:green_frontend/features/multiplayer/presentation/screens/multiplayer_game_screen.dart';
 import 'package:green_frontend/features/multiplayer/presentation/screens/multiplayer_result_screen.dart';
 import 'package:green_frontend/features/multiplayer/presentation/screens/multiplayer_podium_screen.dart';
 
-import 'package:green_frontend/features/multiplayer/presentation/bloc/multiplayer_bloc.dart'; 
+import 'package:green_frontend/features/multiplayer/presentation/bloc/multiplayer_bloc.dart';
 
 
 void main() async {
@@ -73,6 +75,10 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await di.init();
   Bloc.observer = AppBlocObserver();
+
+  // Inicializar fechas en español
+  await initializeDateFormatting('es', null);
+  Intl.defaultLocale = 'es'; // Opcional: define español como default
 
   // --- Inicialización y registro de dependencias Single Player ---
   const baseUrl = 'https://quizzy-backend-0wh2.onrender.com/api';
@@ -194,8 +200,7 @@ void main() async {
         // Discovery Remote DataSource para categorías
         Provider<DiscoveryRemoteDataSource>(
           create: (context) => DiscoveryRemoteDataSourceImpl(
-            apiClient: di.sl<
-                ApiClient>(), // CORRECCIÓN: Usar di.sl<ApiClient>() en lugar de ApiClient(dio: dio)
+            apiClient: di.sl<ApiClient>(),
           ),
         ),
         BlocProvider<MultiplayerBloc>(
@@ -216,7 +221,7 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => NavigationProvider()),
 
-        // Kahoot Datasource - ahora se obtiene el token dinámicamente
+        // Kahoot Datasource
         Provider<KahootRemoteDataSource>(
           create: (_) => KahootRemoteDataSource(),
         ),
@@ -287,6 +292,7 @@ class MyApp extends StatelessWidget {
         '/multiplayer_results': (context) => const MultiplayerResultsScreen(),
         '/multiplayer_podium': (context) => const MultiplayerPodiumScreen(),
         
+          '/multiplayer_lobby': (context) => const MultiplayerLobbyScreen(),
         },
         theme: ThemeData(
           scaffoldBackgroundColor: AppPallete.backgroundColor,
@@ -301,8 +307,7 @@ class MyApp extends StatelessWidget {
             fillColor: Colors.white,
           ),
         ),
-        home:
-            const SplashPage(), // Usamos SplashPage para manejar la autenticación
+        home: const SplashPage(),
       ),
     );
   }

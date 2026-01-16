@@ -16,44 +16,35 @@ class ReportsRepositoryImpl implements ReportsRepository {
   // 🎭 MOCK DATA FACTORY (DATOS FALSOS PARA PRUEBAS UI)
   // ===========================================================================
 
-  // 1. LISTA DE HISTORIAL (Muestra Host, Single y Multi)
+  // 1. LISTA DE HISTORIAL
   List<ReportSummary> _getMockSummaries() {
     return [
       ReportSummary(
         kahootId: 'k-host-1',
-        gameId: 'session-123', // ID para el Host Report
-        gameType: 'Hosted', // <--- CASO ADMIN/HOST
+        gameId: 'session-123',
+        gameType: 'Multiplayer_host',
         title: 'Examen Final de Matemáticas (Host)',
         completionDate: DateTime.now().subtract(const Duration(minutes: 30)),
-        finalScore: 0, // El host no tiene score propio
+        finalScore: null,
         rankingPosition: null,
       ),
       ReportSummary(
         kahootId: 'k-multi-1',
         gameId: 'session-456',
-        gameType: 'Multiplayer', // <--- CASO JUGADOR MULTI
+        gameType: 'Multiplayer_player',
         title: 'Trivia de Cultura General',
         completionDate: DateTime.now().subtract(const Duration(days: 1)),
         finalScore: 12500,
-        rankingPosition: 3, // Quedó 3ro
+        rankingPosition: 3,
       ),
       ReportSummary(
         kahootId: 'k-single-1',
         gameId: 'attempt-789',
-        gameType: 'Singleplayer', // <--- CASO SINGLE PLAYER
+        gameType: 'Singleplayer',
         title: 'Práctica de Inglés Básico',
         completionDate: DateTime.now().subtract(const Duration(days: 2)),
         finalScore: 8400,
-        rankingPosition: null, // Single no tiene ranking vs otros
-      ),
-      ReportSummary(
-        kahootId: 'k-multi-2',
-        gameId: 'session-999',
-        gameType: 'Multiplayer',
-        title: 'Torneo de Programación',
-        completionDate: DateTime.now().subtract(const Duration(days: 5)),
-        finalScore: 4500,
-        rankingPosition: 12, // Quedó lejos
+        rankingPosition: null,
       ),
     ];
   }
@@ -61,11 +52,9 @@ class ReportsRepositoryImpl implements ReportsRepository {
   // 2. REPORTE DE SESIÓN (VISTA ADMIN / HOST)
   SessionReport _getMockSessionReport(String sessionId) {
     return SessionReport(
-      reportId: 'rep-host-001',
       sessionId: sessionId,
       title: 'Reporte: Examen Final de Matemáticas',
       executionDate: DateTime.now(),
-      // TABLA DE POSICIONES (Ranking)
       playerRanking: [
         const PlayerRankingItem(
           position: 1,
@@ -79,51 +68,17 @@ class ReportsRepositoryImpl implements ReportsRepository {
           score: 14200,
           correctAnswers: 9,
         ),
-        const PlayerRankingItem(
-          position: 3,
-          username: "Tu Usuario",
-          score: 12500,
-          correctAnswers: 8,
-        ), // Tú
-        const PlayerRankingItem(
-          position: 4,
-          username: "Carlos123",
-          score: 8000,
-          correctAnswers: 5,
-        ),
-        const PlayerRankingItem(
-          position: 5,
-          username: "Ana_Bot",
-          score: 4000,
-          correctAnswers: 3,
-        ),
       ],
-      // ANÁLISIS DE PREGUNTAS (Barras de colores)
       questionAnalysis: [
         const QuestionAnalysisItem(
           questionIndex: 0,
           questionText: "¿Cuánto es 2 + 2?",
-          correctPercentage: 0.95, // Verde (Muy fácil)
+          correctPercentage: 0.95,
         ),
         const QuestionAnalysisItem(
           questionIndex: 1,
-          questionText: "¿Cuál es la capital de Australia?",
-          correctPercentage: 0.45, // Rojo (Difícil / Tramposa)
-        ),
-        const QuestionAnalysisItem(
-          questionIndex: 2,
-          questionText: "¿Fórmula del agua?",
-          correctPercentage: 0.80, // Verde/Naranja
-        ),
-        const QuestionAnalysisItem(
-          questionIndex: 3,
-          questionText: "Derivada de x^2",
-          correctPercentage: 0.60, // Naranja (Media)
-        ),
-        const QuestionAnalysisItem(
-          questionIndex: 4,
-          questionText: "¿Quién pintó la Mona Lisa?",
-          correctPercentage: 0.20, // Rojo (Muy difícil)
+          questionText: "¿Capital de Australia?",
+          correctPercentage: 0.45,
         ),
       ],
     );
@@ -141,7 +96,6 @@ class ReportsRepositoryImpl implements ReportsRepository {
       averageTimeMs: 5200,
       rankingPosition: 3,
       questionResults: [
-        // CASO 1: Respuesta Correcta Texto Simple
         const QuestionResultItem(
           questionIndex: 0,
           questionText: "¿Cuál es el planeta rojo?",
@@ -150,44 +104,13 @@ class ReportsRepositoryImpl implements ReportsRepository {
           answerTexts: ["Marte"],
           answerMediaIds: [],
         ),
-        // CASO 2: Respuesta Incorrecta
         const QuestionResultItem(
           questionIndex: 1,
-          questionText: "¿Animal más rápido del mundo?",
+          questionText: "¿Qué logo es este?",
           isCorrect: false,
-          timeTakenMs: 8000,
-          answerTexts: ["Leon"], // El usuario eligió mal
-          answerMediaIds: [],
-        ),
-        // CASO 3: Respuesta con IMAGEN (Sin texto)
-        const QuestionResultItem(
-          questionIndex: 2,
-          questionText: "¿Qué logo pertenece a Flutter?",
-          isCorrect: true,
           timeTakenMs: 4000,
           answerTexts: [],
-          // URL simulada de imagen
-          answerMediaIds: [
-            "https://storage.googleapis.com/cms-storage-bucket/0dbfcc7a59cd1cf16282.png",
-          ],
-        ),
-        // CASO 4: Respuesta MULTIPLE (Dos opciones seleccionadas)
-        const QuestionResultItem(
-          questionIndex: 3,
-          questionText: "¿Cuáles son colores primarios?",
-          isCorrect: true,
-          timeTakenMs: 6500,
-          answerTexts: ["Rojo", "Azul"], // Usuario seleccionó dos
-          answerMediaIds: [],
-        ),
-        // CASO 5: Respuesta Mixta o Vacía (Timeout)
-        const QuestionResultItem(
-          questionIndex: 4,
-          questionText: "¿Pregunta difícil sin responder?",
-          isCorrect: false,
-          timeTakenMs: 30000,
-          answerTexts: [],
-          answerMediaIds: [],
+          answerMediaIds: ["https://via.placeholder.com/150"], // URL dummy
         ),
       ],
     );
@@ -205,9 +128,8 @@ class ReportsRepositoryImpl implements ReportsRepository {
       final result = await call();
       return Right(result);
     } catch (e) {
+      // En producción podrías usar 'log' en vez de print
       // print("⚠️ [ReportsRepo] Falló la API ($e). Usando MOCK DATA.");
-      // Simulamos un pequeño delay para que se vea el loading
-      await Future.delayed(const Duration(milliseconds: 800));
       return Right(mockFallback());
     }
   }

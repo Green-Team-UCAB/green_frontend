@@ -7,7 +7,7 @@ class ReportSummaryModel extends ReportSummary {
     required super.gameType,
     required super.title,
     required super.completionDate,
-    required super.finalScore,
+    super.finalScore,
     super.rankingPosition,
   });
 
@@ -15,13 +15,13 @@ class ReportSummaryModel extends ReportSummary {
     return ReportSummaryModel(
       kahootId: json['kahootId'] ?? '',
       gameId: json['gameId'] ?? '',
+      // "Singleplayer" | "Multiplayer_player" | "Multiplayer_host"
       gameType: json['gameType'] ?? 'Singleplayer',
       title: json['title'] ?? 'Sin título',
-      completionDate: json['completionDate'] != null
-          ? DateTime.parse(json['completionDate'])
-          : DateTime.now(),
-      finalScore: (json['finalScore'] as num?)?.toInt() ?? 0,
-      rankingPosition: (json['rankingPosition'] as num?)?.toInt(),
+      completionDate:
+          DateTime.tryParse(json['completionDate'] ?? '') ?? DateTime.now(),
+      finalScore: json['finalScore'],
+      rankingPosition: json['rankingPosition'],
     );
   }
 }

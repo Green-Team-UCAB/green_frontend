@@ -1,26 +1,26 @@
 import 'package:dartz/dartz.dart';
 import '../../../../core/error/failures.dart';
-import '../entities/group_entity.dart';
+import '../entities/group.dart';
+import '../entities/group_quiz_assignment.dart';
+import '../entities/group_leaderboard.dart';
 
 abstract class GroupsRepository {
-  // Lista y Creación
-  Future<Either<Failure, List<GroupEntity>>> getMyGroups();
-  Future<Either<Failure, GroupEntity>> createGroup(
+  Future<Either<Failure, List<Group>>> getMyGroups();
+  Future<Either<Failure, Group>> createGroup(
     String name,
     String description,
   );
-  Future<Either<Failure, GroupEntity>> joinGroup(String token);
-
-  // Detalles (Devuelve un Mapa con info del grupo, miembros, quizes y ranking)
-  Future<Either<Failure, Map<String, dynamic>>> getGroupDetails(String groupId);
-
-  // Acciones Administrativas
+  Future<Either<Failure, Group>> joinGroup(String token);
+  Future<Either<Failure, List<GroupQuizAssignment>>> getGroupQuizzes(
+      String groupId);
+  Future<Either<Failure, List<GroupLeaderboardEntry>>> getGroupLeaderboard(
+      String groupId);
   Future<Either<Failure, String>> generateInvitationLink(String groupId);
-  Future<Either<Failure, void>> assignQuiz(
-    String groupId,
-    String quizId,
-    String availableUntil, {
-    String? quizTitle,
+  Future<Either<Failure, void>> assignQuiz({
+    required String groupId,
+    required String quizId,
+    required DateTime availableFrom,
+    required DateTime availableUntil,
   });
   Future<Either<Failure, void>> updateGroup(
     String groupId,

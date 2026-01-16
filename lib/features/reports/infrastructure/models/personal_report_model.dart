@@ -16,17 +16,16 @@ class PersonalReportModel extends PersonalReport {
   factory PersonalReportModel.fromJson(Map<String, dynamic> json) {
     return PersonalReportModel(
       kahootId: json['kahootId'] ?? '',
-      title: json['title'] ?? 'Resultado',
+      title: json['title'] ?? '',
       userId: json['userId'] ?? '',
-      finalScore: (json['finalScore'] as num?)?.toInt() ?? 0,
-      correctAnswers: (json['correctAnswers'] as num?)?.toInt() ?? 0,
-      totalQuestions: (json['totalQuestions'] as num?)?.toInt() ?? 0,
-      averageTimeMs: (json['averageTimeMs'] as num?)?.toInt() ?? 0,
-      rankingPosition: (json['rankingPosition'] as num?)?.toInt(),
-      questionResults: (json['questionResults'] as List?)
-              ?.map((e) => QuestionResultItemModel.fromJson(e))
-              .toList() ??
-          [],
+      finalScore: json['finalScore'] ?? 0,
+      correctAnswers: json['correctAnswers'] ?? 0,
+      totalQuestions: json['totalQuestions'] ?? 0,
+      averageTimeMs: json['averageTimeMs'] ?? 0,
+      rankingPosition: json['rankingPosition'],
+      questionResults: (json['questionResults'] as List? ?? [])
+          .map((e) => QuestionResultItemModel.fromJson(e))
+          .toList(),
     );
   }
 }
@@ -43,13 +42,15 @@ class QuestionResultItemModel extends QuestionResultItem {
 
   factory QuestionResultItemModel.fromJson(Map<String, dynamic> json) {
     return QuestionResultItemModel(
-      questionIndex: (json['questionIndex'] as num?)?.toInt() ?? 0,
+      questionIndex: json['questionIndex'] ?? 0,
       questionText: json['questionText'] ?? '',
       isCorrect: json['isCorrect'] ?? false,
-      timeTakenMs: (json['timeTakenMs'] as num?)?.toInt() ?? 0,
-      // La API devuelve answerText: String[] y answerMediaID: String[]
-      answerTexts: (json['answerText'] as List?)?.map((e) => e.toString()).toList() ?? [],
-      answerMediaIds: (json['answerMediaID'] as List?)?.map((e) => e.toString()).toList() ?? [],
+      timeTakenMs: json['timeTakenMs'] ?? 0,
+      answerTexts:
+          (json['answerText'] as List? ?? []).map((e) => e.toString()).toList(),
+      answerMediaIds: (json['answerMediaId'] as List? ?? [])
+          .map((e) => e.toString())
+          .toList(),
     );
   }
 }
