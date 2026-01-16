@@ -1,14 +1,23 @@
 import '../../../../core/network/api_client.dart';
 import '../models/group_model.dart';
+import '../models/group_quiz_assignment_model.dart';
+import '../models/group_leaderboard_entry_model.dart';
 
 abstract class GroupsRemoteDataSource {
   Future<List<GroupModel>> getMyGroups();
   Future<GroupModel> createGroup(String name, String description);
   Future<GroupModel> joinGroup(String token);
-  Future<List<dynamic>> getGroupQuizzes(String groupId);
-  Future<Map<String, dynamic>> getGroupDetails(String groupId);
+
+  // ✅ Métodos separados y tipados correctamente
+  Future<List<GroupQuizAssignmentModel>> getGroupQuizzes(String groupId);
+  Future<List<GroupLeaderboardEntryModel>> getGroupLeaderboard(String groupId);
+
   Future<String> generateInvitationLink(String groupId);
-  Future<void> assignQuiz(String groupId, String quizId, String availableUntil);
+
+  // ✅ Asignación con fechas correctas
+  Future<void> assignQuiz(String groupId, String quizId, DateTime availableFrom,
+      DateTime availableUntil);
+
   Future<void> updateGroup(String groupId, String name, String description);
   Future<void> kickMember(String groupId, String memberId);
   Future<void> deleteGroup(String groupId);
@@ -21,10 +30,8 @@ class GroupsRemoteDataSourceImpl implements GroupsRemoteDataSource {
 
   @override
   Future<List<GroupModel>> getMyGroups() async {
-    // Usamos el ApiClient que ya inyecta el token automáticamente
     final response = await apiClient.get(path: '/groups');
-
-    // La API devuelve una lista directa: [ {...}, {...} ]
+    // Mapeo seguro de la lista
     return (response.data as List).map((e) => GroupModel.fromJson(e)).toList();
   }
 
@@ -32,9 +39,11 @@ class GroupsRemoteDataSourceImpl implements GroupsRemoteDataSource {
   Future<GroupModel> createGroup(String name, String description) async {
     final response = await apiClient.post(
       path: '/groups',
-      data: {'name': name, 'description': description},
+      data: {
+        'name': name,
+        'description': description
+      }, // Descripción opcional según tu doc?
     );
-
     return GroupModel.fromJson(response.data);
   }
 
@@ -42,77 +51,79 @@ class GroupsRemoteDataSourceImpl implements GroupsRemoteDataSource {
   Future<GroupModel> joinGroup(String token) async {
     final response = await apiClient.post(
       path: '/groups/join',
-      data: {'token': token},
+      // ⚠️ CORRECCIÓN IMPORTANTE: La doc dice "invitationToken", no "token"
+      data: {'invitationToken': token},
     );
+
+    // La doc dice que retorna info del grupo al unirse.
     return GroupModel.fromJson(response.data);
   }
 
   @override
-  Future<List<dynamic>> getGroupQuizzes(String groupId) async {
+  Future<List<GroupQuizAssignmentModel>> getGroupQuizzes(String groupId) async {
+    // ✅ URL ESPECÍFICA: Esto evita mezclar kahoots de otros grupos
     final response = await apiClient.get(path: '/groups/$groupId/quizzes');
-    // La respuesta según el usuario es { data: [...] } o directamente [...]?
-    // El "Esqueleto JSON (Response)" muestra "{ data: [...] }"
-    if (response.data is Map && response.data.containsKey('data')) {
-      return response.data['data'];
-    } else if (response.data is List) {
-      return response.data;
+
+    // La doc dice: { data: [...] }
+    final data = response.data;
+    List listData = [];
+
+    if (data is Map && data.containsKey('data')) {
+      listData = data['data'];
+    } else if (data is List) {
+      listData = data;
     }
-    return [];
+
+    return listData.map((e) => GroupQuizAssignmentModel.fromJson(e)).toList();
   }
 
   @override
-  Future<Map<String, dynamic>> getGroupDetails(String groupId) async {
-    // 1. Obtener Metadatos del Grupo
-    final groupResponse = await apiClient.get(path: '/groups/$groupId');
+  Future<List<GroupLeaderboardEntryModel>> getGroupLeaderboard(
+      String groupId) async {
+    // ✅ URL ESPECÍFICA
+    final response = await apiClient.get(path: '/groups/$groupId/leaderboard');
 
-    // 2. Obtener Quizzes del Grupo (Nuevo Endpoint)
-    List<dynamic> quizzes = [];
-    try {
-      quizzes = await getGroupQuizzes(groupId);
-    } catch (e) {
-      print("⚠️ Error fetching quizzes separately: $e");
-    }
-
-    // 3. Obtener Ranking/Miembros (Si hay endpoints separados, agregarlos aquí.
-    // Por ahora asumimos que vienen en el endpoint principal o se manejan separados,
-    // pero para mantener compatibilidad con el Repository, mezclamos aquí).
-
-    final data = Map<String, dynamic>.from(groupResponse.data);
-    data['quizzes'] = quizzes;
-
-    return data;
+    // La doc dice que retorna un array directo [...]
+    return (response.data as List)
+        .map((e) => GroupLeaderboardEntryModel.fromJson(e))
+        .toList();
   }
 
   @override
   Future<String> generateInvitationLink(String groupId) async {
-    final response = await apiClient.post(path: '/groups/$groupId/invite');
-    return response.data['link'];
+    // ⚠️ CORRECCIÓN: La doc dice "/invitations", no "/invite"
+    // ⚠️ CORRECCIÓN: La doc dice body { "expiresIn": "7d" }
+    final response = await apiClient.post(
+      path: '/groups/$groupId/invitations',
+      data: {'expiresIn': '7d'},
+    );
+
+    // La doc dice response: { "invitationLink": "..." }
+    return response.data['invitationLink'];
   }
 
   @override
   Future<void> assignQuiz(
     String groupId,
     String quizId,
-    String availableUntil,
+    DateTime availableFrom,
+    DateTime availableUntil,
   ) async {
-    // Nuevo path y body según documentación
     await apiClient.post(
       path: '/groups/$groupId/quizzes',
       data: {
         'quizId': quizId,
-        'availableFrom': DateTime.now().toIso8601String(),
-        'availableUntil': availableUntil,
+        'availableFrom': availableFrom.toIso8601String(),
+        'availableUntil': availableUntil.toIso8601String(),
       },
     );
   }
 
   @override
   Future<void> updateGroup(
-    String groupId,
-    String name,
-    String description,
-  ) async {
-    await apiClient.put(
+      String groupId, String name, String description) async {
+    await apiClient.patch(
+      // La doc dice PATCH, tu código tenía PUT
       path: '/groups/$groupId',
       data: {'name': name, 'description': description},
     );

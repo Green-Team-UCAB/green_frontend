@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../injection_container.dart';
-import '../../domain/entities/group_entity.dart';
+import '../../domain/entities/group.dart';
+import '../../domain/entities/group_quiz_assignment.dart';
+import '../../domain/entities/group_leaderboard.dart';
 import '../bloc/group_detail_bloc.dart';
 import 'group_settings_page.dart';
 import 'kahoot_selection_page.dart';
 
 class GroupDetailPage extends StatelessWidget {
-  final GroupEntity group;
+  final Group group;
 
   const GroupDetailPage({super.key, required this.group});
 
@@ -23,7 +25,7 @@ class GroupDetailPage extends StatelessWidget {
 }
 
 class _GroupDetailView extends StatelessWidget {
-  final GroupEntity group;
+  final Group group;
 
   const _GroupDetailView({required this.group});
 
@@ -38,7 +40,6 @@ class _GroupDetailView extends StatelessWidget {
             SnackBar(content: Text(state.message), backgroundColor: Colors.red),
           );
         } else if (state is QuizAssignedSuccess) {
-          // ✅ Feedback visual cuando se asigna correctamente
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
@@ -67,8 +68,8 @@ class _GroupDetailView extends StatelessWidget {
                   tooltip: 'Invitar miembros',
                   onPressed: () {
                     context.read<GroupDetailBloc>().add(
-                      GenerateInviteEvent(group.id),
-                    );
+                          GenerateInviteEvent(group.id),
+                        );
                   },
                 ),
               if (group.isAdmin)
@@ -77,7 +78,8 @@ class _GroupDetailView extends StatelessWidget {
                   tooltip: 'Configuración del Grupo',
                   onPressed: () async {
                     final state = context.read<GroupDetailBloc>().state;
-                    List<dynamic> currentMembers = [];
+                    List<GroupLeaderboardEntry> currentMembers = [];
+
                     if (state is GroupDetailLoaded) {
                       currentMembers = state.leaderboard;
                     } else if (state is InvitationGenerated) {
@@ -101,8 +103,8 @@ class _GroupDetailView extends StatelessWidget {
                     } else if (result == true) {
                       if (context.mounted) {
                         context.read<GroupDetailBloc>().add(
-                          LoadGroupDetailsEvent(group.id),
-                        );
+                              LoadGroupDetailsEvent(group.id),
+                            );
                       }
                     }
                   },
@@ -146,12 +148,9 @@ class _GroupDetailView extends StatelessWidget {
               return const Center(child: Text("Cargando detalles..."));
             },
           ),
-
-          // ✅ BOTÓN FLOTANTE PARA ASIGNAR KAHOOT (Solo Admin)
           floatingActionButton: group.isAdmin
               ? FloatingActionButton.extended(
                   onPressed: () async {
-                    // 1. Navegar a la pantalla de selección
                     final result = await Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -159,16 +158,14 @@ class _GroupDetailView extends StatelessWidget {
                       ),
                     );
 
-                    // 2. Si vuelve con datos, disparamos el evento de asignación
                     if (result != null && result is Map && context.mounted) {
                       context.read<GroupDetailBloc>().add(
-                        AssignQuizEvent(
-                          groupId: group.id,
-                          quizId: result['quizId'],
-                          quizTitle: result['quizTitle'],
-                          availableUntil: result['availableUntil'],
-                        ),
-                      );
+                            AssignQuizEvent(
+                              groupId: group.id,
+                              quizId: result['quizId'],
+                              availableUntil: result['availableUntil'],
+                            ),
+                          );
                     }
                   },
                   backgroundColor: Colors.deepPurple,
@@ -184,7 +181,6 @@ class _GroupDetailView extends StatelessWidget {
     );
   }
 
-  // ... (El resto de métodos _showInvitationDialog queda igual) ...
   void _showInvitationDialog(BuildContext context, String link) {
     showDialog(
       context: context,
@@ -255,8 +251,9 @@ class _GroupDetailView extends StatelessWidget {
 }
 
 class _QuizzesTab extends StatelessWidget {
-  final List<dynamic> quizzes;
+  final List<GroupQuizAssignment> quizzes;
   const _QuizzesTab({required this.quizzes});
+
   @override
   Widget build(BuildContext context) {
     if (quizzes.isEmpty) {
@@ -271,13 +268,7 @@ class _QuizzesTab extends StatelessWidget {
       separatorBuilder: (c, i) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final quiz = quizzes[index];
-        final title = quiz['title'] ?? 'Sin título';
-        final status = quiz['status'] ?? 'PENDING';
-        final isCompleted = status == 'COMPLETED';
-        final score = quiz['userResult'] != null
-            ? quiz['userResult']['score']
-            : 0;
-        final date = quiz['availableUntil'] ?? '';
+        final isCompleted = quiz.status == 'COMPLETED';
 
         return Card(
           elevation: 2,
@@ -316,14 +307,14 @@ class _QuizzesTab extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      _formatDate(date),
+                      "${quiz.availableUntil.day}/${quiz.availableUntil.month}",
                       style: TextStyle(color: Colors.grey[600], fontSize: 12),
                     ),
                   ],
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  title,
+                  quiz.title,
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -340,7 +331,7 @@ class _QuizzesTab extends StatelessWidget {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        "$score pts",
+                        "${quiz.score ?? 0} pts",
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Colors.deepPurple,
@@ -367,21 +358,13 @@ class _QuizzesTab extends StatelessWidget {
       },
     );
   }
-
-  String _formatDate(String isoDate) {
-    if (isoDate.isEmpty) return '';
-    try {
-      final date = DateTime.parse(isoDate);
-      return "${date.day}/${date.month}/${date.year}";
-    } catch (e) {
-      return '';
-    }
-  }
 }
 
 class _LeaderboardTab extends StatelessWidget {
-  final List<dynamic> leaderboard;
+  final List<GroupLeaderboardEntry> leaderboard;
+
   const _LeaderboardTab({required this.leaderboard});
+
   @override
   Widget build(BuildContext context) {
     if (leaderboard.isEmpty) {
@@ -395,9 +378,8 @@ class _LeaderboardTab extends StatelessWidget {
       itemCount: leaderboard.length,
       itemBuilder: (context, index) {
         final user = leaderboard[index];
-        final name = user['name'] ?? 'Usuario';
-        final points = user['totalPoints'] ?? 0;
         final position = index + 1;
+
         return Card(
           margin: const EdgeInsets.only(bottom: 8),
           elevation: 2,
@@ -414,11 +396,11 @@ class _LeaderboardTab extends StatelessWidget {
               ),
             ),
             title: Text(
-              name,
+              user.name,
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             trailing: Text(
-              "$points pts",
+              "${user.totalPoints} pts",
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 color: Colors.deepPurple,

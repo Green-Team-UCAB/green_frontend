@@ -1,6 +1,6 @@
-import '../../domain/entities/group_entity.dart';
+import '../../domain/entities/group.dart';
 
-class GroupModel extends GroupEntity {
+class GroupModel extends Group {
   const GroupModel({
     required super.id,
     required super.name,
@@ -12,13 +12,17 @@ class GroupModel extends GroupEntity {
 
   factory GroupModel.fromJson(Map<String, dynamic> json) {
     return GroupModel(
-      id: json['id'] ?? '',
-      name: json['name'] ?? 'Sin nombre',
+      id: json['id'] ?? json['groupId'] ?? '',
+      name: json['name'] ?? json['groupName'] ?? 'Sin nombre',
       description: json['description'],
       role: json['role'] ?? 'member',
-      // La API a veces devuelve string o int, aseguramos el parseo
-      memberCount: int.tryParse(json['memberCount'].toString()) ?? 0,
-      createdAt: DateTime.tryParse(json['createdAt'] ?? '') ?? DateTime.now(),
+      memberCount: json['memberCount'] is int
+          ? json['memberCount']
+          : int.tryParse(json['memberCount']?.toString() ?? '1') ?? 1,
+      createdAt: DateTime.tryParse(
+            json['createdAt'] ?? json['joinedAt'] ?? '',
+          ) ??
+          DateTime.now(),
     );
   }
 

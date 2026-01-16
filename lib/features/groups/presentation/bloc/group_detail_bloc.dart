@@ -1,6 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../domain/entities/group_entity.dart';
-import '../../application/get_group_details_use_case.dart';
+import '../../domain/entities/group_quiz_assignment.dart';
+import '../../domain/entities/group_leaderboard.dart';
+import '../../application/get_group_quizzes_use_case.dart';
+import '../../application/get_group_leaderboard_use_case.dart';
 import '../../application/generate_invitation_use_case.dart';
 import '../../application/assign_quiz_use_case.dart';
 
@@ -21,12 +23,11 @@ class AssignQuizEvent extends GroupDetailEvent {
   final String groupId;
   final String quizId;
   final String availableUntil;
-  final String? quizTitle; // Para UI optimista / Mock
+
   AssignQuizEvent({
     required this.groupId,
     required this.quizId,
     required this.availableUntil,
-    this.quizTitle,
   });
 }
 
@@ -38,18 +39,20 @@ class GroupDetailInitial extends GroupDetailState {}
 class GroupDetailLoading extends GroupDetailState {}
 
 class GroupDetailLoaded extends GroupDetailState {
-  final Map<String, dynamic> data; // Contiene quizzes, leaderboard, etc.
-  List<dynamic> get quizzes => data['quizzes'] ?? [];
-  List<dynamic> get leaderboard => data['leaderboard'] ?? [];
-  GroupEntity? get group => data['group'] is GroupEntity ? data['group'] : null;
-  GroupDetailLoaded(this.data);
+  final List<GroupQuizAssignment> quizzes;
+  final List<GroupLeaderboardEntry> leaderboard;
+
+  GroupDetailLoaded({
+    required this.quizzes,
+    required this.leaderboard,
+  });
 }
 
 class InvitationGenerated extends GroupDetailState {
   final String link;
-  // Mantenemos los datos anteriores para no perder la vista
-  final List<dynamic> quizzes;
-  final List<dynamic> leaderboard;
+  final List<GroupQuizAssignment> quizzes;
+  final List<GroupLeaderboardEntry> leaderboard;
+
   InvitationGenerated(this.link, this.quizzes, this.leaderboard);
 }
 
@@ -65,12 +68,14 @@ class GroupDetailError extends GroupDetailState {
 
 // BLOC
 class GroupDetailBloc extends Bloc<GroupDetailEvent, GroupDetailState> {
-  final GetGroupDetailsUseCase getDetails;
+  final GetGroupQuizzesUseCase getGroupQuizzes;
+  final GetGroupLeaderboardUseCase getGroupLeaderboard;
   final GenerateInvitationUseCase generateInvite;
   final AssignQuizUseCase assignQuiz;
 
   GroupDetailBloc({
-    required this.getDetails,
+    required this.getGroupQuizzes,
+    required this.getGroupLeaderboard,
     required this.generateInvite,
     required this.assignQuiz,
   }) : super(GroupDetailInitial()) {
@@ -84,11 +89,37 @@ class GroupDetailBloc extends Bloc<GroupDetailEvent, GroupDetailState> {
     Emitter<GroupDetailState> emit,
   ) async {
     emit(GroupDetailLoading());
-    final result = await getDetails(event.groupId);
-    result.fold(
-      (failure) => emit(GroupDetailError(failure.message)),
-      (data) => emit(GroupDetailLoaded(data)),
+
+    final results = await Future.wait([
+      getGroupQuizzes(event.groupId),
+      getGroupLeaderboard(event.groupId),
+    ]);
+
+    final quizzesResult = results[0] as dynamic;
+    final leaderboardResult = results[1] as dynamic;
+
+    String? errorMessage;
+    List<GroupQuizAssignment>? quizzes;
+    List<GroupLeaderboardEntry>? leaderboard;
+
+    quizzesResult.fold(
+      (failure) => errorMessage = failure.message,
+      (data) => quizzes = data,
     );
+
+    leaderboardResult.fold(
+      (failure) => errorMessage = failure.message,
+      (data) => leaderboard = data,
+    );
+
+    if (errorMessage != null) {
+      emit(GroupDetailError(errorMessage!));
+    } else {
+      emit(GroupDetailLoaded(
+        quizzes: quizzes ?? [],
+        leaderboard: leaderboard ?? [],
+      ));
+    }
   }
 
   Future<void> _onGenerateInvite(
@@ -115,17 +146,23 @@ class GroupDetailBloc extends Bloc<GroupDetailEvent, GroupDetailState> {
     AssignQuizEvent event,
     Emitter<GroupDetailState> emit,
   ) async {
-    // Nota: Podríamos emitir loading, pero para feedback rápido usamos snackbar
+    final DateTime? untilDate = DateTime.tryParse(event.availableUntil);
+
+    if (untilDate == null) {
+      emit(GroupDetailError("Formato de fecha inválido"));
+      return;
+    }
+
     final result = await assignQuiz(
       event.groupId,
       event.quizId,
-      event.availableUntil,
+      DateTime.now(),
+      untilDate,
     );
+
     result.fold((failure) => emit(GroupDetailError(failure.message)), (_) {
       emit(QuizAssignedSuccess("Actividad asignada correctamente"));
-      add(
-        LoadGroupDetailsEvent(event.groupId),
-      ); // Recargar para ver el quiz nuevo
+      add(LoadGroupDetailsEvent(event.groupId));
     });
   }
 }

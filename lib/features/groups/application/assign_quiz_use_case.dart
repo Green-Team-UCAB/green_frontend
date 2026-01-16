@@ -10,14 +10,14 @@ class AssignQuizUseCase {
   Future<Either<Failure, void>> call(
     String groupId,
     String quizId,
-    String availableUntil, {
-    String? quizTitle,
-  }) {
+    DateTime availableFrom,
+    DateTime availableUntil,
+  ) {
     return repository.assignQuiz(
-      groupId,
-      quizId,
-      availableUntil,
-      quizTitle: quizTitle,
+      groupId: groupId,
+      quizId: quizId,
+      availableFrom: availableFrom,
+      availableUntil: availableUntil,
     );
   }
 }

@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../injection_container.dart';
-import '../../domain/entities/group_entity.dart';
+import '../../domain/entities/group.dart';
+import '../../domain/entities/group_leaderboard.dart';
 import '../bloc/group_settings_bloc.dart';
 
 class GroupSettingsPage extends StatelessWidget {
-  final GroupEntity group;
-  final List<dynamic> members;
+  final Group group;
+  final List<GroupLeaderboardEntry> members;
 
   const GroupSettingsPage({
     super.key,
@@ -24,8 +25,8 @@ class GroupSettingsPage extends StatelessWidget {
 }
 
 class _GroupSettingsView extends StatefulWidget {
-  final GroupEntity group;
-  final List<dynamic> members;
+  final Group group;
+  final List<GroupLeaderboardEntry> members;
 
   const _GroupSettingsView({required this.group, required this.members});
 
@@ -36,7 +37,7 @@ class _GroupSettingsView extends StatefulWidget {
 class _GroupSettingsViewState extends State<_GroupSettingsView> {
   late TextEditingController _nameController;
   late TextEditingController _descController;
-  late List<dynamic> _currentMembers;
+  late List<GroupLeaderboardEntry> _currentMembers;
 
   @override
   void initState() {
@@ -57,7 +58,6 @@ class _GroupSettingsViewState extends State<_GroupSettingsView> {
               backgroundColor: Colors.green,
             ),
           );
-          // ✅ Devuelve TRUE para indicar que hubo cambios al volver
           Navigator.pop(context, true);
         } else if (state is MemberKicked) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -67,7 +67,6 @@ class _GroupSettingsViewState extends State<_GroupSettingsView> {
             ),
           );
         } else if (state is GroupDeleted) {
-          // ✅ Devuelve el mapa especial para cerrar todo
           Navigator.pop(context, {'action': 'delete'});
         } else if (state is GroupSettingsError) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -166,12 +165,12 @@ class _GroupSettingsViewState extends State<_GroupSettingsView> {
                 ),
                 onPressed: () {
                   context.read<GroupSettingsBloc>().add(
-                    UpdateGroupInfoEvent(
-                      groupId: widget.group.id,
-                      name: _nameController.text,
-                      description: _descController.text,
-                    ),
-                  );
+                        UpdateGroupInfoEvent(
+                          groupId: widget.group.id,
+                          name: _nameController.text,
+                          description: _descController.text,
+                        ),
+                      );
                 },
                 icon: const Icon(Icons.save),
                 label: const Text("Guardar Cambios"),
@@ -202,14 +201,12 @@ class _GroupSettingsViewState extends State<_GroupSettingsView> {
         separatorBuilder: (c, i) => const Divider(height: 1),
         itemBuilder: (context, index) {
           final member = _currentMembers[index];
-          final name = member['name'] ?? 'Usuario';
-          final userId = member['userId'];
 
           return ListTile(
             leading: CircleAvatar(
               backgroundColor: Colors.deepPurple.withValues(alpha: 0.1),
               child: Text(
-                name[0].toUpperCase(),
+                member.name[0].toUpperCase(),
                 style: const TextStyle(
                   color: Colors.deepPurple,
                   fontWeight: FontWeight.bold,
@@ -217,14 +214,14 @@ class _GroupSettingsViewState extends State<_GroupSettingsView> {
               ),
             ),
             title: Text(
-              name,
+              member.name,
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             trailing: IconButton(
               icon: const Icon(Icons.person_remove, color: Colors.redAccent),
               tooltip: "Expulsar miembro",
               onPressed: () {
-                _showKickDialog(context, userId, name, index);
+                _showKickDialog(context, member.userId, member.name, index);
               },
             ),
           );
@@ -296,8 +293,8 @@ class _GroupSettingsViewState extends State<_GroupSettingsView> {
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () {
               context.read<GroupSettingsBloc>().add(
-                KickMemberEvent(groupId: widget.group.id, memberId: userId),
-              );
+                    KickMemberEvent(groupId: widget.group.id, memberId: userId),
+                  );
               setState(() {
                 _currentMembers.removeAt(index);
               });
@@ -333,8 +330,8 @@ class _GroupSettingsViewState extends State<_GroupSettingsView> {
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () {
               context.read<GroupSettingsBloc>().add(
-                DeleteGroupEvent(groupId: widget.group.id),
-              );
+                    DeleteGroupEvent(groupId: widget.group.id),
+                  );
               Navigator.pop(dialogContext);
             },
             child: const Text(

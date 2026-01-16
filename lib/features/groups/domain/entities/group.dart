@@ -1,4 +1,4 @@
-class GroupEntity {
+class Group {
   final String id;
   final String name;
   final String? description;
@@ -6,7 +6,7 @@ class GroupEntity {
   final int memberCount;
   final DateTime createdAt;
 
-  const GroupEntity({
+  const Group({
     required this.id,
     required this.name,
     this.description,
@@ -15,8 +15,7 @@ class GroupEntity {
     required this.createdAt,
   });
 
-  bool get isAdmin {
-    final r = role.toLowerCase();
-    return r == 'admin' || r == 'owner' || r == 'creator';
-  }
+  // Helpers útiles
+  bool get isAdmin => role.toLowerCase() == 'admin';
+  bool get isMember => role.toLowerCase() == 'member';
 }

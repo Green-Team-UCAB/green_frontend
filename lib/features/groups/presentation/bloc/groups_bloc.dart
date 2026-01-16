@@ -1,5 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../domain/entities/group_entity.dart';
+import '../../domain/entities/group.dart'; // ✅ Import correcto
 import '../../application/get_my_groups_use_case.dart';
 import '../../application/create_group_use_case.dart';
 import '../../application/join_group_use_case.dart';
@@ -28,7 +28,7 @@ class GroupsInitial extends GroupsState {}
 class GroupsLoading extends GroupsState {}
 
 class GroupsLoaded extends GroupsState {
-  final List<GroupEntity> groups;
+  final List<Group> groups; // ✅ Tipo actualizado
   GroupsLoaded(this.groups);
 }
 
