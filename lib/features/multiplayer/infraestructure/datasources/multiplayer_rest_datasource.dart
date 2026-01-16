@@ -1,4 +1,4 @@
-import 'package:dio/dio.dart';
+
 import 'package:green_frontend/core/error/exceptions.dart';
 import 'package:green_frontend/core/network/api_client.dart';
 import 'package:green_frontend/core/network/input_validator.dart';
@@ -13,8 +13,7 @@ class MultiplayerRemoteDataSourceImpl implements MultiplayerRemoteDataSource {
   final ApiClient client;
   static const String _basePath = '/multiplayer-sessions';
 
-  MultiplayerRemoteDataSourceImpl({required Dio dio}) 
-      : client = ApiClient(dio);
+  MultiplayerRemoteDataSourceImpl({required this.client});
 
   @override
   Future<GameSessionModel> createSession({required String kahootId}) async {
@@ -48,5 +47,4 @@ class MultiplayerRemoteDataSourceImpl implements MultiplayerRemoteDataSource {
     
     throw ServerException('Código QR no válido o expirado: ${response.statusCode}');
   }
-
 }

@@ -377,52 +377,83 @@ Widget _buildAdminControls(BuildContext context) {
   // Se obtiene el ID del quiz
   final String quizId = (quiz is KahootSummary) ? quiz.id : quiz['id'];
 
+  // Extraer el estado del Kahoot
+  final String? kahootStatus = (quiz is KahootSummary)
+      ? quiz.status
+      : (quiz['status'] as String?);
+
+  // Verificar si es un borrador
+  final bool isDraft = kahootStatus == null ||
+      kahootStatus.toLowerCase() == 'draft' ||
+      kahootStatus.toLowerCase() == 'borrador';
+
   return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         // --- BOTÓN MULTIJUGADOR (HOST) ---
         ElevatedButton.icon(
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.deepPurple,
+            backgroundColor: isDraft ? Colors.grey : Colors.deepPurple,
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 16),
             minimumSize: const Size(double.infinity, 50),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
-          onPressed: () async {
-            context.read<MultiplayerBloc>().add(OnResetMultiplayer());
-            String? token = sl<ApiClient>().authToken;
-            token ??= await TokenStorage.getToken();
-            if (!context.mounted) return;
-            if (token != null && token.isNotEmpty) {
-              context.read<MultiplayerBloc>().add(
-                OnCreateSessionStarted(
-                  kahootId: quizId,
-                  jwt: token,
-                ),
-              );
-            } else {
-            //  Si el token falló, mandamos al login
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Sesión inválida. Por favor ingresa de nuevo.")),
-            );
-             Navigator.pushReplacementNamed(context, '/login');
-            }
-          },
-          // Si está cargando,se muestra un spinner 
-          icon: context.watch<MultiplayerBloc>().state.status == MultiplayerStatus.connecting
+          onPressed: isDraft
+              ? () {
+                  // Mostrar diálogo de error para borradores
+                  showDialog(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text("No disponible"),
+                      content: const Text(
+                        "Para crear una sesión multijugador (PIN y Código QR), "
+                        "primero debes publicar tu Kahoot. "
+                        "Los borradores no pueden usarse para partidas en línea.",
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: const Text("Entendido"),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+              : () async {
+                  context.read<MultiplayerBloc>().add(OnResetMultiplayer());
+                  String? token = sl<ApiClient>().authToken;
+                  token ??= await TokenStorage.getToken();
+                  if (!context.mounted) return;
+                  if (token != null && token.isNotEmpty) {
+                    context.read<MultiplayerBloc>().add(
+                      OnCreateSessionStarted(
+                        kahootId: quizId,
+                        jwt: token,
+                      ),
+                    );
+                  } else {
+                    //  Si el token falló, mandamos al login
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Sesión inválida. Por favor ingresa de nuevo.")),
+                    );
+                    Navigator.pushReplacementNamed(context, '/login');
+                  }
+                },
+          // Si está cargando, se muestra un spinner
+          icon: !isDraft && context.watch<MultiplayerBloc>().state.status == MultiplayerStatus.connecting
               ? const SizedBox(
                   width: 24,
                   height: 24,
                   child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                 )
               : const Icon(Icons.qr_code_2, size: 28),
-          label: const Text(
-            "Generar PIN y Código QR",
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          label: Text(
+            isDraft ? "Publicar para generar PIN y QR" : "Generar PIN y Código QR",
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
         ),
-        
+
         const SizedBox(height: 12),
 
         // --- BOTÓN EDITAR  ---

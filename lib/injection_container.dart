@@ -271,9 +271,11 @@ Future<void> init() async {
     () => MultiplayerSocketDataSourceImpl(),
   );
 
-  sl.registerLazySingleton<MultiplayerRemoteDataSource>(
-    () => MultiplayerRemoteDataSourceImpl(dio: sl()),
-  );
+  
+sl.registerLazySingleton<MultiplayerRemoteDataSource>(
+  () => MultiplayerRemoteDataSourceImpl(client: sl<ApiClient>()),
+);
+
 
   // Repository
   sl.registerFactory<MultiplayerSocketRepository>(
