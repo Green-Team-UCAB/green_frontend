@@ -72,12 +72,16 @@ import 'package:green_frontend/features/multiplayer/presentation/screens/multipl
 import 'package:green_frontend/features/multiplayer/presentation/bloc/multiplayer_bloc.dart';
 import 'package:green_frontend/features/user/presentation/profile_bloc.dart';
 
+//env
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 // 🔴 AÑADIDO: navigatorKey global para acceder al contexto desde los providers
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   // Configuración de inicialización
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   await di.init();
   Bloc.observer = AppBlocObserver();
 

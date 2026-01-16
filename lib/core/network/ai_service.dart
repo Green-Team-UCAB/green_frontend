@@ -1,22 +1,31 @@
 import 'dart:convert';
 import 'dart:developer' as dev;
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart'; // 1. Importar esto
 
 class AiService {
-  // Tu API Key (Validada ✅)
-  static const String _apiKey = 'AIzaSyBT8BPJ9jjieKgqTxHHvCULOHLX6_i8zwU';
-
-  // ✅ USAMOS EL ALIAS QUE FUNCIONÓ EN POWERSHELL
+  // ✅ USAMOS EL MODELO FLASH (Más rápido y barato)
   static const String _baseUrl =
       'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent';
 
   AiService();
 
   Future<Map<String, dynamic>?> generateFullQuiz(String topic) async {
-    dev.log(
-        '🤖 [AiService] Solicitando quiz sobre: "$topic" (gemini-flash-latest)');
+    // 2. OBTENER LA KEY DEL ARCHIVO .ENV
+    final apiKey = dotenv.env['GEMINI_API_KEY'];
 
-    final url = Uri.parse('$_baseUrl?key=$_apiKey');
+    // 🛡️ Validación de seguridad
+    if (apiKey == null || apiKey.isEmpty) {
+      dev.log(
+          '❌ [AiService] ERROR CRÍTICO: No se encontró GEMINI_API_KEY en el archivo .env');
+      dev.log('⚠️ Usando Mock Data por seguridad.');
+      return _getMockQuiz(topic);
+    }
+
+    dev.log('🤖 [AiService] Solicitando quiz sobre: "$topic"');
+
+    // 3. Construir la URL con la variable segura
+    final url = Uri.parse('$_baseUrl?key=$apiKey');
 
     final prompt = '''
       Genera un quiz educativo sobre "$topic".
@@ -56,7 +65,7 @@ class AiService {
         ],
         "generationConfig": {
           "temperature": 0.7,
-          // Este modelo soporta JSON mode nativo, lo que reduce errores de parseo
+          // Forzar respuesta JSON (reduce errores de parseo)
           "responseMimeType": "application/json"
         }
       });
@@ -73,7 +82,7 @@ class AiService {
             data['candidates']?[0]?['content']?['parts']?[0]?['text'];
 
         if (rawText != null) {
-          dev.log('✅ [AiService] ¡Éxito! Respuesta recibida.');
+          dev.log('✅ [AiService] ¡Éxito! Respuesta recibida de Gemini.');
           return _parseJsonSafe(rawText);
         }
       } else {
@@ -89,12 +98,13 @@ class AiService {
       dev.log('❌ [AiService] Error de conexión: $e');
     }
 
-    // Fallback al Mock si falla la red o la cuota
+    // Fallback al Mock si falla la red, la cuota o la API Key
     return _getMockQuiz(topic);
   }
 
   Map<String, dynamic>? _parseJsonSafe(String text) {
     try {
+      // Limpieza extra por si Gemini decide enviar markdown aunque le dijimos que no
       String clean =
           text.replaceAll('```json', '').replaceAll('```', '').trim();
       return jsonDecode(clean) as Map<String, dynamic>;
