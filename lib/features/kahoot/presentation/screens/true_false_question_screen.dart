@@ -27,7 +27,6 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
   String? _selectedMediaId;
   int _points = 1000;
 
-  // Multimedia para respuestas
   Map<int, String?> _answerMediaIds = {0: null, 1: null};
   Map<int, String?> _answerLocalPaths = {0: null, 1: null};
 
@@ -63,7 +62,6 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
     _points = question.points;
     if (_points <= 0) _points = 1000;
 
-    // Cargar multimedia de respuestas
     for (var i = 0; i < _answers.length; i++) {
       _answerMediaIds[i] = _answers[i].mediaId;
       if (_answers[i].mediaId != null && _answers[i].mediaId!.isNotEmpty) {
@@ -84,9 +82,8 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
           _answerMediaIds[answerIndex] = media.id;
           _answerLocalPaths[answerIndex] = media.localPath;
 
-          // 🔴 CORRECCIÓN: Actualizar respuesta con imagen y sin texto
           _answers[answerIndex] = _answers[answerIndex].copyWith(
-            text: '', // 🔴 Limpiar texto
+            text: '',
             mediaId: media.id,
           );
         });
@@ -131,12 +128,10 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
       return;
     }
 
-    // Asegurar que timeLimit sea positivo
     if (_timeLimit <= 0) {
       _timeLimit = 20;
     }
 
-    // 🔴 VALIDACIÓN: Verificar que cada respuesta tenga solo texto O imagen
     for (var i = 0; i < _answers.length; i++) {
       final answer = _answers[i];
       final hasText = answer.text != null && answer.text!.isNotEmpty;
@@ -153,7 +148,6 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
       }
     }
 
-    // 🔴 VALIDACIÓN: Verificar que al menos una respuesta esté marcada como correcta
     final hasCorrectAnswer = _answers.any((answer) => answer.isCorrect);
     if (!hasCorrectAnswer) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -222,7 +216,6 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
             ),
             SizedBox(height: 20),
 
-            // Multimedia para la pregunta
             _buildQuestionMediaSection(mediaProvider),
 
             SizedBox(height: 20),
@@ -276,11 +269,9 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
             Text('Opciones:', style: TextStyle(fontWeight: FontWeight.bold)),
             SizedBox(height: 10),
 
-            // Opción Verdadero con multimedia
             _buildAnswerCard(0, 'Verdadero', mediaProvider),
             SizedBox(height: 8),
 
-            // Opción Falso con multimedia
             _buildAnswerCard(1, 'Falso', mediaProvider),
           ],
         ),
@@ -300,7 +291,6 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
             style: TextStyle(fontWeight: FontWeight.bold)),
         SizedBox(height: 10),
 
-        // Mostrar imagen si existe
         if (_selectedMediaId != null && localPath != null)
           Container(
             margin: EdgeInsets.only(bottom: 10),
@@ -313,7 +303,6 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
             ),
             child: Stack(
               children: [
-                // 🔴 CORRECCIÓN: Imagen centrada con BoxFit.contain
                 Center(
                   child: Container(
                     constraints: BoxConstraints(
@@ -324,7 +313,7 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
                       borderRadius: BorderRadius.circular(8),
                       child: Image.file(
                         File(localPath),
-                        fit: BoxFit.contain, // 🔴 CAMBIADO: de cover a contain
+                        fit: BoxFit.contain,
                         errorBuilder: (context, error, stackTrace) {
                           return Container(
                             color: Colors.grey[200],
@@ -414,7 +403,6 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
     final hasMedia = _answerMediaIds[index] != null;
     final localPath = _answerLocalPaths[index];
     final isCorrect = _answers[index].isCorrect;
-    final currentText = _answers[index].text;
 
     return Card(
       child: Column(
@@ -431,7 +419,6 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
                 _answers[index] = _answers[index].copyWith(
                   isCorrect: value!,
                 );
-                // Asegurar que solo una opción esté marcada
                 final otherIndex = index == 0 ? 1 : 0;
                 _answers[otherIndex] = _answers[otherIndex].copyWith(
                   isCorrect: !value!,
@@ -440,7 +427,6 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
             ),
           ),
 
-          // Imagen de la respuesta
           if (hasMedia && localPath != null)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -454,7 +440,6 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
                 ),
                 child: Stack(
                   children: [
-                    // 🔴 CORRECCIÓN: Imagen centrada con BoxFit.contain
                     Center(
                       child: Container(
                         constraints: BoxConstraints(
@@ -465,7 +450,7 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
                           borderRadius: BorderRadius.circular(8),
                           child: Image.file(
                             File(localPath),
-                            fit: BoxFit.contain, // 🔴 CAMBIADO: de cover a contain
+                            fit: BoxFit.contain,
                             errorBuilder: (context, error, stackTrace) {
                               return Container(
                                 color: Colors.grey[200],
@@ -500,7 +485,6 @@ class _TrueFalseQuestionScreenState extends State<TrueFalseQuestionScreen> {
               ),
             ),
 
-          // Botón para agregar multimedia
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(

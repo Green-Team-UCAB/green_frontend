@@ -26,7 +26,7 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
   String? _selectedVisibility = 'private';
   String? _selectedCategory;
   String? _selectedThemeName = 'Seleccionar tema';
-
+  String? _selectedThemeId = '';
   String? _selectedCoverImageId;
   String? _selectedCoverLocalPath;
 
@@ -38,8 +38,6 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
       final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
       final categoryProvider =
           Provider.of<CategoryProvider>(context, listen: false);
-      final kahootProvider =
-          Provider.of<KahootProvider>(context, listen: false);
 
       if (themeProvider.themes.isEmpty) {
         themeProvider.loadThemes();
@@ -48,17 +46,6 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
       if (categoryProvider.categories.isEmpty) {
         categoryProvider.loadCategories();
       }
-
-      // Populate fields if Kahoot data exists (e.g. from AI)
-      final currentKahoot = kahootProvider.currentKahoot;
-
-      if (currentKahoot.title.isNotEmpty) {
-        _titleController.text = currentKahoot.title;
-      }
-
-      if (currentKahoot.description?.isNotEmpty ?? false) {
-        _descriptionController.text = currentKahoot.description!;
-      }
     });
   }
 
@@ -66,7 +53,6 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
     final mediaProvider = Provider.of<MediaProvider>(context, listen: false);
     try {
       final media = await mediaProvider.pickImageFromGallery();
-      if (!mounted) return;
       if (media != null) {
         setState(() {
           _selectedCoverImageId = media.id;
@@ -207,7 +193,9 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
                     if (selectedTheme != null) {
                       setState(() {
                         _selectedThemeName = selectedTheme.name;
+                        _selectedThemeId = selectedTheme.id;
                       });
+                      
                       kahootProvider.setThemeId(selectedTheme.id);
                     }
                   },
@@ -248,65 +236,146 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
             SizedBox(height: 16),
 
             if (kahootProvider.currentKahoot.questions.isNotEmpty)
-              ...kahootProvider.currentKahoot.questions
-                  .asMap()
-                  .entries
-                  .map((entry) {
-                final index = entry.key;
-                final question = entry.value;
-                return QuestionTile(
-                  question: question,
-                  index: index,
-                  onTap: () {
-                    // Navegar a la pantalla de edición de pregunta según el tipo
-                    if (question.type == QuestionType.quiz) {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => NormalQuestionScreen(
-                            questionIndex: index,
-                          ),
-                        ),
-                      );
-                    } else {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => TrueFalseQuestionScreen(
-                            questionIndex: index,
-                          ),
-                        ),
-                      );
-                    }
-                  },
-                  onDelete: () {
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: Text('Eliminar pregunta'),
-                        content: Text(
-                            '¿Estás seguro de que quieres eliminar esta pregunta?'),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: Text('Cancelar'),
-                          ),
-                          TextButton(
-                            onPressed: () {
-                              kahootProvider.removeQuestion(index);
-                              Navigator.pop(context);
-                            },
-                            child: Text(
-                              'Eliminar',
-                              style: TextStyle(color: Colors.red),
+              ReorderableListView(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                padding: EdgeInsets.zero,
+                children: kahootProvider.currentKahoot.questions.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final question = entry.value;
+                  return QuestionTile(
+                    key: ValueKey(question.id ?? index),
+                    question: question,
+                    index: index,
+                    onTap: () {
+                      if (question.type == QuestionType.quiz) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => NormalQuestionScreen(
+                              questionIndex: index,
                             ),
                           ),
-                        ],
-                      ),
-                    );
-                  },
-                );
-              }).toList()
+                        );
+                      } else {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => TrueFalseQuestionScreen(
+                              questionIndex: index,
+                            ),
+                          ),
+                        );
+                      }
+                    },
+                    onDelete: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: Text('Eliminar pregunta'),
+                          content: Text(
+                              '¿Estás seguro de que quieres eliminar esta pregunta?'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: Text('Cancelar'),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                kahootProvider.removeQuestion(index);
+                                Navigator.pop(context);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Pregunta eliminada correctamente')),
+                                );
+                              },
+                              child: Text(
+                                'Eliminar',
+                                style: TextStyle(color: Colors.red),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                    // ✅ NUEVO: Funcionalidad para duplicar pregunta (H2.14)
+                    onDuplicate: () {
+                      kahootProvider.duplicateQuestion(index);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Pregunta duplicada correctamente')),
+                      );
+                    },
+                    // ✅ NUEVO: Funcionalidad para cambiar puntuación (H2.12)
+                    onChangePoints: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          final pointsController = TextEditingController(
+                            text: question.points.toString()
+                          );
+                          return AlertDialog(
+                            title: Text('Cambiar puntuación'),
+                            content: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text('Puntuación actual: ${question.points} pts'),
+                                const SizedBox(height: 10),
+                                TextField(
+                                  controller: pointsController,
+                                  keyboardType: TextInputType.number,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Nueva puntuación',
+                                    hintText: 'Ej: 1000',
+                                    border: OutlineInputBorder(),
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                Wrap(
+                                  spacing: 8,
+                                  children: [500, 1000, 1500, 2000].map((points) {
+                                    return ChoiceChip(
+                                      label: Text('$points pts'),
+                                      selected: false,
+                                      onSelected: (_) {
+                                        pointsController.text = points.toString();
+                                      },
+                                    );
+                                  }).toList(),
+                                ),
+                              ],
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: Text('Cancelar'),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  final newPoints = int.tryParse(pointsController.text) ?? question.points;
+                                  if (newPoints > 0) {
+                                    kahootProvider.changeQuestionPoints(index, newPoints);
+                                    Navigator.pop(context);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('Puntuación actualizada a $newPoints puntos')),
+                                    );
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('La puntuación debe ser mayor a 0')),
+                                    );
+                                  }
+                                },
+                                child: Text('Guardar'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                  );
+                }).toList(),
+                onReorder: (oldIndex, newIndex) {
+                  kahootProvider.reorderQuestions(oldIndex, newIndex);
+                },
+              )
             else
               Container(
                 padding: EdgeInsets.symmetric(vertical: 32),
@@ -381,7 +450,6 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
       );
     }
 
-    // Si _selectedCategory es null y hay categorías, seleccionar la primera
     if (_selectedCategory == null && categoryProvider.categories.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         setState(() {
@@ -450,7 +518,6 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
                   )
                 : Stack(
                     children: [
-                      // 🔴 CORRECCIÓN: Imagen con BoxFit.contain y centrada
                       Center(
                         child: Container(
                           constraints: BoxConstraints(
@@ -461,8 +528,7 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
                             borderRadius: BorderRadius.circular(8),
                             child: Image.file(
                               File(_selectedCoverLocalPath!),
-                              fit: BoxFit
-                                  .contain, // 🔴 CAMBIADO: de cover a contain
+                              fit: BoxFit.contain,
                               errorBuilder: (context, error, stackTrace) {
                                 return Container(
                                   color: Colors.grey[200],
@@ -476,7 +542,6 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
                           ),
                         ),
                       ),
-                      // Botón para eliminar imagen
                       Positioned(
                         top: 8,
                         right: 8,
@@ -484,7 +549,7 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
                           onTap: _removeCoverImage,
                           child: Container(
                             decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.7),
+                              color: Colors.black.withOpacity(0.7),
                               shape: BoxShape.circle,
                             ),
                             padding: EdgeInsets.all(8),
@@ -493,7 +558,6 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
                           ),
                         ),
                       ),
-                      // Indicador de imagen cargada
                       Positioned(
                         bottom: 8,
                         left: 8,
@@ -501,7 +565,7 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
                           padding:
                               EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.7),
+                            color: Colors.black.withOpacity(0.7),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Row(
@@ -548,7 +612,6 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
         .where((q) => q.mediaId != null && q.mediaId!.isNotEmpty)
         .length;
 
-    // Contar respuestas con multimedia
     int answersWithMedia = 0;
     for (var question in kahoot.questions) {
       answersWithMedia += question.answers

@@ -39,7 +39,6 @@ class _MediaSelectionScreenState extends State<MediaSelectionScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final mediaProvider = Provider.of<MediaProvider>(context, listen: false);
-      // Podríamos cargar la lista de media del usuario aquí si es necesario
     });
   }
 
@@ -62,10 +61,8 @@ class _MediaSelectionScreenState extends State<MediaSelectionScreen> {
       ),
       body: Column(
         children: [
-          // Opciones de carga
           _buildUploadOptions(mediaProvider),
 
-          // Media del usuario
           Expanded(
             child: _buildUserMedia(mediaProvider),
           ),
@@ -231,10 +228,8 @@ class _MediaSelectionScreenState extends State<MediaSelectionScreen> {
         ),
         child: Stack(
           children: [
-            // Vista previa
             _buildMediaPreview(media),
 
-            // Indicador de tipo
             Positioned(
               top: 4,
               right: 4,
@@ -252,7 +247,6 @@ class _MediaSelectionScreenState extends State<MediaSelectionScreen> {
               ),
             ),
 
-            // Indicador de local
             if (media.isLocal)
               Positioned(
                 top: 4,
@@ -271,7 +265,6 @@ class _MediaSelectionScreenState extends State<MediaSelectionScreen> {
                 ),
               ),
 
-            // Nombre del archivo
             if (media.isImage)
               Positioned(
                 bottom: 0,
@@ -309,11 +302,11 @@ class _MediaSelectionScreenState extends State<MediaSelectionScreen> {
       return ClipRRect(
         borderRadius: BorderRadius.circular(8),
         child: Container(
-          color: Colors.grey[100], // Fondo para miniaturas
+          color: Colors.grey[100],
           child: Center(
             child: Image.file(
               File(media.localPath!),
-              fit: BoxFit.contain, // 🔴 CAMBIADO: de cover a contain
+              fit: BoxFit.contain,
               errorBuilder: (context, error, stackTrace) {
                 return Container(
                   color: Colors.grey[200],
@@ -336,7 +329,7 @@ class _MediaSelectionScreenState extends State<MediaSelectionScreen> {
           child: Center(
             child: Image.network(
               media.thumbnailUrl!,
-              fit: BoxFit.contain, // 🔴 CAMBIADO: de cover a contain
+              fit: BoxFit.contain,
               errorBuilder: (context, error, stackTrace) {
                 return _buildPlaceholder(media);
               },
@@ -398,8 +391,6 @@ class _MediaSelectionScreenState extends State<MediaSelectionScreen> {
   }
 
   Future<void> _pickFile(MediaProvider mediaProvider) async {
-    // Implementar selección de archivo genérico
-    // Necesitarías un paquete como file_picker
     _showErrorSnackbar('Selección de archivos no implementada');
   }
 
@@ -533,7 +524,6 @@ class _MediaSelectionScreenState extends State<MediaSelectionScreen> {
         expiry: Duration(hours: 24),
       );
 
-      // Implementar compartir usando share_plus o similar
       _showSuccessSnackbar('URL generada: ${signedUrl.substring(0, 50)}...');
     } catch (e) {
       _showErrorSnackbar('Error al generar URL: $e');

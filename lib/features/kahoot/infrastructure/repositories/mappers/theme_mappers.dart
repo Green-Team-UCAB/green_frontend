@@ -2,7 +2,6 @@ import 'package:green_frontend/features/kahoot/domain/entities/theme_image.dart'
 
 class ThemeMapper {
   static ThemeImage fromJson(Map<String, dynamic> json) {
-    // Leer en ambos formatos
     final id = json['AssetId'] ?? json['assetId']?.toString() ?? '';
     final name = json['Name'] ?? json['name']?.toString() ?? '';
     final imageUrl = json['Url'] ?? json['url']?.toString() ?? '';
