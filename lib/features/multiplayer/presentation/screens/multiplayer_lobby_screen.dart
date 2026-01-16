@@ -32,7 +32,7 @@ class MultiplayerLobbyScreen extends StatelessWidget {
               children: [
                 const SizedBox(height: 20),
 
-                // ✅ QR pequeño arriba del PIN
+                //  QR pequeño arriba del PIN
                 if (isHost && state.pin != null)
                   Container(
                     padding: const EdgeInsets.all(12),
@@ -57,7 +57,7 @@ class MultiplayerLobbyScreen extends StatelessWidget {
 
                 const SizedBox(height: 20),
 
-                // ✅ PIN grande
+                // PIN grande
                 const Text("PIN del juego:",
                     style: TextStyle(fontSize: 16, color: Colors.black54)),
                 Text(pin,
@@ -69,7 +69,7 @@ class MultiplayerLobbyScreen extends StatelessWidget {
 
                 const SizedBox(height: 30),
 
-                // ✅ Título de jugadores
+                //  Título de jugadores
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Row(
@@ -98,7 +98,7 @@ class MultiplayerLobbyScreen extends StatelessWidget {
 
                 const SizedBox(height: 16),
 
-                // ✅ Lista de jugadores
+                // Lista de jugadores
                 Expanded(
                   child: players.isEmpty
                       ? Center(
@@ -153,7 +153,7 @@ class MultiplayerLobbyScreen extends StatelessWidget {
                         ),
                 ),
 
-                // ✅ Botón solo para el host
+                // Botón solo para el host
                 if (isHost)
                   Padding(
                     padding: const EdgeInsets.all(20),

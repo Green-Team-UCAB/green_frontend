@@ -123,8 +123,8 @@ class MultiplayerBloc extends Bloc<MultiplayerEvent, MultiplayerState> {
         currentSlide: event.slide,
         status: MultiplayerStatus.inQuestion,
         answersReceived: 0,
-        hasAnswered: false, // Resetear para la nueva pregunta
-        questionStartTime: DateTime.now(), // <-- AQUÍ EMPIEZA EL TIEMPO
+        hasAnswered: false, 
+        questionStartTime: DateTime.now(), 
       ));
     });
     on<_OnAnswerCountUpdate>(
@@ -146,7 +146,7 @@ class MultiplayerBloc extends Bloc<MultiplayerEvent, MultiplayerState> {
       emit(state.copyWith(
         status: MultiplayerStatus.gameEnded,
         podium: event
-            .podium, // Asegúrate de tener este campo en el state si lo necesitas
+            .podium, 
       ));
     });
 
@@ -158,7 +158,7 @@ class MultiplayerBloc extends Bloc<MultiplayerEvent, MultiplayerState> {
     });
   }
 
-  // 1. Lógica para el HOST (Pág 54-55)
+
   Future<void> _onCreateSessionStarted(
       OnCreateSessionStarted event, Emitter<MultiplayerState> emit) async {
     emit(state.copyWith(status: MultiplayerStatus.connecting));
@@ -177,7 +177,6 @@ class MultiplayerBloc extends Bloc<MultiplayerEvent, MultiplayerState> {
     );
   }
 
-  // 2. Lógica para el PLAYER vía QR (Pág 56)
   Future<void> _onResolvePinStarted(
       OnResolvePinStarted event, Emitter<MultiplayerState> emit) async {
     emit(state.copyWith(status: MultiplayerStatus.connecting));
@@ -216,7 +215,7 @@ class MultiplayerBloc extends Bloc<MultiplayerEvent, MultiplayerState> {
         pin: event.pin,
         role: event.role));
 
-    // se inicia la conexión física
+
     final result =
         await _connectToGame(role: event.role, pin: event.pin, jwt: event.jwt);
 
@@ -253,9 +252,9 @@ class MultiplayerBloc extends Bloc<MultiplayerEvent, MultiplayerState> {
           "DEBUG BLOC: Lobby actualizado con ${lobby.players.length} jugadores");
       add(_OnLobbyUpdate(lobby));
     });
-    print("✅ [BLOC] Subscribing to onQuestionStarted...");
+    print(" [BLOC] Subscribing to onQuestionStarted...");
     _questionSub = _listenQuestionStarted().listen((slide) {
-      print("✅ [BLOC] Stream emitted a slide! ID: ${slide.id}");
+      print(" [BLOC] Stream emitted a slide! ID: ${slide.id}");
       add(_OnQuestionStarted(slide));
     });
     _answerCountSub = _listenAnswerCountUpdate()

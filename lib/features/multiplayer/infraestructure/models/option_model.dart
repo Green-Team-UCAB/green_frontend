@@ -7,7 +7,7 @@ class OptionModel extends SlideOption {
     required super.index,
     required super.text,
     super.mediaUrl,
-    super.isCorrect = false, // Valor por defecto en el constructor
+    super.isCorrect = false, 
   });
 
   factory OptionModel.fromJson(Map<String, dynamic> json) {
@@ -15,12 +15,10 @@ class OptionModel extends SlideOption {
       index: json['index'] ?? 0,
       text: json['text'] ?? '',
 
-      // ✅ CORRECCIÓN 1: mediaUrl es String opcional
+
       mediaUrl: json['mediaUrl'] as String?,
 
-      // ✅ CORRECCIÓN 2: isCorrect maneja nulos (Para el Player) y booleanos (Para el Host)
-      // Si viene null (Player), se convierte en false.
-      // Si viene true/false (Host), se usa ese valor.
+
       isCorrect: (json['isCorrect'] as bool?) ?? false,
     );
   }

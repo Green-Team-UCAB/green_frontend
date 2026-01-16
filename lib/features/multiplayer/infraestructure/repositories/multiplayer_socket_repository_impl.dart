@@ -34,7 +34,7 @@ class MultiplayerSocketRepositoryImpl implements MultiplayerSocketRepository {
   }) async {
     print("DEBUG: Conectando con URL: $baseUrl");
     try {
-      // CONVERSIÓN AQUÍ: Pasamos el nombre del rol en mayúsculas
+ 
       final roleString = role.toString().split('.').last.toUpperCase();
 
       await dataSource.connect(
@@ -50,7 +50,7 @@ class MultiplayerSocketRepositoryImpl implements MultiplayerSocketRepository {
     }
   }
 
-  // --- EMISORES (Acciones del usuario) ---
+
 
   @override
   void emitPlayerJoin(Nickname nickname) {
@@ -88,7 +88,7 @@ class MultiplayerSocketRepositoryImpl implements MultiplayerSocketRepository {
     dataSource.emit('host_start_game', {});
   }
 
-  // --- ESCUCHAS (Transformación de Datos) ---
+
 
   @override
   Stream<Unit> get onHostConnectedSuccess =>
@@ -109,10 +109,10 @@ class MultiplayerSocketRepositoryImpl implements MultiplayerSocketRepository {
   // 🔥 TRAMPA DE DEPURACIÓN ACTIVADA 🔥
   @override
   Stream<Slide> get onQuestionStarted {
-    print("✅ [REPO] onQuestionStarted getter called. returning mapped stream.");
+    print(" [REPO] onQuestionStarted getter called. returning mapped stream.");
     return dataSource.onQuestionStarted.map((data) {
-      print("\n🛑 [DEBUG REPO] --- INICIO PROCESAMIENTO PREGUNTA ---");
-      print("🛑 [DEBUG REPO] 1. Data cruda recibida del Socket: $data");
+      print("\n [DEBUG REPO] --- INICIO PROCESAMIENTO PREGUNTA ---");
+      print(" [DEBUG REPO] 1. Data cruda recibida del Socket: $data");
 
       try {
         // 1. Extracción de datos
@@ -120,33 +120,33 @@ class MultiplayerSocketRepositoryImpl implements MultiplayerSocketRepository {
 
         if (data.containsKey('currentSlideData')) {
           print(
-              "🛑 [DEBUG REPO] 2. Detectado 'currentSlideData', extrayendo...");
+              " [DEBUG REPO] 2. Detectado 'currentSlideData', extrayendo...");
           // Aseguramos que sea un Mapa de String, dynamic
           slideMap = Map<String, dynamic>.from(data['currentSlideData']);
         } else {
           print(
-              "🛑 [DEBUG REPO] 2. Usando data plana (no hay currentSlideData)...");
+              " [DEBUG REPO] 2. Usando data plana (no hay currentSlideData)...");
           slideMap = Map<String, dynamic>.from(data);
         }
 
         print(
-            "🛑 [DEBUG REPO] 3. Data final para SlideModel.fromJson: $slideMap");
+            " [DEBUG REPO] 3. Data final para SlideModel.fromJson: $slideMap");
 
         // 2. Intento de conversión (Aquí suele fallar)
-        print("🛑 [DEBUG REPO] 4. Ejecutando SlideModel.fromJson...");
+        print(" [DEBUG REPO] 4. Ejecutando SlideModel.fromJson...");
         final model = SlideModel.fromJson(slideMap);
 
         print(
-            "✅ [DEBUG REPO] 5. Conversión EXITOSA. Pregunta: ${model.questionText}");
-        print("🛑 [DEBUG REPO] --- FIN PROCESAMIENTO PREGUNTA ---\n");
+            " [DEBUG REPO] 5. Conversión EXITOSA. Pregunta: ${model.questionText}");
+        print(" [DEBUG REPO] --- FIN PROCESAMIENTO PREGUNTA ---\n");
         return model.toEntity();
       } catch (e, stackTrace) {
         // 3. Captura del error
-        print("\n❌❌❌ [CRITICAL ERROR] FALLÓ SlideModel.fromJson ❌❌❌");
-        print("❌ TIPO DE ERROR: ${e.runtimeType}");
-        print("❌ MENSAJE: $e");
-        print("❌ stackTrace: $stackTrace");
-        print("❌❌❌ REVISA TU SlideModel Y OptionModel ❌❌❌\n");
+        print("\n FALLÓ SlideModel.fromJson ");
+        print(" TIPO DE ERROR: ${e.runtimeType}");
+        print(" MENSAJE: $e");
+        print(" stackTrace: $stackTrace");
+        print(" REVISA TU SlideModel Y OptionModel\n");
 
         throw FormatException("Error crítico parseando Slide: $e");
       }
@@ -155,7 +155,7 @@ class MultiplayerSocketRepositoryImpl implements MultiplayerSocketRepository {
 
   @override
   Stream<HostResults> get onHostResults => dataSource.onHostResults
-      .where((data) => data.isNotEmpty) // evita {}
+      .where((data) => data.isNotEmpty) 
       .map((data) => HostResultModel.fromJson(data).toEntity());
 
   @override

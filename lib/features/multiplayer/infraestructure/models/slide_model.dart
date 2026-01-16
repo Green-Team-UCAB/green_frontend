@@ -23,7 +23,7 @@ class SlideModel extends Slide{
     ),
     timeLimitSeconds: json['timeLimitSeconds'] ?? 0,
     questionText: json['questionText'] ?? '',
-    slideImageUrl: json['slideImageURL'], // 👈 coincide con el backend
+    slideImageUrl: json['slideImageURL'], 
     pointsValue: json['pointsValue'],
     options: (json['options'] as List<dynamic>? ?? [])
         .map((optionJson) =>

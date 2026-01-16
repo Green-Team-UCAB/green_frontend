@@ -78,7 +78,7 @@ Future<UserModel> register({
   String? description,
   String? avatarAssetUrl,
 }) async {
-  // El "Esqueleto JSON (Request)" pide estos campos específicos
+
   final response = await client.post<Map<String, dynamic>>(
     path: '/user/register', 
     data: {
@@ -91,7 +91,7 @@ Future<UserModel> register({
   );
 
   if (response.statusCode == 201) {
-    // Retorna el usuario con sus datos
+
     return UserModel.fromJson(response.data);
   }
   
@@ -159,7 +159,7 @@ Future<UserModel> register({
   Future<UserModel> updateProfile({
     required Map<String, dynamic> body,
   }) async {
-    // 1. La documentación indica el path '/user/profile/' y método PATCH
+
     final response = await client.patch<Map<String, dynamic>>(
       path: '/user/profile/',
       data: body,
@@ -168,14 +168,14 @@ Future<UserModel> register({
     if (response.statusCode == 200) {
       final data = response.data;
       
-      // 2. La documentación muestra que el recurso actualizado viene dentro de la llave "user"
+
       if (data != null && data.containsKey('user')) {
         return UserModel.fromJson(data['user'] as Map<String, dynamic>);
       }
       throw ServerException('Formato de respuesta inesperado');
     }
 
-    // 3. Manejo de errores específicos según la documentación
+
     if (response.statusCode == 400) {
       throw ServerException('Datos incorrectos');
     }
@@ -189,14 +189,14 @@ Future<UserModel> register({
 
   @override
   Future<UserModel> getUserProfile() async {
-    // La documentación especifica el path '/user/profile/' y método GET
+
     final response = await client.get<Map<String, dynamic>>(
       path: '/user/profile/',
     );
 
     if (response.statusCode == 200) {
       final data = response.data;
-      // La documentación muestra que el objeto usuario viene dentro de la llave "user"
+
       if (data != null && data.containsKey('user')) {
         return UserModel.fromJson(data['user'] as Map<String, dynamic>);
       }

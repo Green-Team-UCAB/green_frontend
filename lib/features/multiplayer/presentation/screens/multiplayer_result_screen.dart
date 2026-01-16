@@ -10,13 +10,13 @@ class MultiplayerResultsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocConsumer<MultiplayerBloc, MultiplayerState>(
       listener: (context, state) {
-        // IMPORTANTE: Si llega una nueva pregunta, volvemos a la pantalla de juego
+
         if (state.status == MultiplayerStatus.inQuestion) {
           Navigator.pushReplacementNamed(context, '/multiplayer_game'); 
-          // O Navigator.pop(context) si no usaste pushReplacement antes
+
         }
         
-        // Si el juego termina, vamos al podio
+        // Si el juego termina se va al podio
         if (state.status == MultiplayerStatus.gameEnded) {
           Navigator.pushReplacementNamed(context, '/multiplayer_podium');
         }
@@ -24,18 +24,18 @@ class MultiplayerResultsScreen extends StatelessWidget {
       builder: (context, state) {
         final bool isHost = state.role == ClientRole.host;
         
-        // Si es Host, mostramos una pantalla de "Estadísticas" o "Ranking"
+        // Si es Host, se muestra el Ranking
         if (isHost) {
           return _buildHostResultsView(context, state);
         }
 
-        // Si es Jugador, mostramos su feedback personal (Tu código actual)
+        // Si es Jugador, semuestra feedback personal
         return _buildPlayerResultsView(context, state);
       },
     );
   }
 
-  // --- VISTA PARA EL JUGADOR (Tu código mejorado) ---
+  // --- VISTA PARA EL JUGADOR  ---
   Widget _buildPlayerResultsView(BuildContext context, MultiplayerState state) {
     final result = state.lastQuestionResult;
     final bool isCorrect = result?.isCorrect ?? false;
@@ -73,12 +73,12 @@ class MultiplayerResultsScreen extends StatelessWidget {
     );
   }
 
-  // --- VISTA PARA EL HOST (Resumen de la pregunta) ---
+  // --- VISTA PARA EL HOST ( ---
   Widget _buildHostResultsView(BuildContext context, MultiplayerState state) {
   final result = state.lastHostResult;
-  // Usamos tu mapa de distribución (ID de respuesta -> cantidad de votos)
+
   final distribution = result?.distributionTop3 ?? {};
-  // Usamos tu lista de ranking
+
   final ranking = result?.leaderboard ?? [];
 
   return Scaffold(
@@ -95,7 +95,7 @@ class MultiplayerResultsScreen extends StatelessWidget {
           style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
         ),
         
-        // 1. Gráfico simple de barras para la distribución
+        
         Padding(
           padding: const EdgeInsets.all(20.0),
           child: Row(
@@ -125,7 +125,7 @@ class MultiplayerResultsScreen extends StatelessWidget {
         Expanded(
           child: ListView.builder(
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            itemCount: ranking.take(5).length, // Solo mostramos los top 5
+            itemCount: ranking.take(5).length, //  top 5
             itemBuilder: (context, index) {
               final entry = ranking[index];
               return Card(
@@ -154,7 +154,7 @@ class MultiplayerResultsScreen extends StatelessWidget {
       padding: const EdgeInsets.all(30),
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
-          backgroundColor: isLast ? Colors.amber : Colors.white, // Color especial si es la última
+          backgroundColor: isLast ? Colors.amber : Colors.white, 
           minimumSize: const Size(double.infinity, 60),
         ),
         onPressed: () => context.read<MultiplayerBloc>().add(OnNextPhase()),
@@ -169,7 +169,7 @@ class MultiplayerResultsScreen extends StatelessWidget {
 }
 }
 
-// Widget auxiliar para los puntos
+
 class _PointsBadge extends StatelessWidget {
   final int points;
   const _PointsBadge({required this.points});

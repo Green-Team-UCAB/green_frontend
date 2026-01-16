@@ -19,8 +19,8 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   @override
   void initState() {
     super.initState();
-    // ⏱️ TIMER VITAL: Actualiza la UI cada 100ms para que la barra de tiempo baje suavemente.
-    // Sin esto, la barra se congela hasta que llega un evento del servidor.
+    // Actualiza la UI cada 100ms para que la barra de tiempo baje suavemente.
+
     _timer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
       if (mounted) {
         setState(() {});
@@ -50,7 +50,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
       builder: (context, state) {
         final slide = state.currentSlide;
 
-        // 🔥 Protección contra nulos
+        // Protección contra nulos
         if (slide == null) {
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
@@ -64,13 +64,13 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
               children: [
                 _buildHeader(state),
 
-                // 🔥 Expanded para la imagen/pregunta
+                // Expanded para la imagen/pregunta
                 Expanded(
                   flex: 3,
                   child: _buildQuestionArea(slide),
                 ),
 
-                // 🔥 Expanded para los botones
+                //  Expanded para los botones
                 Expanded(
                   flex: 4,
                   child: _buildOptionsGrid(context, slide, state),
@@ -84,7 +84,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   }
 
   Widget _buildHeader(MultiplayerState state) {
-    const int totalTimeMs = 30000; // 30 segundos o lo que venga del slide
+    const int totalTimeMs = 30000;
     final startTime = state.questionStartTime ?? DateTime.now();
 
     // Calculamos el tiempo transcurrido en tiempo real
@@ -182,7 +182,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
             ),
             // Si ya respondió, quitamos la elevación para feedback visual
             elevation: hasAnswered ? 0 : 4,
-            // Opcional: Cambiar opacidad si ya respondió
+            //  Cambiar opacidad si ya respondió
             foregroundColor:
                 hasAnswered ? Colors.white.withOpacity(0.5) : Colors.white,
           ),
@@ -210,7 +210,6 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
     context.read<MultiplayerBloc>().add(
           OnSubmitAnswer(
             questionId: qId,
-            // ✅ CORRECCIÓN FINAL: Agregamos .toString() porque AnswerIds espera String
             answerIds: AnswerIds([optionIndex.toString()]),
             timeElapsedMs: TimeElapsedMs(elapsed),
           ),

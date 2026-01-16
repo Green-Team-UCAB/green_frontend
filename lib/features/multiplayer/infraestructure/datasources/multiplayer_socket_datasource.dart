@@ -61,7 +61,7 @@ class MultiplayerSocketDataSourceImpl implements MultiplayerSocketDataSource {
     required String url,
     required String jwt,
     required String pin,
-    required String role, // Ahora es dinámico
+    required String role, 
   }) async {
     final completer = Completer<void>();
     final socketUrl =
@@ -75,8 +75,7 @@ class MultiplayerSocketDataSourceImpl implements MultiplayerSocketDataSource {
             .setTransports(['websocket'])
             .enableForceNew()
             .enableAutoConnect()
-            // 1. Asegura que el PIN sea un String .toString()
-            // 2. Algunos servidores prefieren 'token' en lugar de 'jwt' en el auth
+
             .setAuth({
               'pin': pin.toString(),
               'role': role.toUpperCase(),
@@ -95,36 +94,36 @@ class MultiplayerSocketDataSourceImpl implements MultiplayerSocketDataSource {
             })
             .build());
 
-    // --- MANEJO DE CONEXIÓN FÍSICA ---
+
     _socket!.onConnect((_) {
-      print('✅ [DATASOURCE] Socket Conectado físicamente');
+      print(' [DATASOURCE] Socket Conectado físicamente');
       if (!completer.isCompleted) completer.complete();
     });
 
     _socket!.onConnectError((data) {
-      print('❌ [DATASOURCE] Error de conexión: $data');
+      print(' [DATASOURCE] Error de conexión: $data');
       if (!completer.isCompleted) completer.completeError(data);
     });
 
     _socket!.onDisconnect(
-        (reason) => print('🔌 [DATASOURCE] Socket Desconectado $reason'));
+        (reason) => print(' [DATASOURCE] Socket Desconectado $reason'));
 
-    // Esto te dirá si el PIN es inválido o el JWT expiró
+
     _socket!.on('exception', (data) {
-      print('⚠️ EXCEPCIÓN DEL SERVIDOR: $data');
+      print(' EXCEPCIÓN DEL SERVIDOR: $data');
     });
 
-// Esto te dirá si hay un error de protocolo
+
     _socket!.onConnectError((data) {
-      print('❌ ERROR DE PROTOCOLO: $data');
+      print(' ERROR DE PROTOCOLO: $data');
     });
 
-    // --- DEBUG: ATRAPA-TODO ---
+
     _socket!.onAny((event, data) {
-      print('📩 [SOCKET_EVENT]: $event | Data: $data');
+      print(' [SOCKET_EVENT]: $event | Data: $data');
     });
 
-    // --- MAPEOS SEGÚN PÁG 58-64 ---
+   
     _socket!.on('host_connected_success',
         (data) => _hostConnectedSuccessController.add(_toMap(data)));
     _socket!.on('player_connected_to_server',
@@ -139,7 +138,7 @@ class MultiplayerSocketDataSourceImpl implements MultiplayerSocketDataSource {
         'player_joined', (data) => _playersUpdateController.add(_toMap(data)));
     _socket!.on('question_started', (data) {
       print(
-          "✅ [DATASOURCE] HANDLER: question_started detected! Data received: $data");
+          " [DATASOURCE] HANDLER: question_started detected! Data received: $data");
       _questionStartedController.add(_toMap(data));
     });
     _socket!

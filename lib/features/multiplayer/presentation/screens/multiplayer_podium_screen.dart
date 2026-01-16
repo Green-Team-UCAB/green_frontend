@@ -31,7 +31,6 @@ class MultiplayerPodiumScreen extends StatelessWidget {
                 
                 const Spacer(),
 
-                // Lógica basada en tu entidad Summary
                 if (isHost)
                   _buildHostPodio(summary?.finalPodium ?? [])
                 else
@@ -69,9 +68,9 @@ class MultiplayerPodiumScreen extends StatelessWidget {
     );
   }
 
-  // --- VISTA HOST: Usa finalPodium (List<LeaderboardEntry>) ---
+  // --- VISTA HOST  ---
   Widget _buildHostPodio(List<LeaderboardEntry> podium) {
-    // Buscamos por el campo 'rank' de tu LeaderboardEntry
+
     final first = podium.firstWhere((e) => e.rank == 1, orElse: () => podium[0]);
     final second = podium.length > 1 ? podium.firstWhere((e) => e.rank == 2, orElse: () => podium[1]) : null;
     final third = podium.length > 2 ? podium.firstWhere((e) => e.rank == 3, orElse: () => podium[2]) : null;
@@ -108,7 +107,7 @@ class MultiplayerPodiumScreen extends StatelessWidget {
     );
   }
 
-  // --- VISTA JUGADOR: Usa rank y totalScore del Summary ---
+  // --- VISTA JUGADOR
   Widget _buildPlayerFinalScore({required int rank, required int score, required bool isWinner}) {
     return Column(
       children: [
