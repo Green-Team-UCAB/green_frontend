@@ -8,7 +8,6 @@ import 'package:fpdart/fpdart.dart';
 import 'package:green_frontend/core/error/failures.dart';
 import 'package:green_frontend/features/auth/domain/entities/user.dart';
 import 'package:flutter/foundation.dart';
-import 'dart:developer' as dev;
 
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
