@@ -13,14 +13,21 @@ class UserModel extends User {
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
+    // 1. Extraemos el objeto anidado del perfil
+    final profile = json['userProfileDetails'] ?? {};
+
     return UserModel(
-      id: json['id'] ?? '',
+      id: json['id']?.toString() ?? '',
+      // 2. Mapeamos 'username' del JSON a 'userName' de tu clase
       userName: json['username'] ?? '',
-      name: json['name'] ?? '',
+      // 3. El nombre real viene de 'userProfileDetails'
+      name: profile['name'] ?? json['name'] ?? 'Usuario', 
       email: json['email'] ?? '',
-      type: json['role'] ?? json['userType'] ?? 'user',
-      description: json['description'],
-      avatarAssetUrl: json['avatarAssetUrl'],
+      // 4. Mapeamos el tipo (asegúrate de que la llave sea 'type')
+      type: json['type'] ?? json['role'] ?? 'user',
+      // 5. Estos también suelen venir dentro del perfil
+      description: profile['description'] ?? json['description'],
+      avatarAssetUrl: profile['avatarAssetUrl'] ?? json['avatarAssetUrl'],
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'])
           : DateTime.now(),

@@ -27,6 +27,8 @@ abstract class AuthDataSource {
     required String id,
     required Map<String, dynamic> body,
   });
+
+  Future<UserModel> getUserProfile();
 }
 
 // Implementación del DataSource
@@ -169,5 +171,28 @@ Future<UserModel> register({
       return UserModel.fromJson(response.data);
     }
     throw ServerException('Unexpected status: ${response.statusCode}');
+  }
+
+  @override
+  Future<UserModel> getUserProfile() async {
+    // La documentación especifica el path '/user/profile/' y método GET
+    final response = await client.get<Map<String, dynamic>>(
+      path: '/user/profile/',
+    );
+
+    if (response.statusCode == 200) {
+      final data = response.data;
+      // La documentación muestra que el objeto usuario viene dentro de la llave "user"
+      if (data != null && data.containsKey('user')) {
+        return UserModel.fromJson(data['user'] as Map<String, dynamic>);
+      }
+      throw ServerException('Formato de respuesta inesperado');
+    }
+
+    if (response.statusCode == 401) {
+      throw AuthException('Credenciales inválidas');
+    }
+
+    throw ServerException('Error al recuperar perfil: ${response.statusCode}');
   }
 }
