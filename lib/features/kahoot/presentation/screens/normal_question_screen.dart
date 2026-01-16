@@ -27,6 +27,12 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
   Map<int, String?> _answerMediaIds = {};
   Map<int, String?> _answerLocalPaths = {};
 
+  // 🔴 NUEVO: Lista de tiempos permitidos basados en la imagen
+  final List<int> allowedTimeLimits = [5, 10, 20, 30, 45, 60, 90, 120, 180, 240];
+  
+  // 🔴 NUEVO: Lista de puntos permitidos para preguntas Quiz
+  final List<int> allowedPoints = [0, 500, 1000];
+
   @override
   void initState() {
     super.initState();
@@ -50,12 +56,20 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
         kahootProvider.currentKahoot.questions[widget.questionIndex!];
 
     _questionTextController.text = question.text;
+    
+    // 🔴 MODIFICADO: Asegurar que el tiempo esté en la lista permitida
     _timeLimit = question.timeLimit;
-    if (_timeLimit <= 0) _timeLimit = 20;
+    if (!allowedTimeLimits.contains(_timeLimit)) {
+      _timeLimit = 20; // Valor por defecto si no está en la lista
+    }
 
     _selectedMediaId = question.mediaId;
+    
+    // 🔴 MODIFICADO: Asegurar que los puntos estén en la lista permitida
     _points = question.points;
-    if (_points <= 0) _points = 1000;
+    if (!allowedPoints.contains(_points)) {
+      _points = 1000; // Valor por defecto si no está en la lista
+    }
 
     _answers.clear();
     _answerControllers.clear();
@@ -149,7 +163,8 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
       return;
     }
 
-    if (_timeLimit <= 0) {
+    // 🔴 NUEVO: Validar que el tiempo esté en la lista permitida
+    if (!allowedTimeLimits.contains(_timeLimit)) {
       _timeLimit = 20;
     }
 
@@ -268,54 +283,51 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
 
             _buildQuestionMediaSection(),
 
+            // 🔴 MODIFICADO: Selector de tiempo con valores específicos
             SizedBox(height: 20),
             Text('Tiempo límite:',
                 style: TextStyle(fontWeight: FontWeight.bold)),
             SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: Slider(
-                    value: _timeLimit.toDouble(),
-                    min: 5,
-                    max: 120,
-                    divisions: 23,
-                    label: '$_timeLimit segundos',
-                    onChanged: (value) {
-                      setState(() => _timeLimit = value.round());
-                    },
-                  ),
-                ),
-                SizedBox(width: 16),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.blue[50],
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text('$_timeLimit s',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                ),
-              ],
-            ),
-            SizedBox(height: 10),
-            Text(
-              'Mínimo: 5 segundos, Máximo: 120 segundos',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
+            DropdownButtonFormField<int>(
+              value: _timeLimit,
+              decoration: InputDecoration(
+                border: OutlineInputBorder(),
+                filled: true,
+                fillColor: Colors.white,
+              ),
+              items: allowedTimeLimits.map((time) {
+                return DropdownMenuItem<int>(
+                  value: time,
+                  child: Text('$time segundos'),
+                );
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  _timeLimit = value!;
+                });
+              },
             ),
             SizedBox(height: 20),
+            
+            // 🔴 MODIFICADO: Selector de puntos específicos para Quiz
             Text('Puntaje de la pregunta:',
                 style: TextStyle(fontWeight: FontWeight.bold)),
             SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _buildPointsButton(500, Icons.star_border),
-                _buildPointsButton(1000, Icons.star_half),
-                _buildPointsButton(2000, Icons.star),
+                _buildQuizPointsButton(0),
+                _buildQuizPointsButton(500),
+                _buildQuizPointsButton(1000),
               ],
             ),
+            SizedBox(height: 10),
+            Text(
+              'Solo puedes seleccionar: 0, 500 o 1000 puntos',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
             SizedBox(height: 20),
+            
             Text('Respuestas:', style: TextStyle(fontWeight: FontWeight.bold)),
             SizedBox(height: 10),
             ..._answers.asMap().entries.map((entry) {
@@ -330,6 +342,30 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  // 🔴 NUEVO: Botón de puntos específico para Quiz
+  Widget _buildQuizPointsButton(int points) {
+    return ElevatedButton(
+      onPressed: () => setState(() => _points = points),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: _points == points ? Colors.blue : Colors.grey[300],
+        foregroundColor: _points == points ? Colors.white : Colors.black,
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            points == 0 ? Icons.star_border :
+            points == 500 ? Icons.star_half : Icons.star,
+            size: 30,
+          ),
+          SizedBox(height: 5),
+          Text('$points pts'),
+        ],
       ),
     );
   }
@@ -434,24 +470,6 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildPointsButton(int points, IconData icon) {
-    return ElevatedButton(
-      onPressed: () => setState(() => _points = points),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: _points == points ? Colors.blue : Colors.grey[300],
-        foregroundColor: _points == points ? Colors.white : Colors.black,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 30),
-          SizedBox(height: 5),
-          Text('$points pts'),
-        ],
-      ),
     );
   }
 
