@@ -121,9 +121,10 @@ Future<Either<Failure, Unit>> connect({
   );
 
   @override
-  Stream<HostResults> get onHostResults => dataSource.onHostResults.map(
-    (data) => HostResultModel.fromJson(data).toEntity()
-  );
+Stream<HostResults> get onHostResults =>
+    dataSource.onHostResults
+      .where((data) => data.isNotEmpty) // evita {}
+      .map((data) => HostResultModel.fromJson(data).toEntity());
 
   @override
   Stream<PlayerResults> get onPlayerResults => dataSource.onPlayerResults.map(

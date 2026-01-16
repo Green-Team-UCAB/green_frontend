@@ -24,29 +24,57 @@ class MultiplayerLobbyScreen extends StatelessWidget {
         return Scaffold(
           backgroundColor: const Color(0xFF46178F), 
           body: SafeArea(
-            child: Column(
-              children: [
-                _buildHeader(state), // Aquí estará el QR y el PIN
-                const SizedBox(height: 10),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text("Jugadores", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                      Chip(
-                        label: Text("${state.lobby?.players.length ?? 0}", 
-                          style: const TextStyle(fontWeight: FontWeight.bold)),
-                        backgroundColor: Colors.white,
-                      ),
-                    ],
+  child: Column(
+    children: [
+      _buildHeader(state),
+      const SizedBox(height: 10),
+
+      // Todo lo que crece va aquí
+      Expanded(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    "Jugadores",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                Expanded(child: _buildPlayerList(state)),
-                _buildFooter(context, state),
-              ],
+                  Chip(
+                    label: Text(
+                      "${state.lobby?.players.length ?? 0}",
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    backgroundColor: Colors.white,
+                  ),
+                ],
+              ),
             ),
-          ),
+
+            const SizedBox(height: 10),
+
+            // La lista ocupa el espacio flexible
+            Expanded(
+              child: _buildPlayerList(state),
+            ),
+          ],
+        ),
+      ),
+
+      // Footer SIEMPRE fuera del Expanded
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        child: _buildFooter(context, state),
+      ),
+    ],
+  ),
+),
         );
       },
     );

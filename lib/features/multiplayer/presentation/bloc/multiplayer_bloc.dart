@@ -257,9 +257,13 @@ on<_OnHostResultsReceived>((event, emit) {
     _errorSub = _listenSocketError().listen((failure) => add(_OnSocketErrorReceived(failure)));
     _sessionClosedSub = _listenSessionClosed().listen((_) => add(_OnSessionClosedReceived()));
   
-  _hostResultsSub = _listenHostResults().listen(
-  (results) => add(_OnHostResultsReceived(results))
-);
+    if (state.role == ClientRole.host) {
+    _hostResultsSub = _listenHostResults().listen(
+      (results) => add(_OnHostResultsReceived(results)),
+    );
+  }
+
+
   }
   
 

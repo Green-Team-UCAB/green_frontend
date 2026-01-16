@@ -110,7 +110,7 @@ _socket!.onConnectError((data) {
 
     // --- MAPEOS SEGÚN PÁG 58-64 ---
     _socket!.on('host_connected_success', (data) => _hostConnectedSuccessController.add(_toMap(data)));
-    _socket!.on('player_connected_to_session', (data) => _playerConnectedSuccessController.add(_toMap(data)));
+    _socket!.on('player_connected_to_server', (data) => _playerConnectedSuccessController.add(_toMap(data)));
     _socket!.on('host_lobby_update', (data) => _playersUpdateController.add(_toMap(data)));
     
     // Otros eventos
