@@ -40,7 +40,15 @@ class KahootRemoteDataSource {
         );
       }
 
-      final Map<String, dynamic> kahootData = KahootMapper.toMap(kahoot);
+      // 🔴 NUEVO: Asegurar que si la visibilidad es "public", el estado sea "publish"
+      Kahoot kahootToSave = kahoot;
+      if (kahoot.visibility == 'public' && kahoot.status == 'draft') {
+        kahootToSave = kahoot.copyWith(
+          status: 'publish', // 🔴 CAMBIADO: 'published' → 'publish'
+        );
+      }
+
+      final Map<String, dynamic> kahootData = KahootMapper.toMap(kahootToSave);
 
       kahootData.remove('authorId');
       kahootData.remove('createdAt');
@@ -48,12 +56,12 @@ class KahootRemoteDataSource {
 
       final headers = await _getHeaders();
 
-      if (kahoot.id != null && kahoot.id!.isNotEmpty) {
+      if (kahootToSave.id != null && kahootToSave.id!.isNotEmpty) {
         final Map<String, dynamic> dataForPut = Map<String, dynamic>.from(kahootData);
         dataForPut.remove('id');
         
         final response = await http.put(
-          Uri.parse('$baseUrl/kahoots/${kahoot.id}'),
+          Uri.parse('$baseUrl/kahoots/${kahootToSave.id}'),
           headers: headers,
           body: json.encode(dataForPut),
         );
@@ -79,8 +87,8 @@ class KahootRemoteDataSource {
           final Map<String, dynamic> responseData = json.decode(response.body);
           
           if (responseData["themeId"] == null) {
-            if (kahoot.themeId.isNotEmpty) {
-              responseData['themeId'] = kahoot.themeId;
+            if (kahootToSave.themeId.isNotEmpty) {
+              responseData['themeId'] = kahootToSave.themeId;
             }
           }
           

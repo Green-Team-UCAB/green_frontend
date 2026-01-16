@@ -38,7 +38,16 @@ class SaveKahootUseCase {
         }
       }
       
-      return await repository.saveKahoot(kahoot);
+      // 🔴 NUEVO: Ajustar el estado basado en la visibilidad para cumplir con las reglas del backend
+      // Si la visibilidad es "public", el estado debe ser "publish" (no "draft")
+      Kahoot kahootToSave = kahoot;
+      if (kahoot.visibility == 'public' && kahoot.status == 'draft') {
+        kahootToSave = kahoot.copyWith(
+          status: 'publish', // 🔴 CAMBIADO: 'published' → 'publish'
+        );
+      }
+      
+      return await repository.saveKahoot(kahootToSave);
     } catch (e) {
       rethrow;
     }
