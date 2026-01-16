@@ -58,7 +58,6 @@ class _JoinGameScreenState extends State<JoinGameScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Calculamos el bottomInset para el teclado
     final double bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
     return BlocListener<MultiplayerBloc, MultiplayerState>(
@@ -73,8 +72,7 @@ class _JoinGameScreenState extends State<JoinGameScreen> {
         }
       },
       child: Scaffold(
-        resizeToAvoidBottomInset:
-            false, // Lo manejamos manualmente con AnimatedPadding
+        resizeToAvoidBottomInset: false,
         body: Stack(
           children: [
             Container(
@@ -113,14 +111,12 @@ class _JoinGameScreenState extends State<JoinGameScreen> {
                         child: Row(
                           children: [
                             Expanded(
-                              child:
-                                  _buildPill('Ingresar PIN', isPinSelected, () {
+                              child: _buildPill('Ingresar PIN', isPinSelected, () {
                                 setState(() => isPinSelected = true);
                               }),
                             ),
                             Expanded(
-                              child:
-                                  _buildPill('Escanear QR', !isPinSelected, () {
+                              child: _buildPill('Escanear QR', !isPinSelected, () {
                                 pinFocusNode.unfocus();
                                 setState(() => isPinSelected = false);
                               }),
@@ -134,8 +130,7 @@ class _JoinGameScreenState extends State<JoinGameScreen> {
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 300),
                       curve: Curves.easeOutCubic,
-                      padding:
-                          EdgeInsets.only(bottom: bottomInset > 0 ? 20 : 0),
+                      padding: EdgeInsets.only(bottom: bottomInset > 0 ? 20 : 0),
                       child: Center(
                         child: SingleChildScrollView(
                           physics: const NeverScrollableScrollPhysics(),
@@ -162,52 +157,59 @@ class _JoinGameScreenState extends State<JoinGameScreen> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Text(
+        Text(
           "INGRESA TU NICKNAME",
           style: TextStyle(
-            color: Colors.white70,
+            color: Colors.black54,
             fontSize: 14,
             fontWeight: FontWeight.bold,
             letterSpacing: 2,
           ),
         ),
         const SizedBox(height: 20),
-        TextField(
-          controller: nicknameController,
-          maxLength: 20,
-          autofocus: true,
-          textAlign: TextAlign.center,
-          textCapitalization: TextCapitalization.characters,
-          onChanged: (val) => setState(() => nickname = val),
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 40,
-            fontWeight: FontWeight.w900,
-            letterSpacing: 4,
-          ),
-          decoration: const InputDecoration(
-            hintText: "NICKNAME",
-            hintStyle: TextStyle(color: Colors.white12),
-            border: InputBorder.none,
+        Container(
+          constraints: const BoxConstraints(maxWidth: 280),
+          child: TextField(
+            controller: nicknameController,
+            maxLength: 20,
+            autofocus: true,
+            textAlign: TextAlign.center,
+            textCapitalization: TextCapitalization.characters,
+            onChanged: (val) => setState(() => nickname = val),
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: 28,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 2,
+            ),
+            decoration: InputDecoration(
+              hintText: "NICKNAME",
+              hintStyle: TextStyle(color: Colors.black26),
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              counterStyle: TextStyle(color: Colors.black54),
+            ),
           ),
         ),
         Padding(
-          padding: const EdgeInsets.only(top: 8),
+          padding: const EdgeInsets.only(top: 12),
           child: Text(
             "${nickname.length} / 20 caracteres",
             style: TextStyle(
-              // Cambia a rojo si está fuera de rango para alertar al usuario
               color: (nickname.length >= 6 && nickname.length <= 20)
-                  ? Colors.white54
+                  ? Colors.black54
                   : Colors.redAccent,
               fontSize: 12,
               fontWeight: FontWeight.bold,
             ),
           ),
         ),
-        const SizedBox(height: 10),
-        Container(width: 150, height: 2, color: Colors.white24),
-        const SizedBox(height: 20),
+        const SizedBox(height: 30),
         TextButton.icon(
           onPressed: () {
             setState(() {
@@ -216,9 +218,9 @@ class _JoinGameScreenState extends State<JoinGameScreen> {
               nicknameController.clear();
             });
           },
-          icon: const Icon(Icons.edit, color: Colors.white54, size: 16),
+          icon: const Icon(Icons.edit, color: Colors.black54, size: 16),
           label: const Text("EDITAR PIN / QR",
-              style: TextStyle(color: Colors.white54, fontSize: 12)),
+              style: TextStyle(color: Colors.black54, fontSize: 12)),
         )
       ],
     );
@@ -315,7 +317,7 @@ class _JoinGameScreenState extends State<JoinGameScreen> {
             ),
             onPressed: (isEnabled && !isLoading) ? _handleJoinAction : null,
             child: isLoading
-                ? const CircularProgressIndicator(color: Color(0xFF6E48AA))
+                ? CircularProgressIndicator(color: const Color(0xFF6E48AA))
                 : Text(
                     isEnteringNickname ? '¡A JUGAR!' : 'SIGUIENTE',
                     style: const TextStyle(
@@ -420,3 +422,4 @@ class _ScannerOverlayPainter extends CustomPainter {
   @override
   bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
+
