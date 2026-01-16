@@ -59,6 +59,7 @@ import 'features/groups/application/assign_quiz_use_case.dart';
 import 'features/groups/application/update_group_use_case.dart';
 import 'features/groups/application/kick_member_use_case.dart';
 import 'features/groups/application/delete_group_use_case.dart';
+import 'features/groups/application/get_group_members_use_case.dart';
 
 // --- Feature: IA (Épica 9) ---
 import 'core/network/ai_service.dart';
@@ -182,6 +183,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => UpdateGroupUseCase(sl()));
   sl.registerLazySingleton(() => KickMemberUseCase(sl()));
   sl.registerLazySingleton(() => DeleteGroupUseCase(sl()));
+  sl.registerLazySingleton(() => GetGroupMembersUseCase(sl()));
 
   // Blocs
   sl.registerFactory(
@@ -202,6 +204,7 @@ Future<void> init() async {
       updateGroup: sl(),
       kickMember: sl(),
       deleteGroup: sl(),
+      getGroupMembers: sl(),
     ),
   );
   sl.registerFactory(() => KahootSelectionBloc(getMyKahoots: sl()));
@@ -310,16 +313,15 @@ Future<void> init() async {
   // AUTH & PROFILE FEATURE
   // ================================================================
 
-  
   sl.registerLazySingleton(() => GetUserProfileUseCase(sl()));
   sl.registerLazySingleton(() => UpdateProfileUseCase(sl()));
 
   sl.registerFactory(
-  () => ProfileBloc(
-    getUserProfile: sl<GetUserProfileUseCase>(),
-    updateUserProfile: sl<UpdateProfileUseCase>(), // Añade esta dependencia
-  ),
-);
+    () => ProfileBloc(
+      getUserProfile: sl<GetUserProfileUseCase>(),
+      updateUserProfile: sl<UpdateProfileUseCase>(), // Añade esta dependencia
+    ),
+  );
 
   // 3. Repository: Debes registrar la interfaz vinculada a su implementación
   sl.registerLazySingleton<AuthRepository>(

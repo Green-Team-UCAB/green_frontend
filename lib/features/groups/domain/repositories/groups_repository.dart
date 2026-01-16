@@ -3,6 +3,7 @@ import '../../../../core/error/failures.dart';
 import '../entities/group.dart';
 import '../entities/group_quiz_assignment.dart';
 import '../entities/group_leaderboard.dart';
+import '../entities/group_member.dart';
 
 abstract class GroupsRepository {
   Future<Either<Failure, List<Group>>> getMyGroups();
@@ -15,6 +16,7 @@ abstract class GroupsRepository {
       String groupId);
   Future<Either<Failure, List<GroupLeaderboardEntry>>> getGroupLeaderboard(
       String groupId);
+  Future<Either<Failure, List<GroupMember>>> getGroupMembers(String groupId);
   Future<Either<Failure, String>> generateInvitationLink(String groupId);
   Future<Either<Failure, void>> assignQuiz({
     required String groupId,
