@@ -9,6 +9,11 @@ import 'package:green_frontend/features/single_player/presentation/bloc/game_blo
 import 'package:green_frontend/features/single_player/presentation/screens/single_player_game.dart';
 import 'package:green_frontend/features/single_player/presentation/bloc/game_event.dart';
 
+import 'package:green_frontend/features/multiplayer/presentation/bloc/multiplayer_bloc.dart';
+import 'package:green_frontend/core/network/api_client.dart';
+import 'package:green_frontend/core/storage/token_storage.dart';
+import 'package:green_frontend/features/multiplayer/presentation/screens/multiplayer_lobby_screen.dart';
+
 class PublicQuizDetailPage extends StatelessWidget {
   final dynamic quiz;
 
@@ -49,7 +54,28 @@ class _QuizDetailView extends StatelessWidget {
     final imageUrl = quiz['coverImageId'];
     final category = quiz['category'] ?? 'General';
 
-    return Scaffold(
+    return BlocListener<MultiplayerBloc, MultiplayerState>(
+      listenWhen: (previous, current) => previous.status != current.status,
+      listener: (context, state) {
+        if (state.status == MultiplayerStatus.inLobby) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => BlocProvider.value(
+                value: context.read<MultiplayerBloc>(),
+                child: const MultiplayerLobbyScreen(),
+              ),
+            ),
+          );
+        }
+
+        if (state.status == MultiplayerStatus.error) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.failure?.message ?? "Error")),
+          );
+        }
+      },
+      child: Scaffold(
       backgroundColor: Colors.white,
       body: CustomScrollView(
         slivers: [
@@ -241,26 +267,116 @@ class _QuizDetailView extends StatelessWidget {
             ),
           ],
         ),
-        child: ElevatedButton(
+        child: _buildAdminControls(context),
+      ),
+    ),
+    );
+  }
+
+  Widget _buildAdminControls(BuildContext context) {
+    // Se obtiene el ID del quiz
+    final String quizId = quiz['id'];
+
+    // Los Kahoots de Discovery ya son públicos por defecto
+    // Solo verificamos draft si el campo status existe explícitamente
+    final String? kahootStatus = quiz['status'] as String?;
+
+    // Verificar si es un borrador (solo si el campo status viene explícitamente como draft/borrador)
+    final bool isDraft = kahootStatus != null &&
+        (kahootStatus.toLowerCase() == 'draft' ||
+            kahootStatus.toLowerCase() == 'borrador');
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // --- BOTÓN MULTIJUGADOR (HOST) ---
+        ElevatedButton.icon(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: isDraft ? Colors.grey : Colors.deepPurple,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            minimumSize: const Size(double.infinity, 50),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          onPressed: isDraft
+              ? () {
+                  // Mostrar diálogo de error para borradores
+                  showDialog(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text("No disponible"),
+                      content: const Text(
+                        "Para crear una sesión multijugador (PIN y Código QR), "
+                        "primero debes publicar tu Kahoot. "
+                        "Los borradores no pueden usarse para partidas en línea.",
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: const Text("Entendido"),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+              : () async {
+                  context.read<MultiplayerBloc>().add(OnResetMultiplayer());
+                  String? token = sl<ApiClient>().authToken;
+                  token ??= await TokenStorage.getToken();
+                  if (!context.mounted) return;
+                  if (token != null && token.isNotEmpty) {
+                    context.read<MultiplayerBloc>().add(
+                      OnCreateSessionStarted(
+                        kahootId: quizId,
+                        jwt: token,
+                      ),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content:
+                              Text("Sesión inválida. Por favor ingresa de nuevo.")),
+                    );
+                    Navigator.pushReplacementNamed(context, '/login');
+                  }
+                },
+          icon: !isDraft &&
+                  context.watch<MultiplayerBloc>().state.status ==
+                      MultiplayerStatus.connecting
+              ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                      color: Colors.white, strokeWidth: 2),
+                )
+              : const Icon(Icons.qr_code_2, size: 28),
+          label: Text(
+            isDraft ? "Publicar para generar PIN y QR" : "Generar PIN y Código QR",
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+        ),
+        const SizedBox(height: 12),
+        // --- BOTÓN JUGAR SOLO ---
+        ElevatedButton(
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.deepPurple,
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 16),
+            minimumSize: const Size(double.infinity, 50),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
           ),
           onPressed: () {
-            // Disparamos el evento al GameBloc
             context.read<GameBloc>().add(StartGame(quiz['id']));
-
-            // Navegamos a la pantalla del juego
             Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (_) => BlocProvider.value(
                   value: context.read<GameBloc>(),
-                  child: SinglePlayerGameScreen(),
+                  child: const SinglePlayerGameScreen(),
                 ),
               ),
             );
@@ -270,7 +386,7 @@ class _QuizDetailView extends StatelessWidget {
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
         ),
-      ),
+      ],
     );
   }
 

@@ -26,7 +26,7 @@ class MultiplayerLobbyScreen extends StatelessWidget {
         final players = state.lobby?.players ?? [];
 
         return Scaffold(
-          backgroundColor: const Color.fromARGB(255, 225, 222, 228),
+          backgroundColor: Colors.white,
           body: SafeArea(
             child: Column(
               children: [
@@ -34,36 +34,40 @@ class MultiplayerLobbyScreen extends StatelessWidget {
 
                 // ✅ QR pequeño arriba del PIN
                 if (isHost && state.pin != null)
-                  SizedBox(
-                    height: 100,
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.deepPurple, width: 3),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     child: QrImageView(
                       data: state.pin!.value,
                       version: QrVersions.auto,
-                      size: 100.0,
+                      size: 80.0,
                       eyeStyle: const QrEyeStyle(
                         eyeShape: QrEyeShape.square,
-                        color: Color.fromARGB(255, 142, 139, 146),
+                        color: Colors.deepPurple,
                       ),
                       dataModuleStyle: const QrDataModuleStyle(
                         dataModuleShape: QrDataModuleShape.circle,
-                        color: Colors.black,
+                        color: Colors.deepPurple,
                       ),
                     ),
                   ),
 
-                const SizedBox(height: 12),
+                const SizedBox(height: 20),
 
                 // ✅ PIN grande
                 const Text("PIN del juego:",
-                    style: TextStyle(fontSize: 14, color: Colors.white70)),
+                    style: TextStyle(fontSize: 16, color: Colors.black54)),
                 Text(pin,
                     style: const TextStyle(
-                        fontSize: 42,
+                        fontSize: 48,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 4,
-                        color: Colors.white)),
+                        color: Colors.deepPurple)),
 
-                const SizedBox(height: 20),
+                const SizedBox(height: 30),
 
                 // ✅ Título de jugadores
                 Padding(
@@ -73,50 +77,76 @@ class MultiplayerLobbyScreen extends StatelessWidget {
                     children: [
                       const Text("Jugadores",
                           style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
+                              color: Colors.black,
+                              fontSize: 20,
                               fontWeight: FontWeight.bold)),
-                      Chip(
-                        label: Text("${players.length}",
-                            style: const TextStyle(fontWeight: FontWeight.bold)),
-                        backgroundColor: Colors.white,
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.deepPurple,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text("${players.length}",
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white)),
                       ),
                     ],
                   ),
                 ),
 
-                const SizedBox(height: 10),
+                const SizedBox(height: 16),
 
                 // ✅ Lista de jugadores
                 Expanded(
                   child: players.isEmpty
-                      ? const Center(
-                          child: Text("Esperando a los jugadores...",
-                              style: TextStyle(
-                                  color: Colors.white, fontSize: 20)),
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.people_outline,
+                                size: 60,
+                                color: Colors.grey.shade400,
+                              ),
+                              const SizedBox(height: 16),
+                              const Text("Esperando a los jugadores...",
+                                  style: TextStyle(
+                                      color: Colors.black54, fontSize: 18)),
+                            ],
+                          ),
                         )
                       : GridView.builder(
                           padding: const EdgeInsets.all(20),
                           gridDelegate:
                               const SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 2,
-                            childAspectRatio: 3,
-                            crossAxisSpacing: 10,
-                            mainAxisSpacing: 10,
+                            childAspectRatio: 2.5,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
                           ),
                           itemCount: players.length,
                           itemBuilder: (context, index) {
                             final player = players[index];
                             return Container(
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(8),
+                                color: Colors.deepPurple.withValues(alpha: 0.1),
+                                border: Border.all(
+                                    color: Colors.deepPurple.withValues(alpha: 0.3)),
+                                borderRadius: BorderRadius.circular(12),
                               ),
                               child: Center(
-                                child: Text(player.nickname,
-                                    style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold)),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                                  child: Text(player.nickname,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                          color: Colors.deepPurple,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16)),
+                                ),
                               ),
                             );
                           },
@@ -129,15 +159,18 @@ class MultiplayerLobbyScreen extends StatelessWidget {
                     padding: const EdgeInsets.all(20),
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
+                        backgroundColor: Colors.deepPurple,
                         minimumSize: const Size(double.infinity, 60),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                       ),
                       onPressed: () {
                         context.read<MultiplayerBloc>().add(OnStartGame());
                       },
                       child: const Text("¡EMPEZAR!",
                           style:
-                              TextStyle(fontSize: 24, color: Colors.white)),
+                              TextStyle(fontSize: 22, color: Colors.white)),
                     ),
                   ),
               ],
