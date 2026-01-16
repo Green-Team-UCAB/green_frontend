@@ -132,10 +132,10 @@ class MultiplayerSocketRepositoryImpl implements MultiplayerSocketRepository {
       );
 
   @override
-  Stream<Slide> get onQuestionStarted =>
-      dataSource.onQuestionStarted.map(
-        (data) => SlideModel.fromJson(data['currentSlideData'] as Map<String, dynamic>).toEntity(),
-      );
+Stream<Slide> get onQuestionStarted =>
+    dataSource.onQuestionStarted.map(
+      (data) => SlideModel.fromJson(data).toEntity(),
+    );
 
   @override
   Stream<HostResults> get onHostResults =>

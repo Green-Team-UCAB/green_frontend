@@ -157,10 +157,17 @@ class MultiplayerSocketDataSourceImpl implements MultiplayerSocketDataSource {
 
     // QUESTION STARTED
     // datasource
-    _socket!.on('question_started', (data) {
+   _socket!.on('question_started', (data) {
   final map = _toMap(data);
+
+  // 🔥 EXTRAER SOLO EL SLIDE
   final slide = map['currentSlideData'] ?? {};
-  _questionStartedController.add(Map<String, dynamic>.from(slide));
+
+  print(" [DATASOURCE] Slide limpio enviado al stream: $slide");
+
+  _questionStartedController.add(
+    Map<String, dynamic>.from(slide),
+  );
 });
 
     // RESULTS

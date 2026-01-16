@@ -4,9 +4,24 @@ import 'package:green_frontend/features/multiplayer/presentation/bloc/multiplaye
 import 'package:green_frontend/features/multiplayer/domain/value_objects/answer_id.dart';
 import 'package:green_frontend/features/multiplayer/domain/value_objects/time_elapsed_ms.dart';
 import 'package:green_frontend/features/multiplayer/presentation/screens/multiplayer_result_screen.dart';
+import 'package:green_frontend/features/multiplayer/domain/entities/slide.dart';
 
-class MultiplayerGameScreen extends StatelessWidget {
+class MultiplayerGameScreen extends StatefulWidget {
   const MultiplayerGameScreen({super.key});
+
+  @override
+  State<MultiplayerGameScreen> createState() => _MultiplayerGameScreenState();
+}
+
+class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
+  int? selectedIndex;
+
+  final List<Color> optionColors = const [
+    Colors.blue,
+    Colors.red,
+    Colors.orange,
+    Colors.green,
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -15,14 +30,15 @@ class MultiplayerGameScreen extends StatelessWidget {
         if (state.status == MultiplayerStatus.showingResults) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (_) => const MultiplayerResultsScreen()),
+            MaterialPageRoute(
+              builder: (_) => const MultiplayerResultsScreen(),
+            ),
           );
         }
       },
       builder: (context, state) {
-        final slide = state.currentSlide;
+        final Slide? slide = state.currentSlide;
 
-        // 🔥 Evita crash si slide aún no ha llegado
         if (slide == null) {
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
@@ -30,13 +46,12 @@ class MultiplayerGameScreen extends StatelessWidget {
         }
 
         return Scaffold(
-          backgroundColor: const Color(0xFFF2F2F2),
+          backgroundColor: const Color(0xFFF8F9FA),
           body: SafeArea(
             child: Column(
               children: [
-                _buildHeader(state),
+                _buildHeader(state, slide),
 
-                // 🔥 NO usar Expanded dentro de _buildQuestionArea
                 Expanded(
                   flex: 3,
                   child: _buildQuestionArea(slide),
@@ -46,6 +61,11 @@ class MultiplayerGameScreen extends StatelessWidget {
                   flex: 4,
                   child: _buildOptionsGrid(context, slide, state),
                 ),
+
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 40),
+                  child: _buildSubmitButton(context, state, slide.id),
+                ),
               ],
             ),
           ),
@@ -54,11 +74,15 @@ class MultiplayerGameScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(MultiplayerState state) {
-    const int totalTimeMs = 30000;
+  // ---------------------------------------------------------------------------
+  // HEADER (TIMER)
+  // ---------------------------------------------------------------------------
+
+  Widget _buildHeader(MultiplayerState state, Slide slide) {
+    final int totalTimeMs = slide.timeLimitSeconds * 1000;
     final startTime = state.questionStartTime ?? DateTime.now();
     final elapsed = DateTime.now().difference(startTime).inMilliseconds;
-    final remaining = totalTimeMs - elapsed;
+    final remaining = (totalTimeMs - elapsed).clamp(0, totalTimeMs);
     final progress = (remaining / totalTimeMs).clamp(0.0, 1.0);
 
     return Container(
@@ -89,85 +113,160 @@ class MultiplayerGameScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildQuestionArea(dynamic slide) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        if (slide?.slideImageUrl != null)
-          SizedBox(
-            height: 180, // 🔥 Tamaño fijo, NO Expanded
-            child: Image.network(slide.slideImageUrl, fit: BoxFit.contain),
-          ),
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Text(
+  // ---------------------------------------------------------------------------
+  // QUESTION AREA
+  // ---------------------------------------------------------------------------
+
+  Widget _buildQuestionArea(Slide slide) {
+    final imageUrl = slide.slideImageUrl;
+
+    return Padding(
+      padding: const EdgeInsets.all(20.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          if (imageUrl != null && imageUrl.isNotEmpty)
+            SizedBox(
+              height: 180,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: Image.network(
+                  imageUrl,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) =>
+                      const Icon(Icons.broken_image, size: 80),
+                ),
+              ),
+            ),
+          const SizedBox(height: 16),
+          Text(
             slide.questionText,
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w900,
+              color: Color(0xFF2D3436),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // OPTIONS GRID
+  // ---------------------------------------------------------------------------
+
   Widget _buildOptionsGrid(
-      BuildContext context, dynamic slide, MultiplayerState state) {
+    BuildContext context,
+    Slide slide,
+    MultiplayerState state,
+  ) {
     final options = slide.options;
     final hasAnswered = state.hasAnswered;
 
-    final List<Color> colors = [
-      Colors.red,
-      Colors.blue,
-      Colors.orange,
-      Colors.green
-    ];
-
     return GridView.builder(
       padding: const EdgeInsets.all(16),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 1.5,
+      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 250,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
+        childAspectRatio: 1.3,
       ),
       itemCount: options.length,
       itemBuilder: (context, index) {
         final option = options[index];
+        final isSelected = selectedIndex == index;
+        final color = optionColors[index % optionColors.length];
 
-        return ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: colors[index % colors.length],
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            elevation: hasAnswered ? 0 : 4,
-          ),
-          onPressed: hasAnswered
+        return GestureDetector(
+          onTap: hasAnswered
               ? null
-              : () => _submitAnswer(context, state, option.index),
-          child: Text(
-            option.text,
-            style: const TextStyle(
-                fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold),
+              : () {
+                  setState(() => selectedIndex = index);
+                },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            decoration: BoxDecoration(
+              color: isSelected ? color : color.withOpacity(0.5),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isSelected ? Colors.white : Colors.transparent,
+                width: 2.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: color.withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                )
+              ],
+            ),
+            child: Center(
+              child: Text(
+                option.text,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
           ),
         );
       },
     );
   }
 
-  void _submitAnswer(
-      BuildContext context, MultiplayerState state, String optionIndex) {
-    final String qId = state.currentSlide?.id ?? "";
+  // ---------------------------------------------------------------------------
+  // SUBMIT BUTTON
+  // ---------------------------------------------------------------------------
 
-    final startTime = state.questionStartTime ?? DateTime.now();
-    final int elapsed = DateTime.now().difference(startTime).inMilliseconds;
+  Widget _buildSubmitButton(
+    BuildContext context,
+    MultiplayerState state,
+    String slideId,
+  ) {
+    final hasAnswered = state.hasAnswered;
 
-    context.read<MultiplayerBloc>().add(
-          OnSubmitAnswer(
-            questionId: qId,
-            answerIds: AnswerIds([optionIndex]),
-            timeElapsedMs: TimeElapsedMs(elapsed),
+    return SizedBox(
+      width: double.infinity,
+      height: 60,
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color.fromARGB(255, 113, 7, 146),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
-        );
+        ),
+        onPressed: (selectedIndex == null || hasAnswered)
+            ? null
+            : () {
+                final startTime = state.questionStartTime ?? DateTime.now();
+                final elapsed =
+                    DateTime.now().difference(startTime).inMilliseconds;
+
+                // 🔥 Aquí convertimos el índice a String para AnswerIds
+                final answerId = selectedIndex!.toString();
+
+                context.read<MultiplayerBloc>().add(
+                      OnSubmitAnswer(
+                        questionId: slideId,
+                        answerIds: AnswerIds([answerId]),
+                        timeElapsedMs: TimeElapsedMs(elapsed),
+                      ),
+                    );
+              },
+        child: const Text(
+          "ENVIAR RESPUESTA",
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
   }
 }

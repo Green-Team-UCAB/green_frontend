@@ -14,9 +14,9 @@ class OptionModel {
 
   factory OptionModel.fromJson(Map<String, dynamic> json) {
     return OptionModel(
-      index: json['index'],
-      text: json['text'],
-      mediaURL: json['mediaURL'],
+      index: json['index'] as int? ?? 0,
+      text: json['text'] as String?,
+      mediaURL: json['mediaUrl'] as String?,
     );
   }
 

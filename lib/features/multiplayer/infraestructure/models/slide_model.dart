@@ -27,15 +27,15 @@ class SlideModel {
 
   factory SlideModel.fromJson(Map<String, dynamic> json) {
     return SlideModel(
-      id: json['id'],
-      position: json['position'],
-      slideType: json['slideType'],
-      timeLimitSeconds: json['timeLimitSeconds'],
-      questionText: json['questionText'],
-      slideImageURL: json['slideImageURL'],
-      pointsValue: json['pointsValue'],
-      options: (json['options'] as List)
-          .map((o) => OptionModel.fromJson(o))
+      id: json['id'] as String? ?? '',
+      position: json['position'] as int? ?? 0,
+      slideType: json['slideType'] as String? ?? '',
+      timeLimitSeconds: json['timeLimitSeconds'] as int? ?? 0,
+      questionText: json['questionText'] as String? ?? '',
+      slideImageURL: json['slideImageURL'] as String?,
+      pointsValue: json['pointsValue'] as int? ?? 0,
+      options: (json['options'] as List<dynamic>? ?? [])
+          .map((o) => OptionModel.fromJson(o as Map<String, dynamic>))
           .toList(),
     );
   }
