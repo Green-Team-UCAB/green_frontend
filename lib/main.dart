@@ -86,7 +86,8 @@ void main() async {
   Intl.defaultLocale = 'es'; // Opcional: define español como default
 
   // --- Inicialización y registro de dependencias Single Player ---
-  const baseUrl = 'https://quizzy-backend-0wh2.onrender.com/api';
+  // 🔴 MODIFICADO: Usar URL base desde injection_container
+  final baseUrl = di.apiBaseUrl;
 
   final dio = Dio(
     BaseOptions(
@@ -168,7 +169,7 @@ void main() async {
         Provider<MediaRemoteDataSource>(
           create: (context) => MediaRemoteDataSource(
             client: http.Client(),
-            baseUrl: baseUrl,
+            baseUrl: baseUrl, // 🔴 Usando URL centralizada
           ),
         ),
 
@@ -226,11 +227,12 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => NavigationProvider()),
 
-        // Kahoot Datasource
+        // Kahoot Datasource (ahora usa URL centralizada desde su constructor)
         Provider<KahootRemoteDataSource>(
           create: (_) => KahootRemoteDataSource(),
         ),
 
+        // Theme Datasource (ahora usa URL centralizada desde su constructor)
         Provider<ThemeRemoteDataSource>(
           create: (_) => ThemeRemoteDataSource(client: http.Client()),
         ),

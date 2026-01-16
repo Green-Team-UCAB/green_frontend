@@ -92,8 +92,10 @@ import 'core/mappers/exception_failure_mapper.dart';
 // Instancia global del Service Locator
 final sl = GetIt.instance;
 
+// 🔴 URL BASE CENTRALIZADA PARA TODA LA APLICACIÓN
 const String _baseUrl = 'https://quizzy-backend-1-zpvc.onrender.com';
 const String _apiSufix = '/api';
+const String apiBaseUrl = '$_baseUrl$_apiSufix';
 
 Future<void> init() async {
   // ================================================================
@@ -333,7 +335,7 @@ Future<void> init() async {
   sl.registerLazySingleton(
     () => Dio(
       BaseOptions(
-        baseUrl: '$_baseUrl$_apiSufix',
+        baseUrl: apiBaseUrl, // 🔴 USANDO URL CENTRALIZADA
         connectTimeout: const Duration(seconds: 30),
         receiveTimeout: const Duration(seconds: 30),
       ),

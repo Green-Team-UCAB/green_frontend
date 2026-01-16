@@ -3,9 +3,11 @@ import 'package:green_frontend/features/kahoot/domain/entities/kahoot.dart';
 import 'package:green_frontend/features/kahoot/infrastructure/repositories/mappers/kahoot_mapper.dart';
 import 'package:http/http.dart' as http;
 import 'package:green_frontend/core/storage/token_storage.dart';
+import 'package:green_frontend/injection_container.dart' as di;
 
 class KahootRemoteDataSource {
-  final String baseUrl ='https://quizzy-backend-1-zpvc.onrender.com/api'; //'https://quizzy-backend-0wh2.onrender.com/api'; // 'https://quizzy-backend-1-zpvc.onrender.com';
+  // 🔴 MODIFICADO: Usar URL base desde injection_container
+  final String baseUrl = di.apiBaseUrl;
 
   KahootRemoteDataSource();
 
