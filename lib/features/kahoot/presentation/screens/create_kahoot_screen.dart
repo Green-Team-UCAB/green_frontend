@@ -196,17 +196,7 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
                         _selectedThemeId = selectedTheme.id;
                       });
                       
-                      // 🔴 DEBUG: Verificar qué themeId se está pasando
-                      print('🔴 [DEBUG create] Tema seleccionado:');
-                      print('   Nombre: ${selectedTheme.name}');
-                      print('   ID: ${selectedTheme.id}');
-                      print('   Longitud ID: ${selectedTheme.id.length}');
-                      print('   Es UUID válido?: ${RegExp(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', caseSensitive: false).hasMatch(selectedTheme.id)}');
-                      
                       kahootProvider.setThemeId(selectedTheme.id);
-                      
-                      // 🔴 Verificar que se estableció correctamente
-                      print('   themeId en provider: ${kahootProvider.currentKahoot.themeId}');
                     }
                   },
                 );
@@ -258,7 +248,6 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
                     question: question,
                     index: index,
                     onTap: () {
-                      // Navegar a la pantalla de edición de pregunta según el tipo
                       if (question.type == QuestionType.quiz) {
                         Navigator.push(
                           context,
@@ -461,7 +450,6 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
       );
     }
 
-    // Si _selectedCategory es null y hay categorías, seleccionar la primera
     if (_selectedCategory == null && categoryProvider.categories.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         setState(() {
@@ -530,7 +518,6 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
                   )
                 : Stack(
                     children: [
-                      // 🔴 CORRECCIÓN: Imagen con BoxFit.contain y centrada
                       Center(
                         child: Container(
                           constraints: BoxConstraints(
@@ -555,7 +542,6 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
                           ),
                         ),
                       ),
-                      // Botón para eliminar imagen
                       Positioned(
                         top: 8,
                         right: 8,
@@ -572,7 +558,6 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
                           ),
                         ),
                       ),
-                      // Indicador de imagen cargada
                       Positioned(
                         bottom: 8,
                         left: 8,
@@ -627,7 +612,6 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
         .where((q) => q.mediaId != null && q.mediaId!.isNotEmpty)
         .length;
 
-    // Contar respuestas con multimedia
     int answersWithMedia = 0;
     for (var question in kahoot.questions) {
       answersWithMedia += question.answers

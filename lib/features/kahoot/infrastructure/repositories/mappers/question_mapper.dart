@@ -4,7 +4,6 @@ import 'package:green_frontend/features/kahoot/infrastructure/repositories/mappe
 class QuestionMapper {
   // Convierte un Map (en JSON) a una entidad Question
   static Question fromMap(Map<String, dynamic> map) {
-    // Leer en ambos formatos: timeLimit en camelCase
     int timeLimit = _parsePositiveInt(map['timeLimit'] ?? 20, 20, 'timeLimit');
 
     int points = _parsePositiveInt(map['points'] ?? 1000, 1000, 'points');
@@ -29,7 +28,6 @@ class QuestionMapper {
     final int timeLimit = _ensurePositiveInt(question.timeLimit, 20);
     final int points = _ensurePositiveInt(question.points, 1000);
 
-    // Determinar el tipo basado en QuestionType y respuestas
     String typeString = _questionTypeToBackendString(question);
 
     return {
@@ -50,7 +48,6 @@ class QuestionMapper {
       case QuestionType.trueFalse:
         return 'true_false';
       case QuestionType.quiz:
-        // Para quiz, determinar si es single o multiple basado en respuestas correctas
         int correctAnswersCount = question.answers
             .where((a) => a.isCorrect)
             .length;

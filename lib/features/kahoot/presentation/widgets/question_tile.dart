@@ -6,8 +6,8 @@ class QuestionTile extends StatelessWidget {
   final int index;
   final VoidCallback onTap;
   final VoidCallback onDelete;
-  final VoidCallback? onDuplicate; // ✅ NUEVO: para duplicar
-  final VoidCallback? onChangePoints; // ✅ NUEVO: para cambiar puntuación
+  final VoidCallback? onDuplicate;
+  final VoidCallback? onChangePoints;
 
   const QuestionTile({
     Key? key,
@@ -21,7 +21,6 @@ class QuestionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Contar respuestas con multimedia
     int answersWithMedia = question.answers
         .where((a) => a.mediaId != null && a.mediaId!.isNotEmpty)
         .length;
@@ -33,14 +32,13 @@ class QuestionTile extends StatelessWidget {
       margin: EdgeInsets.only(bottom: 8),
       child: Card(
         child: InkWell(
-          onTap: onTap, // 🔴 AGREGADO: Esto permite que toda la tarjeta sea tappable
+          onTap: onTap,
           borderRadius: BorderRadius.circular(8),
           child: Padding(
             padding: const EdgeInsets.all(12.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ✅ NUEVO: Header con botones de acción
                 Row(
                   children: [
                     Container(
@@ -76,7 +74,6 @@ class QuestionTile extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    // ✅ NUEVO: Botones de acción
                     if (onChangePoints != null)
                       IconButton(
                         icon: Icon(Icons.trending_up, size: 20),
@@ -102,7 +99,6 @@ class QuestionTile extends StatelessWidget {
                 
                 const SizedBox(height: 8),
                 
-                // Información detallada
                 Row(
                   children: [
                     Chip(

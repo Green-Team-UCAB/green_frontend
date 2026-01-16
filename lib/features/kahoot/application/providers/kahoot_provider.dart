@@ -41,14 +41,7 @@ class KahootProvider with ChangeNotifier {
   }
 
   void setThemeId(String themeId) {
-    print('🔴 [DEBUG provider] setThemeId llamado:');
-    print('   themeId recibido: "$themeId"');
-    print('   Longitud: ${themeId.length}');
-    print('   ¿Es UUID válido?: ${RegExp(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', caseSensitive: false).hasMatch(themeId)}');
-    
     _currentKahoot = _currentKahoot.copyWith(themeId: themeId);
-    
-    print('   themeId después de copyWith: "${_currentKahoot.themeId}"');
     notifyListeners();
   }
 
@@ -188,13 +181,7 @@ class KahootProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      print('🔴 [DEBUG provider saveKahoot] Antes de guardar:');
-      print('   Título: ${_currentKahoot.title}');
-      print('   ThemeId: "${_currentKahoot.themeId}"');
-      print('   ¿ThemeId está vacío?: ${_currentKahoot.themeId.isEmpty}');
-      
       if (_currentKahoot.themeId.isEmpty) {
-        print('   ⚠️⚠️⚠️ ERROR: themeId está VACÍO!');
         throw Exception('Debe seleccionar un tema para el Kahoot');
       }
 
@@ -215,10 +202,6 @@ class KahootProvider with ChangeNotifier {
   }
 
   void loadKahoot(Kahoot kahoot) {
-    print('🔴 [DEBUG provider] loadKahoot llamado:');
-    print('   Kahoot ID: ${kahoot.id}');
-    print('   ThemeId del kahoot cargado: "${kahoot.themeId}"');
-    
     _currentKahoot = kahoot;
     notifyListeners();
   }
@@ -253,9 +236,6 @@ class KahootProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      print('🔴 [Provider] Cargando kahoot completo ID: $kahootId');
-      
-      // Verificar si el repositorio tiene el método getKahootById
       if (_kahootRepository is KahootRepositoryImpl) {
         final fullKahoot = await (_kahootRepository as KahootRepositoryImpl).getKahootById(kahootId);
         _currentKahoot = fullKahoot;
@@ -265,7 +245,6 @@ class KahootProvider with ChangeNotifier {
       }
     } catch (e) {
       _error = 'Error al cargar el kahoot: $e';
-      print('🔴 Error en loadFullKahoot: $e');
       rethrow;
     } finally {
       _isLoading = false;

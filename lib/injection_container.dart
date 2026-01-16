@@ -93,7 +93,7 @@ import 'core/mappers/exception_failure_mapper.dart';
 final sl = GetIt.instance;
 
 // 🔴 URL BASE CENTRALIZADA PARA TODA LA APLICACIÓN
-const String _baseUrl = 'https://quizzy-backend-1-zpvc.onrender.com';
+const String _baseUrl ='https://quizzy-backend-1-zpvc.onrender.com';//' // 'https://quizzy-backend-1-zpvc.onrender.com';//'
 const String _apiSufix = '/api';
 const String apiBaseUrl = '$_baseUrl$_apiSufix';
 

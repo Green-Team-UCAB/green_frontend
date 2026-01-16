@@ -38,11 +38,9 @@ class _EditKahootScreenState extends State<EditKahootScreen> {
   void initState() {
     super.initState();
     
-    // Inicializar valores por defecto
     _selectedVisibility = 'private';
     _selectedCategory = widget.kahootToEdit.category;
     
-    // Cargar datos del kahoot en los controles
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadKahootData();
     });
@@ -53,27 +51,18 @@ class _EditKahootScreenState extends State<EditKahootScreen> {
     final mediaProvider = Provider.of<MediaProvider>(context, listen: false);
     
     try {
-      // 🔴 CORRECCIÓN: Intentar cargar el kahoot completo desde el backend
-      print('🔴 Intentando cargar kahoot completo ID: ${widget.kahootToEdit.id}');
-      
       if (widget.kahootToEdit.id != null && widget.kahootToEdit.id!.isNotEmpty) {
-        // Intentar cargar el kahoot completo
         await kahootProvider.loadFullKahoot(widget.kahootToEdit.id!);
       } else {
-        // Si no hay ID, usar los datos básicos
         kahootProvider.loadKahoot(widget.kahootToEdit);
       }
       
-      // Inicializar controles con datos actuales
       await _initializeControls(kahootProvider, mediaProvider);
       
     } catch (e) {
-      print('🔴 Error al cargar kahoot completo: $e');
-      // Si falla, mostrar mensaje de error pero continuar con datos básicos
       kahootProvider.loadKahoot(widget.kahootToEdit);
       await _initializeControls(kahootProvider, mediaProvider);
       
-      // Mostrar snackbar informativo
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -84,7 +73,6 @@ class _EditKahootScreenState extends State<EditKahootScreen> {
       }
     }
     
-    // Cargar temas y categorías
     await _loadAdditionalData();
   }
 
@@ -94,14 +82,12 @@ class _EditKahootScreenState extends State<EditKahootScreen> {
     _titleController.text = currentKahoot.title;
     _descriptionController.text = currentKahoot.description ?? '';
     
-    // 🔴 CORRECCIÓN: Convertir a minúscula para coincidir con DropdownButton
     final visibilityValue = currentKahoot.visibility ?? 'private';
     _selectedVisibility = visibilityValue.toLowerCase();
     
     _selectedThemeId = currentKahoot.themeId;
     _selectedCoverImageId = currentKahoot.coverImageId;
     
-    // 🔴 CORRECCIÓN: Obtener la ruta local de la imagen de portada
     if (_selectedCoverImageId != null && _selectedCoverImageId!.isNotEmpty) {
       final localPath = mediaProvider.getLocalPath(_selectedCoverImageId!);
       
@@ -138,7 +124,6 @@ class _EditKahootScreenState extends State<EditKahootScreen> {
         await categoryProvider.loadCategories();
       }
 
-      // 🔴 CORRECCIÓN: Buscar el tema actual por su ID
       if (_selectedThemeId != null && _selectedThemeId!.isNotEmpty) {
         final currentTheme = themeProvider.themes.firstWhere(
           (theme) => theme.id == _selectedThemeId,
@@ -156,7 +141,6 @@ class _EditKahootScreenState extends State<EditKahootScreen> {
         }
       }
     } catch (e) {
-      print('Error al cargar tema: $e');
     } finally {
       if (mounted) {
         setState(() {
@@ -214,7 +198,6 @@ class _EditKahootScreenState extends State<EditKahootScreen> {
           IconButton(
             icon: Icon(Icons.save),
             onPressed: () async {
-              // Validación antes de guardar
               final validationError = kahootProvider.validate();
               if (validationError != null) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -246,7 +229,6 @@ class _EditKahootScreenState extends State<EditKahootScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 🔴 Mostrar mensaje de error si existe
                   if (kahootProvider.error != null)
                     Container(
                       padding: EdgeInsets.all(12),
@@ -270,12 +252,10 @@ class _EditKahootScreenState extends State<EditKahootScreen> {
                       ),
                     ),
 
-                  // Portada con multimedia
                   _buildCoverImageSection(mediaProvider),
 
                   SizedBox(height: 24),
 
-                  // Título
                   TextField(
                     controller: _titleController,
                     decoration: InputDecoration(
@@ -287,7 +267,6 @@ class _EditKahootScreenState extends State<EditKahootScreen> {
                   ),
                   SizedBox(height: 16),
 
-                  // Descripción
                   TextField(
                     controller: _descriptionController,
                     maxLines: 3,
@@ -300,7 +279,6 @@ class _EditKahootScreenState extends State<EditKahootScreen> {
                   ),
                   SizedBox(height: 16),
 
-                  // Tema
                   StatefulBuilder(
                     builder: (context, setState) {
                       return ListTile(
@@ -327,13 +305,7 @@ class _EditKahootScreenState extends State<EditKahootScreen> {
                               _selectedThemeId = selectedTheme.id;
                             });
                             
-                            print('🔴 [DEBUG edit] Tema seleccionado:');
-                            print('   Nombre: ${selectedTheme.name}');
-                            print('   ID: ${selectedTheme.id}');
-                            
                             kahootProvider.setThemeId(selectedTheme.id);
-                            
-                            print('   themeId en provider: ${kahootProvider.currentKahoot.themeId}');
                           }
                         },
                       );
@@ -341,12 +313,11 @@ class _EditKahootScreenState extends State<EditKahootScreen> {
                   ),
                   Divider(),
 
-                  // 🔴 CORRECCIÓN: Visibilidad - Asegurar que el valor esté en minúscula
                   ListTile(
                     contentPadding: EdgeInsets.zero,
                     title: Text('Visible para'),
                     trailing: DropdownButton<String>(
-                      value: _selectedVisibility?.toLowerCase(), // 🔴 Asegurar minúscula
+                      value: _selectedVisibility?.toLowerCase(),
                       onChanged: (value) {
                         if (value != null) {
                           setState(() {
@@ -369,11 +340,9 @@ class _EditKahootScreenState extends State<EditKahootScreen> {
                   ),
                   Divider(),
 
-                  // Categoría - Ahora dinámica desde el backend
                   _buildCategorySection(categoryProvider, kahootProvider),
                   Divider(),
 
-                  // Preguntas
                   Text(
                     'Preguntas (${kahootProvider.currentKahoot.questions.length})',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -393,7 +362,6 @@ class _EditKahootScreenState extends State<EditKahootScreen> {
                           question: question,
                           index: index,
                           onTap: () {
-                            // Navegar a la pantalla de edición de pregunta según el tipo
                             if (question.type == QuestionType.quiz) {
                               Navigator.push(
                                 context,
@@ -443,14 +411,12 @@ class _EditKahootScreenState extends State<EditKahootScreen> {
                               ),
                             );
                           },
-                          // ✅ Funcionalidad para duplicar pregunta
                           onDuplicate: () {
                             kahootProvider.duplicateQuestion(index);
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(content: Text('Pregunta duplicada correctamente')),
                             );
                           },
-                          // ✅ Funcionalidad para cambiar puntuación
                           onChangePoints: () {
                             showDialog(
                               context: context,
@@ -535,12 +501,10 @@ class _EditKahootScreenState extends State<EditKahootScreen> {
 
                   SizedBox(height: 24),
 
-                  // Estadísticas del Kahoot
                   _buildKahootStats(kahootProvider),
 
                   SizedBox(height: 24),
 
-                  // Botón para añadir pregunta
                   Center(
                     child: ElevatedButton.icon(
                       icon: Icon(Icons.add),
@@ -597,7 +561,6 @@ class _EditKahootScreenState extends State<EditKahootScreen> {
       );
     }
 
-    // Si _selectedCategory es null y hay categorías, seleccionar la primera
     if (_selectedCategory == null && categoryProvider.categories.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         setState(() {
@@ -607,17 +570,14 @@ class _EditKahootScreenState extends State<EditKahootScreen> {
       });
     }
 
-    // 🔴 CORRECCIÓN: Normalizar el valor seleccionado
     String? normalizedCategory = _selectedCategory;
     if (normalizedCategory != null && categoryProvider.categories.isNotEmpty) {
-      // Buscar coincidencia exacta
       final exactMatch = categoryProvider.categories.firstWhere(
         (cat) => cat.toLowerCase() == normalizedCategory!.toLowerCase(),
         orElse: () => '',
       );
       
       if (exactMatch.isEmpty) {
-        // Si no hay coincidencia exacta, usar la primera categoría
         normalizedCategory = categoryProvider.categories.first;
         WidgetsBinding.instance.addPostFrameCallback((_) {
           setState(() {
@@ -783,7 +743,6 @@ class _EditKahootScreenState extends State<EditKahootScreen> {
         .where((q) => q.mediaId != null && q.mediaId!.isNotEmpty)
         .length;
 
-    // Contar respuestas con multimedia
     int answersWithMedia = 0;
     for (var question in kahoot.questions) {
       answersWithMedia += question.answers

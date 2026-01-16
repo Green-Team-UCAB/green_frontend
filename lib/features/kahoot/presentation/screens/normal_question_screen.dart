@@ -24,7 +24,6 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
   String? _selectedMediaId;
   int _points = 1000;
 
-  // Map para rastrear imágenes de respuestas
   Map<int, String?> _answerMediaIds = {};
   Map<int, String?> _answerLocalPaths = {};
 
@@ -74,7 +73,6 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
       _answerControllers.add(TextEditingController(text: answer.text));
       _answerMediaIds[i] = answer.mediaId;
 
-      // Obtener ruta local si existe
       if (answer.mediaId != null && answer.mediaId!.isNotEmpty) {
         _answerLocalPaths[i] = mediaProvider.getLocalPath(answer.mediaId!);
       } else {
@@ -100,15 +98,13 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
       final media = await mediaProvider.pickImageFromGallery();
       if (media != null) {
         setState(() {
-          // 🔴 CORRECCIÓN: Limpiar texto cuando se agrega imagen
           _answerControllers[answerIndex].clear();
           
           _answerMediaIds[answerIndex] = media.id;
           _answerLocalPaths[answerIndex] = media.localPath;
 
-          // Actualizar la respuesta en la lista
           _answers[answerIndex] = _answers[answerIndex].copyWith(
-            text: '', // 🔴 Limpiar texto
+            text: '',
             mediaId: media.id,
           );
         });
@@ -139,7 +135,6 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
   }
 
   void _saveQuestion() {
-    // Validaciones
     if (_questionTextController.text.isEmpty) {
       ScaffoldMessenger.of(
         context,
@@ -154,12 +149,10 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
       return;
     }
 
-    // Asegurar que timeLimit sea positivo
     if (_timeLimit <= 0) {
       _timeLimit = 20;
     }
 
-    // 🔴 VALIDACIÓN MEJORADA: Verificar que cada respuesta tenga texto O imagen, no ambos
     for (var i = 0; i < _answers.length; i++) {
       final answer = _answers[i];
       final hasText = answer.text != null && answer.text!.isNotEmpty;
@@ -193,7 +186,6 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
     }
 
     for (var i = 0; i < _answers.length; i++) {
-      // 🔴 VALIDACIÓN MODIFICADA: Solo verificar si tiene texto O imagen
       final hasText = _answers[i].text != null && _answers[i].text!.isNotEmpty;
       final hasMedia = _answerMediaIds[i] != null;
       
@@ -274,7 +266,6 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
             ),
             SizedBox(height: 20),
 
-            // Multimedia para la pregunta
             _buildQuestionMediaSection(),
 
             SizedBox(height: 20),
@@ -356,7 +347,6 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
             style: TextStyle(fontWeight: FontWeight.bold)),
         SizedBox(height: 10),
 
-        // Mostrar imagen si existe
         if (_selectedMediaId != null && localPath != null)
           Container(
             margin: EdgeInsets.only(bottom: 10),
@@ -369,7 +359,6 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
             ),
             child: Stack(
               children: [
-                // 🔴 CORRECCIÓN: Imagen centrada con BoxFit.contain
                 Center(
                   child: Container(
                     constraints: BoxConstraints(
@@ -380,7 +369,7 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
                       borderRadius: BorderRadius.circular(8),
                       child: Image.file(
                         File(localPath),
-                        fit: BoxFit.contain, // 🔴 CAMBIADO: de cover a contain
+                        fit: BoxFit.contain,
                         errorBuilder: (context, error, stackTrace) {
                           return Container(
                             color: Colors.grey[200],
@@ -542,7 +531,6 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
               ],
             ),
 
-            // Imagen de la respuesta
             if (hasMedia && localPath != null)
               Container(
                 margin: EdgeInsets.only(top: 8),
@@ -555,7 +543,6 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
                 ),
                 child: Stack(
                   children: [
-                    // 🔴 CORRECCIÓN: Imagen centrada con BoxFit.contain
                     Center(
                       child: Container(
                         constraints: BoxConstraints(
@@ -566,7 +553,7 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
                           borderRadius: BorderRadius.circular(8),
                           child: Image.file(
                             File(localPath),
-                            fit: BoxFit.contain, // 🔴 CAMBIADO: de cover a contain
+                            fit: BoxFit.contain,
                             errorBuilder: (context, error, stackTrace) {
                               return Container(
                                 color: Colors.grey[200],
@@ -600,7 +587,6 @@ class _NormalQuestionScreenState extends State<NormalQuestionScreen> {
                 ),
               ),
 
-            // Botón para agregar multimedia a la respuesta
             Align(
               alignment: Alignment.centerRight,
               child: TextButton.icon(

@@ -14,7 +14,6 @@ class KahootRepositoryImpl implements KahootRepository {
 
   @override
   Future<List<Kahoot>> getKahoots() async {
-    // TODO: Implementar cuando se tenga el endpoint
     return [];
   }
 
