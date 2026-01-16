@@ -2,28 +2,29 @@ import 'package:flutter/material.dart';
 import 'package:green_frontend/features/kahoot/application/use_cases/save_kahoot_use_case.dart';
 import 'package:green_frontend/features/kahoot/domain/entities/kahoot.dart';
 import 'package:green_frontend/features/kahoot/domain/entities/question.dart';
-// ✅ NUEVOS IMPORTS NECESARIOS
 import 'package:green_frontend/features/kahoot/domain/entities/answer.dart';
 import 'package:green_frontend/core/network/ai_service.dart';
-import 'package:green_frontend/injection_container.dart'; // Para obtener sl<AiService>()
+import 'package:green_frontend/features/kahoot/infrastructure/repositories/kahoot_repository_impl.dart';
+import 'package:green_frontend/injection_container.dart';
+import 'package:green_frontend/features/kahoot/domain/repositories/ikahoot_repository.dart';
 
 class KahootProvider with ChangeNotifier {
   Kahoot _currentKahoot = Kahoot.empty();
   bool _isLoading = false;
   String? _error;
   final SaveKahootUseCase _saveKahootUseCase;
+  final KahootRepository _kahootRepository; // 🔴 AÑADIDO
 
-  // ✅ VARIABLE PARA EL ESTADO DE CARGA DE IA
   bool _isGeneratingAi = false;
   bool get isGeneratingAi => _isGeneratingAi;
 
-  KahootProvider(this._saveKahootUseCase);
+  // 🔴 MODIFICADO: Ahora recibe KahootRepository
+  KahootProvider(this._saveKahootUseCase, this._kahootRepository);
 
   Kahoot get currentKahoot => _currentKahoot;
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  // ... (Tus métodos setters existentes: setTitle, setDescription, etc. déjalos igual) ...
   void setTitle(String title) {
     _currentKahoot = _currentKahoot.copyWith(title: title);
     notifyListeners();
@@ -82,7 +83,6 @@ class KahootProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // ✅ NUEVO: Duplicar una pregunta específica
   void duplicateQuestion(int index) {
     if (index < 0 || index >= _currentKahoot.questions.length) return;
     
@@ -96,7 +96,6 @@ class KahootProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // ✅ NUEVO: Cambiar puntuación de una pregunta
   void changeQuestionPoints(int index, int newPoints) {
     if (index < 0 || index >= _currentKahoot.questions.length) return;
     
@@ -112,7 +111,6 @@ class KahootProvider with ChangeNotifier {
     updateQuestion(index, updatedQuestion);
   }
 
-  // ✅ NUEVO: Reordenar preguntas
   void reorderQuestions(int oldIndex, int newIndex) {
     if (oldIndex < newIndex) {
       newIndex -= 1;
@@ -126,29 +124,25 @@ class KahootProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // ✅ NUEVO MÉTODO: GENERAR CON IA
   Future<void> generateWithAi(String topic) async {
     _isGeneratingAi = true;
     _error = null;
-    notifyListeners(); // Muestra el spinner de carga
+    notifyListeners();
 
     try {
-      final aiService = sl<AiService>(); // Obtenemos el servicio inyectado
+      final aiService = sl<AiService>();
       final data = await aiService.generateFullQuiz(topic);
 
       if (data != null) {
-        // 1. Actualizar Título y Descripción
         _currentKahoot = _currentKahoot.copyWith(
           title: data['title'] ?? 'Quiz IA',
           description: data['description'] ?? '',
         );
 
-        // 2. Convertir JSON a Entidades (Question y Answer)
         final List<dynamic> questionsJson = data['questions'];
         final List<Question> newQuestions = [];
 
         for (var q in questionsJson) {
-          // IDs temporales únicos para la UI
           final String qId =
               DateTime.now().millisecondsSinceEpoch.toString() +
               q['text'].hashCode.toString();
@@ -176,7 +170,6 @@ class KahootProvider with ChangeNotifier {
           );
         }
 
-        // 3. Reemplazar preguntas actuales con las nuevas
         _currentKahoot = _currentKahoot.copyWith(questions: newQuestions);
       } else {
         _error = "La IA no pudo generar el quiz. Intenta otro tema.";
@@ -185,7 +178,7 @@ class KahootProvider with ChangeNotifier {
       _error = "Error conectando con IA: $e";
     } finally {
       _isGeneratingAi = false;
-      notifyListeners(); // Oculta el spinner y actualiza la pantalla
+      notifyListeners();
     }
   }
 
@@ -195,7 +188,6 @@ class KahootProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      // 🔴 DEBUG ANTES DE GUARDAR
       print('🔴 [DEBUG provider saveKahoot] Antes de guardar:');
       print('   Título: ${_currentKahoot.title}');
       print('   ThemeId: "${_currentKahoot.themeId}"');
@@ -231,7 +223,6 @@ class KahootProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // ✅ NUEVO: Validar si el kahoot está listo para guardar
   String? validate() {
     if (_currentKahoot.title.isEmpty) {
       return 'El título es requerido';
@@ -253,5 +244,32 @@ class KahootProvider with ChangeNotifier {
     }
     
     return null;
+  }
+
+  // 🔴 MODIFICADO: Usar _kahootRepository que recibimos en el constructor
+  Future<void> loadFullKahoot(String kahootId) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      print('🔴 [Provider] Cargando kahoot completo ID: $kahootId');
+      
+      // Verificar si el repositorio tiene el método getKahootById
+      if (_kahootRepository is KahootRepositoryImpl) {
+        final fullKahoot = await (_kahootRepository as KahootRepositoryImpl).getKahootById(kahootId);
+        _currentKahoot = fullKahoot;
+        notifyListeners();
+      } else {
+        throw Exception('Repositorio no soporta obtener kahoot por ID');
+      }
+    } catch (e) {
+      _error = 'Error al cargar el kahoot: $e';
+      print('🔴 Error en loadFullKahoot: $e');
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 }

@@ -33,6 +33,7 @@ import 'package:green_frontend/features/kahoot/application/providers/kahoot_prov
 import 'package:green_frontend/features/kahoot/application/use_cases/save_kahoot_use_case.dart';
 import 'package:green_frontend/features/kahoot/infrastructure/datasources/kahoot_remote_datasource.dart';
 import 'package:green_frontend/features/kahoot/infrastructure/repositories/kahoot_repository_impl.dart';
+import 'package:green_frontend/features/kahoot/domain/repositories/ikahoot_repository.dart';
 
 // --- Feature: Media ---
 import 'package:green_frontend/features/media/application/providers/media_provider.dart';
@@ -49,6 +50,7 @@ import 'package:green_frontend/features/media/infrastructure/datasources/media_r
 import 'package:green_frontend/features/kahoot/application/providers/theme_provider.dart';
 import 'package:green_frontend/features/kahoot/infrastructure/datasources/theme_remote_datasource.dart';
 import 'package:green_frontend/features/kahoot/infrastructure/repositories/theme_repository_impl.dart';
+import 'package:green_frontend/features/kahoot/domain/repositories/itheme_repository.dart';
 
 // --- Feature: Single Player ---
 import 'package:green_frontend/features/single_player/application/start_attempt.dart';
@@ -70,6 +72,8 @@ import 'package:green_frontend/features/multiplayer/presentation/screens/multipl
 import 'package:green_frontend/features/multiplayer/presentation/bloc/multiplayer_bloc.dart';
 import 'package:green_frontend/features/user/presentation/profile_bloc.dart';
 
+// 🔴 AÑADIDO: navigatorKey global para acceder al contexto desde los providers
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   // Configuración de inicialización
@@ -231,28 +235,30 @@ class MyApp extends StatelessWidget {
           create: (_) => ThemeRemoteDataSource(client: http.Client()),
         ),
 
-        // Repositories
-        Provider<KahootRepositoryImpl>(
+        // 🔴 CORRECCIÓN: Usar la interfaz KahootRepository en lugar de KahootRepositoryImpl
+        Provider<KahootRepository>(
           create: (context) =>
               KahootRepositoryImpl(context.read<KahootRemoteDataSource>()),
         ),
 
-        Provider<ThemeRepositoryImpl>(
+        // 🔴 CORRECCIÓN: Usar la interfaz ThemeRepository
+        Provider<ThemeRepository>(
           create: (context) => ThemeRepositoryImpl(
             remoteDataSource: context.read<ThemeRemoteDataSource>(),
           ),
         ),
 
-        // Providers
+        // 🔴 CORRECCIÓN: KahootProvider ahora recibe KahootRepository como segundo parámetro
         ChangeNotifierProvider(
           create: (context) => KahootProvider(
-            SaveKahootUseCase(context.read<KahootRepositoryImpl>()),
+            SaveKahootUseCase(context.read<KahootRepository>()),
+            context.read<KahootRepository>(), // 🔴 SEGUNDO PARÁMETRO AÑADIDO
           ),
         ),
 
         ChangeNotifierProvider<ThemeProvider>(
           create: (context) => ThemeProvider(
-            themeRepository: context.read<ThemeRepositoryImpl>(),
+            themeRepository: context.read<ThemeRepository>(),
           ),
         ),
 
@@ -288,12 +294,13 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Kahoot Clone',
         debugShowCheckedModeBanner: false,
+        // 🔴 AÑADIDO: navigatorKey para poder acceder al contexto desde los providers
+        navigatorKey: navigatorKey,
         routes: {
         '/multiplayer_lobby': (context) => const MultiplayerLobbyScreen(),
         '/multiplayer_game': (context) => const MultiplayerGameScreen(),
         '/multiplayer_results': (context) => const MultiplayerResultsScreen(),
         '/multiplayer_podium': (context) => const MultiplayerPodiumScreen(),
-        
         },
         theme: ThemeData(
           scaffoldBackgroundColor: AppPallete.backgroundColor,
