@@ -7,6 +7,10 @@ import 'package:flutter/foundation.dart';
 import 'core/network/api_client.dart';
 import 'core/storage/token_storage.dart';
 
+//--- Feature: User ---
+import 'features/user/presentation/profile_bloc.dart';
+import 'features/auth/application/get_user_profile.dart';
+
 // --- Feature: Discovery (H6.1) ---
 import 'features/discovery/data/datasources/discovery_remote_data_source.dart';
 import 'features/discovery/data/repositories/discovery_repository_impl.dart';
@@ -77,6 +81,10 @@ import 'features/multiplayer/presentation/bloc/multiplayer_bloc.dart';
 import 'features/multiplayer/infraestructure/repositories/multiplayer_session_repository_impl.dart';
 import 'features/multiplayer/domain/repositories/multiplayer_session_repository.dart';
 import 'features/multiplayer/infraestructure/datasources/multiplayer_rest_datasource.dart';
+
+import 'features/auth/domain/repositories/auth_repository.dart';
+import 'features/auth/infraestructure/repositories/auth_repository_impl.dart';
+import 'features/auth/infraestructure/datasources/auth_datasource.dart';
 
 // Core Mappers
 import 'core/mappers/exception_failure_mapper.dart';
@@ -295,6 +303,26 @@ Future<void> init() async {
       listenGameResults: sl(),
       listenHostResults: sl(),
     ),
+  );
+
+  // ================================================================
+  // AUTH & PROFILE FEATURE
+  // ================================================================
+
+  // 1. Bloc: Se registra como Factory porque queremos una instancia nueva cada vez
+  sl.registerFactory(() => ProfileBloc(getUserProfile: sl()));
+
+  // 2. Use Cases: Se registran como Singletons ya que no guardan estado
+  sl.registerLazySingleton(() => GetUserProfileUseCase(sl()));
+
+  // 3. Repository: Debes registrar la interfaz vinculada a su implementación
+  sl.registerLazySingleton<AuthRepository>(
+    () => AuthRepositoryImpl(dataSource: sl(), mapper: sl()),
+  );
+
+  // 4. Data Source: La fuente de datos remota
+  sl.registerLazySingleton<AuthDataSource>(
+    () => AuthRemoteDataSourceImpl(client: sl()),
   );
 
   // ================================================================

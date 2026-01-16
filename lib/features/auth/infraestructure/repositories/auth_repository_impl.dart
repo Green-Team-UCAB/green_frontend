@@ -94,4 +94,22 @@ Future<Either<Failure, User>> register({
       return left(mapper.mapExceptionToFailure(e));
     }
   }
+
+  @override
+Future<Either<Failure, User>> getUserProfile() async {
+  try {
+    // 1. Llamamos al DataSource que configuramos según la documentación (GET /user/profile/)
+    final userModel = await dataSource.getUserProfile();
+    
+    // 2. Convertimos el Modelo de infraestructura a nuestra Entidad de dominio
+    return right(userModel.toEntity());
+    
+  } on Exception catch (e) {
+    debugPrint("AuthRepositoryImpl.getUserProfile EXCEPTION => $e");
+    
+    // 3. Mapeamos la excepción (ServerException, AuthException, etc.) a un Failure
+    final failure = mapper.mapExceptionToFailure(e);
+    return left(failure);
+  }
+}
 }

@@ -68,6 +68,7 @@ import 'package:green_frontend/features/multiplayer/presentation/screens/multipl
 import 'package:green_frontend/features/multiplayer/presentation/screens/multiplayer_podium_screen.dart';
 
 import 'package:green_frontend/features/multiplayer/presentation/bloc/multiplayer_bloc.dart';
+import 'package:green_frontend/features/user/presentation/profile_bloc.dart';
 
 
 void main() async {
@@ -282,6 +283,7 @@ class MyApp extends StatelessWidget {
             getKahootPreview: context.read<GetKahootPreview>(),
           ),
         ),
+        BlocProvider(create: (context) => di.sl<ProfileBloc>()),
       ],
       child: MaterialApp(
         title: 'Kahoot Clone',
@@ -292,7 +294,6 @@ class MyApp extends StatelessWidget {
         '/multiplayer_results': (context) => const MultiplayerResultsScreen(),
         '/multiplayer_podium': (context) => const MultiplayerPodiumScreen(),
         
-          '/multiplayer_lobby': (context) => const MultiplayerLobbyScreen(),
         },
         theme: ThemeData(
           scaffoldBackgroundColor: AppPallete.backgroundColor,
