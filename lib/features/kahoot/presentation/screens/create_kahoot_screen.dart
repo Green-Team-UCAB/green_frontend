@@ -26,7 +26,7 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
   String? _selectedVisibility = 'private';
   String? _selectedCategory;
   String? _selectedThemeName = 'Seleccionar tema';
-  String? _selectedThemeId = '';
+
   String? _selectedCoverImageId;
   String? _selectedCoverLocalPath;
 
@@ -38,6 +38,8 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
       final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
       final categoryProvider =
           Provider.of<CategoryProvider>(context, listen: false);
+      final kahootProvider =
+          Provider.of<KahootProvider>(context, listen: false);
 
       if (themeProvider.themes.isEmpty) {
         themeProvider.loadThemes();
@@ -46,6 +48,17 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
       if (categoryProvider.categories.isEmpty) {
         categoryProvider.loadCategories();
       }
+
+      // Populate fields if Kahoot data exists (e.g. from AI)
+      final currentKahoot = kahootProvider.currentKahoot;
+
+      if (currentKahoot.title.isNotEmpty) {
+        _titleController.text = currentKahoot.title;
+      }
+
+      if (currentKahoot.description?.isNotEmpty ?? false) {
+        _descriptionController.text = currentKahoot.description!;
+      }
     });
   }
 
@@ -53,6 +66,7 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
     final mediaProvider = Provider.of<MediaProvider>(context, listen: false);
     try {
       final media = await mediaProvider.pickImageFromGallery();
+      if (!mounted) return;
       if (media != null) {
         setState(() {
           _selectedCoverImageId = media.id;
@@ -234,7 +248,10 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
             SizedBox(height: 16),
 
             if (kahootProvider.currentKahoot.questions.isNotEmpty)
-              ...kahootProvider.currentKahoot.questions.asMap().entries.map((entry) {
+              ...kahootProvider.currentKahoot.questions
+                  .asMap()
+                  .entries
+                  .map((entry) {
                 final index = entry.key;
                 final question = entry.value;
                 return QuestionTile(
@@ -444,7 +461,8 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
                             borderRadius: BorderRadius.circular(8),
                             child: Image.file(
                               File(_selectedCoverLocalPath!),
-                              fit: BoxFit.contain, // 🔴 CAMBIADO: de cover a contain
+                              fit: BoxFit
+                                  .contain, // 🔴 CAMBIADO: de cover a contain
                               errorBuilder: (context, error, stackTrace) {
                                 return Container(
                                   color: Colors.grey[200],
@@ -466,7 +484,7 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
                           onTap: _removeCoverImage,
                           child: Container(
                             decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.7),
+                              color: Colors.black.withValues(alpha: 0.7),
                               shape: BoxShape.circle,
                             ),
                             padding: EdgeInsets.all(8),
@@ -483,7 +501,7 @@ class _CreateKahootScreenState extends State<CreateKahootScreen> {
                           padding:
                               EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.7),
+                            color: Colors.black.withValues(alpha: 0.7),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Row(

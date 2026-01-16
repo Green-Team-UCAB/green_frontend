@@ -3,26 +3,30 @@ import 'dart:developer' as dev;
 import 'package:http/http.dart' as http;
 
 class AiService {
-  static const String _apiKey = 'AIzaSyBiN1xsuPduKG5CqTTMbOnJSJMfKuTyDbo';
+  // Tu API Key (Validada ✅)
+  static const String _apiKey = 'AIzaSyC9gR85mTN5vzH3dfSjjh8y4dmVtqm31Eo';
 
-  // Usamos el modelo confirmado
+  // ✅ USAMOS EL ALIAS QUE FUNCIONÓ EN POWERSHELL
   static const String _baseUrl =
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent';
 
   AiService();
 
   Future<Map<String, dynamic>?> generateFullQuiz(String topic) async {
-    dev.log('🤖 [AiService] Solicitando quiz sobre: "$topic"');
+    dev.log(
+        '🤖 [AiService] Solicitando quiz sobre: "$topic" (gemini-flash-latest)');
 
     final url = Uri.parse('$_baseUrl?key=$_apiKey');
 
     final prompt = '''
-      Crea un quiz educativo sobre "$topic".
-      Responde ÚNICAMENTE con un JSON válido.
-      El JSON debe tener esta estructura exacta:
+      Genera un quiz educativo sobre "$topic".
+      Responde ÚNICAMENTE con un objeto JSON válido.
+      NO uses bloques de código markdown (como ```json).
+      
+      Estructura JSON requerida:
       {
         "title": "Título sugerido",
-        "description": "Descripción sugerida",
+        "description": "Descripción breve",
         "questions": [
           {
             "text": "¿Pregunta?",
@@ -30,15 +34,15 @@ class AiService {
             "timeLimit": 20,
             "points": 1000,
             "answers": [
-              {"text": "Opción A", "isCorrect": false},
-              {"text": "Opción B", "isCorrect": true},
-              {"text": "Opción C", "isCorrect": false},
-              {"text": "Opción D", "isCorrect": false}
+              {"text": "Opción 1", "isCorrect": false},
+              {"text": "Opción 2", "isCorrect": true},
+              {"text": "Opción 3", "isCorrect": false},
+              {"text": "Opción 4", "isCorrect": false}
             ]
           }
         ]
       }
-      Genera al menos 4 preguntas.
+      Genera 4 preguntas.
     ''';
 
     try {
@@ -52,6 +56,7 @@ class AiService {
         ],
         "generationConfig": {
           "temperature": 0.7,
+          // Este modelo soporta JSON mode nativo, lo que reduce errores de parseo
           "responseMimeType": "application/json"
         }
       });
@@ -68,91 +73,63 @@ class AiService {
             data['candidates']?[0]?['content']?['parts']?[0]?['text'];
 
         if (rawText != null) {
-          dev.log('✅ [AiService] Éxito con la IA real');
-          return _parseJsonFromText(rawText);
+          dev.log('✅ [AiService] ¡Éxito! Respuesta recibida.');
+          return _parseJsonSafe(rawText);
         }
       } else {
-        // Si hay error (429 Quota, 500 Server, etc), mostramos log pero NO rompemos la app
         dev.log(
-            '⚠️ [AiService] Falló la IA (${response.statusCode}). Usando Mock de respaldo.');
+            '⚠️ [AiService] Error HTTP ${response.statusCode}: ${response.body}');
+
+        // Manejo de Cuota Excedida (Error 429)
+        if (response.statusCode == 429) {
+          dev.log('⏳ Cuota excedida momentáneamente. Intenta en 1 min.');
+        }
       }
     } catch (e) {
-      dev.log('❌ [AiService] Excepción de red: $e. Usando Mock de respaldo.');
+      dev.log('❌ [AiService] Error de conexión: $e');
     }
 
-    // 🛡️ SALVAVIDAS: Si llegamos aquí, algo falló. Devolvemos el Mock.
+    // Fallback al Mock si falla la red o la cuota
     return _getMockQuiz(topic);
   }
 
-  /// Parsea el JSON que viene de la IA
-  Map<String, dynamic>? _parseJsonFromText(String text) {
+  Map<String, dynamic>? _parseJsonSafe(String text) {
     try {
-      final cleanText =
+      String clean =
           text.replaceAll('```json', '').replaceAll('```', '').trim();
-      final startIndex = cleanText.indexOf('{');
-      final endIndex = cleanText.lastIndexOf('}');
-      if (startIndex != -1 && endIndex != -1) {
-        final jsonString = cleanText.substring(startIndex, endIndex + 1);
-        return Map<String, dynamic>.from(jsonDecode(jsonString));
-      }
+      return jsonDecode(clean) as Map<String, dynamic>;
     } catch (e) {
-      dev.log('⚠️ Error parseando JSON: $e');
+      dev.log('Error parseando JSON: $e');
+      return null;
     }
-    return null;
   }
 
-  /// 🎭 MOCK DATA: Genera un quiz falso pero válido si la IA falla
   Map<String, dynamic> _getMockQuiz(String topic) {
-    dev.log('🎭 Generando datos simulados para "$topic"');
+    dev.log('🎭 Usando Mock Data (Respaldo)');
     return {
       "title": "Quiz sobre $topic (Modo Demo)",
-      "description":
-          "Este quiz fue generado automáticamente para la demostración sobre $topic.",
+      "description": "Generado localmente (Sin conexión a IA)",
       "questions": [
         {
-          "text": "¿Cuál es el concepto principal de $topic?",
+          "text": "¿Pregunta de prueba sobre $topic?",
           "type": "quiz",
           "timeLimit": 20,
           "points": 1000,
           "answers": [
-            {"text": "Es algo irrelevante", "isCorrect": false},
-            {"text": "Es el concepto clave A", "isCorrect": true},
-            {"text": "No tiene definición", "isCorrect": false},
-            {"text": "Es una fruta", "isCorrect": false}
+            {"text": "A", "isCorrect": true},
+            {"text": "B", "isCorrect": false},
+            {"text": "C", "isCorrect": false},
+            {"text": "D", "isCorrect": false}
           ]
         },
         {
-          "text": "¿Verdadero o Falso? $topic es importante.",
-          "type": "quiz", // O true_false si tu app lo soporta en la UI
-          "timeLimit": 10,
-          "points": 500,
-          "answers": [
-            {"text": "Verdadero", "isCorrect": true},
-            {"text": "Falso", "isCorrect": false}
-          ]
-        },
-        {
-          "text": "¿En qué año se popularizó $topic?",
+          "text": "Segunda pregunta mock",
           "type": "quiz",
-          "timeLimit": 20,
+          "timeLimit": 15,
           "points": 1000,
           "answers": [
-            {"text": "1990", "isCorrect": false},
-            {"text": "2024", "isCorrect": true},
-            {"text": "1500", "isCorrect": false},
-            {"text": "Nunca", "isCorrect": false}
-          ]
-        },
-        {
-          "text": "Selecciona la característica de $topic",
-          "type": "quiz",
-          "timeLimit": 30,
-          "points": 2000,
-          "answers": [
-            {"text": "Innovación", "isCorrect": true},
-            {"text": "Aburrimiento", "isCorrect": false},
-            {"text": "Lentitud", "isCorrect": false},
-            {"text": "Ninguna de las anteriores", "isCorrect": false}
+            {"text": "Falso", "isCorrect": false},
+            {"text": "Verdadero", "isCorrect": true}
           ]
         }
       ]
