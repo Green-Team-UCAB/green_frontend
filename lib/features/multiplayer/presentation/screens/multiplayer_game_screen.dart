@@ -93,10 +93,10 @@ class MultiplayerGameScreen extends StatelessWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        if (slide.slideImageURL != null)
+        if (slide?.slideImageUrl != null)
           SizedBox(
             height: 180, // 🔥 Tamaño fijo, NO Expanded
-            child: Image.network(slide.slideImageURL, fit: BoxFit.contain),
+            child: Image.network(slide.slideImageUrl, fit: BoxFit.contain),
           ),
         Padding(
           padding: const EdgeInsets.all(16.0),

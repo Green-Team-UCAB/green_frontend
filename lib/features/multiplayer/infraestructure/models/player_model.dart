@@ -13,7 +13,7 @@ class PlayerModel extends Player {
     return PlayerModel(
       playerId: json['playerId'] as String,
       nickname: json['nickname'] as String,
-      score: json['score'] as int,
+      score: json['score'] as int? ?? 0,
       rank: json['rank'] as int?,
       previousRank: json['previousRank'] as int?,
     );

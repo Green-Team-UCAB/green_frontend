@@ -14,23 +14,23 @@ class SlideModel extends Slide{
   });
 
   factory SlideModel.fromJson(Map<String, dynamic> json) {
-    return SlideModel(
-      id: json['id'] ?? '',
-      position: json['position'] ?? 0,
-      type: QuestionType.values.firstWhere(
-          (e) => e.toString() == 'QuestionType.${json['type']}',
-          orElse: () => QuestionType.single),
-      timeLimitSeconds: json['timeLimitSeconds'] ?? 0,
-      questionText: json['questionText'] ?? '',
-      slideImageUrl: json['slideImageUrl'],
-      pointsValue: json['pointsValue'],
-      options: (json['options'] as List<dynamic>? ?? [])
-          .map((optionJson) =>
-              OptionModel.fromJson(optionJson as Map<String, dynamic>))
-          .toList(),
-    );
-  }
-
+  return SlideModel(
+    id: json['id'] ?? '',
+    position: json['position'] ?? 0,
+    type: QuestionType.values.firstWhere(
+      (e) => e.toString() == 'QuestionType.${(json['slideType'] ?? '').toString().toLowerCase()}',
+      orElse: () => QuestionType.single,
+    ),
+    timeLimitSeconds: json['timeLimitSeconds'] ?? 0,
+    questionText: json['questionText'] ?? '',
+    slideImageUrl: json['slideImageURL'], // 👈 coincide con el backend
+    pointsValue: json['pointsValue'],
+    options: (json['options'] as List<dynamic>? ?? [])
+        .map((optionJson) =>
+            OptionModel.fromJson(optionJson as Map<String, dynamic>))
+        .toList(),
+  );
+}
   Slide toEntity() {
     return Slide(
       id: id,
