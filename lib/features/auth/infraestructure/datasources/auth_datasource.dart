@@ -24,7 +24,6 @@ abstract class AuthDataSource {
   Future<void> resetPassword({required String email});
 
   Future<UserModel> updateProfile({
-    required String id,
     required Map<String, dynamic> body,
   });
 
@@ -156,20 +155,35 @@ Future<UserModel> register({
   }
 
   @override
+  @override
   Future<UserModel> updateProfile({
-    required String id,
     required Map<String, dynamic> body,
   }) async {
-    InputValidator.validateNotEmpty(id, 'id');
-
+    // 1. La documentación indica el path '/user/profile/' y método PATCH
     final response = await client.patch<Map<String, dynamic>>(
-      path: '$_usersPath/$id',
+      path: '/user/profile/',
       data: body,
     );
 
     if (response.statusCode == 200) {
-      return UserModel.fromJson(response.data);
+      final data = response.data;
+      
+      // 2. La documentación muestra que el recurso actualizado viene dentro de la llave "user"
+      if (data != null && data.containsKey('user')) {
+        return UserModel.fromJson(data['user'] as Map<String, dynamic>);
+      }
+      throw ServerException('Formato de respuesta inesperado');
     }
+
+    // 3. Manejo de errores específicos según la documentación
+    if (response.statusCode == 400) {
+      throw ServerException('Datos incorrectos');
+    }
+    
+    if (response.statusCode == 401) {
+      throw AuthException('Credenciales inválidas');
+    }
+
     throw ServerException('Unexpected status: ${response.statusCode}');
   }
 

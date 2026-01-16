@@ -82,32 +82,28 @@ Future<Either<Failure, User>> register({
   }
 
   @override
-  Future<Either<Failure, User>> updateProfile(User user) async {
-    try {
-      final UserModel model = await dataSource.updateProfile(
-        id: user.id,
-        body: UserModel.fromEntity(user).toJson(),
-      );
-      final User domain = model.toEntity();
-      return right(domain);
-    } on Exception catch (e) {
-      return left(mapper.mapExceptionToFailure(e));
-    }
+  Future<Either<Failure, User>> updateProfile(Map<String, dynamic> updateData) async {
+  try {
+
+    final updatedModel = await dataSource.updateProfile(
+      body: updateData,
+    );
+
+    return right(updatedModel.toEntity());
+  } on Exception catch (e) {
+    return left(mapper.mapExceptionToFailure(e));
   }
+}
 
   @override
 Future<Either<Failure, User>> getUserProfile() async {
   try {
-    // 1. Llamamos al DataSource que configuramos según la documentación (GET /user/profile/)
     final userModel = await dataSource.getUserProfile();
-    
-    // 2. Convertimos el Modelo de infraestructura a nuestra Entidad de dominio
     return right(userModel.toEntity());
     
   } on Exception catch (e) {
     debugPrint("AuthRepositoryImpl.getUserProfile EXCEPTION => $e");
-    
-    // 3. Mapeamos la excepción (ServerException, AuthException, etc.) a un Failure
+  
     final failure = mapper.mapExceptionToFailure(e);
     return left(failure);
   }
