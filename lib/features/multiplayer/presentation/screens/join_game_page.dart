@@ -18,7 +18,7 @@ class _JoinGameScreenState extends State<JoinGameScreen> {
   bool isEnteringNickname = false;
   String pin = '';
   String nickname = '';
-  
+
   final MobileScannerController cameraController = MobileScannerController();
   final TextEditingController pinTextController = TextEditingController();
   final TextEditingController nicknameController = TextEditingController();
@@ -73,7 +73,8 @@ class _JoinGameScreenState extends State<JoinGameScreen> {
         }
       },
       child: Scaffold(
-        resizeToAvoidBottomInset: false, // Lo manejamos manualmente con AnimatedPadding
+        resizeToAvoidBottomInset:
+            false, // Lo manejamos manualmente con AnimatedPadding
         body: Stack(
           children: [
             Container(
@@ -112,12 +113,14 @@ class _JoinGameScreenState extends State<JoinGameScreen> {
                         child: Row(
                           children: [
                             Expanded(
-                              child: _buildPill('Ingresar PIN', isPinSelected, () {
+                              child:
+                                  _buildPill('Ingresar PIN', isPinSelected, () {
                                 setState(() => isPinSelected = true);
                               }),
                             ),
                             Expanded(
-                              child: _buildPill('Escanear QR', !isPinSelected, () {
+                              child:
+                                  _buildPill('Escanear QR', !isPinSelected, () {
                                 pinFocusNode.unfocus();
                                 setState(() => isPinSelected = false);
                               }),
@@ -131,7 +134,8 @@ class _JoinGameScreenState extends State<JoinGameScreen> {
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 300),
                       curve: Curves.easeOutCubic,
-                      padding: EdgeInsets.only(bottom: bottomInset > 0 ? 20 : 0),
+                      padding:
+                          EdgeInsets.only(bottom: bottomInset > 0 ? 20 : 0),
                       child: Center(
                         child: SingleChildScrollView(
                           physics: const NeverScrollableScrollPhysics(),
@@ -188,19 +192,19 @@ class _JoinGameScreenState extends State<JoinGameScreen> {
           ),
         ),
         Padding(
-        padding: const EdgeInsets.only(top: 8),
-        child: Text(
-          "${nickname.length} / 20 caracteres",
-          style: TextStyle(
-            // Cambia a rojo si está fuera de rango para alertar al usuario
-            color: (nickname.length >= 6 && nickname.length <= 20) 
-                ? Colors.white54 
-                : Colors.redAccent,
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
+          padding: const EdgeInsets.only(top: 8),
+          child: Text(
+            "${nickname.length} / 20 caracteres",
+            style: TextStyle(
+              // Cambia a rojo si está fuera de rango para alertar al usuario
+              color: (nickname.length >= 6 && nickname.length <= 20)
+                  ? Colors.white54
+                  : Colors.redAccent,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
-      ),
         const SizedBox(height: 10),
         Container(width: 150, height: 2, color: Colors.white24),
         const SizedBox(height: 20),
@@ -238,7 +242,8 @@ class _JoinGameScreenState extends State<JoinGameScreen> {
           ),
         ),
         SizedBox(
-          height: 0, width: 0,
+          height: 0,
+          width: 0,
           child: TextField(
             controller: pinTextController,
             focusNode: pinFocusNode,
@@ -304,7 +309,8 @@ class _JoinGameScreenState extends State<JoinGameScreen> {
               backgroundColor: Colors.white,
               foregroundColor: const Color(0xFF6E48AA),
               minimumSize: const Size(double.infinity, 60),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30)),
               elevation: 5,
             ),
             onPressed: (isEnabled && !isLoading) ? _handleJoinAction : null,
@@ -312,7 +318,8 @@ class _JoinGameScreenState extends State<JoinGameScreen> {
                 ? const CircularProgressIndicator(color: Color(0xFF6E48AA))
                 : Text(
                     isEnteringNickname ? '¡A JUGAR!' : 'SIGUIENTE',
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold),
                   ),
           );
         },
@@ -326,9 +333,9 @@ class _JoinGameScreenState extends State<JoinGameScreen> {
     } else {
       final token = await TokenStorage.getToken();
       if (!mounted) return;
-      
+
       final bloc = context.read<MultiplayerBloc>();
-      
+
       if (isPinSelected) {
         bloc.add(OnConnectStarted(
           role: ClientRole.player,
@@ -397,12 +404,17 @@ class _ScannerOverlayPainter extends CustomPainter {
     const l = 30.0;
     canvas.drawLine(const Offset(0, l), const Offset(0, 0), cornerPaint);
     canvas.drawLine(const Offset(0, 0), const Offset(l, 0), cornerPaint);
-    canvas.drawLine(Offset(size.width - l, 0), Offset(size.width, 0), cornerPaint);
+    canvas.drawLine(
+        Offset(size.width - l, 0), Offset(size.width, 0), cornerPaint);
     canvas.drawLine(Offset(size.width, 0), Offset(size.width, l), cornerPaint);
-    canvas.drawLine(Offset(0, size.height - l), Offset(0, size.height), cornerPaint);
-    canvas.drawLine(Offset(0, size.height), Offset(l, size.height), cornerPaint);
-    canvas.drawLine(Offset(size.width - l, size.height), Offset(size.width, size.height), cornerPaint);
-    canvas.drawLine(Offset(size.width, size.height), Offset(size.width, size.height - l), cornerPaint);
+    canvas.drawLine(
+        Offset(0, size.height - l), Offset(0, size.height), cornerPaint);
+    canvas.drawLine(
+        Offset(0, size.height), Offset(l, size.height), cornerPaint);
+    canvas.drawLine(Offset(size.width - l, size.height),
+        Offset(size.width, size.height), cornerPaint);
+    canvas.drawLine(Offset(size.width, size.height),
+        Offset(size.width, size.height - l), cornerPaint);
   }
 
   @override

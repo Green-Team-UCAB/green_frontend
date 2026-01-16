@@ -4,7 +4,11 @@ import 'package:socket_io_client/socket_io_client.dart' as io;
 /// Interfaz del DataSource para el Socket.IO
 
 abstract class MultiplayerSocketDataSource {
-  Future<void> connect({required String url, required String jwt, required String pin, required String role});
+  Future<void> connect(
+      {required String url,
+      required String jwt,
+      required String pin,
+      required String role});
   void emit(String event, dynamic data);
   void disconnect();
 
@@ -23,64 +27,75 @@ abstract class MultiplayerSocketDataSource {
   Stream<Map<String, dynamic>> get onAnswerCountUpdate;
 }
 
-///Implementación concreta del DataSource 
+///Implementación concreta del DataSource
 class MultiplayerSocketDataSourceImpl implements MultiplayerSocketDataSource {
   io.Socket? _socket;
-  
+
   // Controladores para convertir eventos de socket a Streams de Dart
-  final _hostConnectedSuccessController = StreamController<Map<String, dynamic>>.broadcast();
-  final _playerConnectedSuccessController = StreamController<Map<String, dynamic>>.broadcast();
-  final _roomJoinedController = StreamController<Map<String, dynamic>>.broadcast();
-  final _playersUpdateController = StreamController<Map<String, dynamic>>.broadcast();
-  final _questionStartedController = StreamController<Map<String, dynamic>>.broadcast();
+  final _hostConnectedSuccessController =
+      StreamController<Map<String, dynamic>>.broadcast();
+  final _playerConnectedSuccessController =
+      StreamController<Map<String, dynamic>>.broadcast();
+  final _roomJoinedController =
+      StreamController<Map<String, dynamic>>.broadcast();
+  final _playersUpdateController =
+      StreamController<Map<String, dynamic>>.broadcast();
+  final _questionStartedController =
+      StreamController<Map<String, dynamic>>.broadcast();
   final _errorController = StreamController<dynamic>.broadcast();
-  final _hostResultsController = StreamController<Map<String, dynamic>>.broadcast();
-  final _playerResultsController = StreamController<Map<String, dynamic>>.broadcast();
+  final _hostResultsController =
+      StreamController<Map<String, dynamic>>.broadcast();
+  final _playerResultsController =
+      StreamController<Map<String, dynamic>>.broadcast();
   final _gameEndController = StreamController<Map<String, dynamic>>.broadcast();
-  final _sessionClosedController = StreamController<Map<String, dynamic>>.broadcast();
-  final _playerLeftController = StreamController<Map<String, dynamic>>.broadcast();
-  final _answerUpdateController = StreamController<Map<String, dynamic>>.broadcast();
+  final _sessionClosedController =
+      StreamController<Map<String, dynamic>>.broadcast();
+  final _playerLeftController =
+      StreamController<Map<String, dynamic>>.broadcast();
+  final _answerUpdateController =
+      StreamController<Map<String, dynamic>>.broadcast();
 
   @override
   @override
-Future<void> connect({
-  required String url, 
-  required String jwt, 
-  required String pin,
-  required String role, // Ahora es dinámico
-}) async {
-  final completer = Completer<void>();
-  final socketUrl = 'wss://quizzy-backend-1-zpvc.onrender.com/multiplayer-sessions';
+  Future<void> connect({
+    required String url,
+    required String jwt,
+    required String pin,
+    required String role, // Ahora es dinámico
+  }) async {
+    final completer = Completer<void>();
+    final socketUrl =
+        'wss://quizzy-backend-1-zpvc.onrender.com/multiplayer-sessions';
 
-  print('🔍 CONECTANDO COMO: $role AL PIN: $pin');
+    print('🔍 CONECTANDO COMO: $role AL PIN: $pin');
 
-  _socket = io.io(socketUrl, io.OptionBuilder()
-    .setTransports(['websocket']) 
-    .enableForceNew()
-    .enableAutoConnect()
-    // 1. Asegura que el PIN sea un String .toString()
-    // 2. Algunos servidores prefieren 'token' en lugar de 'jwt' en el auth
-    .setAuth({
-      'pin': pin.toString(), 
-      'role': role.toUpperCase(), 
-      'jwt': jwt,
-    })
-    .setQuery({
-      'pin': pin.toString(),
-      'role': role.toUpperCase(),
-      'jwt': jwt,
-    })
-    .setExtraHeaders({
-      'pin': pin.toString(),
-      'role': role.toUpperCase(),
-      'jwt': jwt,
-      'Authorization': 'Bearer $jwt',
-    })
-    .build());
+    _socket = io.io(
+        socketUrl,
+        io.OptionBuilder()
+            .setTransports(['websocket'])
+            .enableForceNew()
+            .enableAutoConnect()
+            // 1. Asegura que el PIN sea un String .toString()
+            // 2. Algunos servidores prefieren 'token' en lugar de 'jwt' en el auth
+            .setAuth({
+              'pin': pin.toString(),
+              'role': role.toUpperCase(),
+              'jwt': jwt,
+            })
+            .setQuery({
+              'pin': pin.toString(),
+              'role': role.toUpperCase(),
+              'jwt': jwt,
+            })
+            .setExtraHeaders({
+              'pin': pin.toString(),
+              'role': role.toUpperCase(),
+              'jwt': jwt,
+              'Authorization': 'Bearer $jwt',
+            })
+            .build());
 
-     
-
-    // --- MANEJO DE CONEXIÓN FÍSICA --- 
+    // --- MANEJO DE CONEXIÓN FÍSICA ---
     _socket!.onConnect((_) {
       print('✅ [DATASOURCE] Socket Conectado físicamente');
       if (!completer.isCompleted) completer.complete();
@@ -91,17 +106,18 @@ Future<void> connect({
       if (!completer.isCompleted) completer.completeError(data);
     });
 
-    _socket!.onDisconnect((reason) => print('🔌 [DATASOURCE] Socket Desconectado $reason'));
+    _socket!.onDisconnect(
+        (reason) => print('🔌 [DATASOURCE] Socket Desconectado $reason'));
 
     // Esto te dirá si el PIN es inválido o el JWT expiró
-_socket!.on('exception', (data) {
-  print('⚠️ EXCEPCIÓN DEL SERVIDOR: $data');
-});
+    _socket!.on('exception', (data) {
+      print('⚠️ EXCEPCIÓN DEL SERVIDOR: $data');
+    });
 
 // Esto te dirá si hay un error de protocolo
-_socket!.onConnectError((data) {
-  print('❌ ERROR DE PROTOCOLO: $data');
-});
+    _socket!.onConnectError((data) {
+      print('❌ ERROR DE PROTOCOLO: $data');
+    });
 
     // --- DEBUG: ATRAPA-TODO ---
     _socket!.onAny((event, data) {
@@ -109,22 +125,36 @@ _socket!.onConnectError((data) {
     });
 
     // --- MAPEOS SEGÚN PÁG 58-64 ---
-    _socket!.on('host_connected_success', (data) => _hostConnectedSuccessController.add(_toMap(data)));
-    _socket!.on('player_connected_to_server', (data) => _playerConnectedSuccessController.add(_toMap(data)));
-    _socket!.on('host_lobby_update', (data) => _playersUpdateController.add(_toMap(data)));
-    
+    _socket!.on('host_connected_success',
+        (data) => _hostConnectedSuccessController.add(_toMap(data)));
+    _socket!.on('player_connected_to_server',
+        (data) => _playerConnectedSuccessController.add(_toMap(data)));
+    _socket!.on('host_lobby_update',
+        (data) => _playersUpdateController.add(_toMap(data)));
+
     // Otros eventos
-    _socket!.on('room_joined', (data) => _roomJoinedController.add(_toMap(data)));
-    _socket!.on('player_joined', (data) => _playersUpdateController.add(_toMap(data)));
-    _socket!.on('question_started', (data) => _questionStartedController.add(_toMap(data)));
-    _socket!.on('host_results', (data) => _hostResultsController.add(_toMap(data)));
-    _socket!.on('player_results', (data) => _playerResultsController.add(_toMap(data)));
+    _socket!
+        .on('room_joined', (data) => _roomJoinedController.add(_toMap(data)));
+    _socket!.on(
+        'player_joined', (data) => _playersUpdateController.add(_toMap(data)));
+    _socket!.on('question_started', (data) {
+      print(
+          "✅ [DATASOURCE] HANDLER: question_started detected! Data received: $data");
+      _questionStartedController.add(_toMap(data));
+    });
+    _socket!
+        .on('host_results', (data) => _hostResultsController.add(_toMap(data)));
+    _socket!.on(
+        'player_results', (data) => _playerResultsController.add(_toMap(data)));
     _socket!.on('game_end', (data) => _gameEndController.add(_toMap(data)));
-    _socket!.on('session_closed', (data) => _sessionClosedController.add(_toMap(data)));
-    _socket!.on('player_left', (data) => _playerLeftController.add(_toMap(data)));
-    _socket!.on('answer_update', (data) => _answerUpdateController.add(_toMap(data)));
-    
-    _socket!.on('exception', (data) => _errorController.add(data)); 
+    _socket!.on(
+        'session_closed', (data) => _sessionClosedController.add(_toMap(data)));
+    _socket!
+        .on('player_left', (data) => _playerLeftController.add(_toMap(data)));
+    _socket!.on(
+        'answer_update', (data) => _answerUpdateController.add(_toMap(data)));
+
+    _socket!.on('exception', (data) => _errorController.add(data));
 
     // Esperar a que el evento onConnect ocurra antes de seguir
     return completer.future;
@@ -166,27 +196,35 @@ _socket!.onConnectError((data) {
 
   // Getters de los Streams
   @override
-  Stream<Map<String, dynamic>> get onHostConnectedSuccess => _hostConnectedSuccessController.stream;
+  Stream<Map<String, dynamic>> get onHostConnectedSuccess =>
+      _hostConnectedSuccessController.stream;
   @override
-  Stream<Map<String, dynamic>> get onPlayerConnectedSuccess => _playerConnectedSuccessController.stream;
+  Stream<Map<String, dynamic>> get onPlayerConnectedSuccess =>
+      _playerConnectedSuccessController.stream;
   @override
   Stream<Map<String, dynamic>> get onRoomJoined => _roomJoinedController.stream;
   @override
-  Stream<Map<String, dynamic>> get onPlayersUpdate => _playersUpdateController.stream;
+  Stream<Map<String, dynamic>> get onPlayersUpdate =>
+      _playersUpdateController.stream;
   @override
-  Stream<Map<String, dynamic>> get onQuestionStarted => _questionStartedController.stream;
+  Stream<Map<String, dynamic>> get onQuestionStarted =>
+      _questionStartedController.stream;
   @override
-  Stream<Map<String, dynamic>> get onHostResults => _hostResultsController.stream;
+  Stream<Map<String, dynamic>> get onHostResults =>
+      _hostResultsController.stream;
   @override
-  Stream<Map<String, dynamic>> get onPlayerResults => _playerResultsController.stream;
+  Stream<Map<String, dynamic>> get onPlayerResults =>
+      _playerResultsController.stream;
   @override
   Stream<Map<String, dynamic>> get onGameEnd => _gameEndController.stream;
   @override
   Stream<dynamic> get onError => _errorController.stream;
   @override
-  Stream<Map<String, dynamic>> get onSessionClosed => _sessionClosedController.stream;
+  Stream<Map<String, dynamic>> get onSessionClosed =>
+      _sessionClosedController.stream;
   @override
   Stream<Map<String, dynamic>> get onPlayerLeft => _playerLeftController.stream;
   @override
-  Stream<Map<String, dynamic>> get onAnswerCountUpdate => _answerUpdateController.stream;
+  Stream<Map<String, dynamic>> get onAnswerCountUpdate =>
+      _answerUpdateController.stream;
 }
