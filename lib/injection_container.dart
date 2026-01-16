@@ -7,6 +7,12 @@ import 'package:flutter/foundation.dart';
 import 'core/network/api_client.dart';
 import 'core/storage/token_storage.dart';
 
+// --- Feature: Kahoot ---
+import 'features/kahoot/domain/repositories/ikahoot_repository.dart';
+import 'features/kahoot/infrastructure/repositories/kahoot_repository_impl.dart';
+import 'features/kahoot/infrastructure/datasources/kahoot_remote_datasource.dart';
+import 'features/kahoot/application/use_cases/save_kahoot_use_case.dart';
+
 //--- Feature: User ---
 import 'features/user/presentation/profile_bloc.dart';
 import 'features/auth/application/get_user_profile.dart';
@@ -94,13 +100,34 @@ import 'core/mappers/exception_failure_mapper.dart';
 // Instancia global del Service Locator
 final sl = GetIt.instance;
 
+// 🔴 URL BASE CENTRALIZADA PARA TODA LA APLICACIÓN
 const String _baseUrl = 'https://quizzy-backend-1-zpvc.onrender.com';
 const String _apiSufix = '/api';
+const String apiBaseUrl = '$_baseUrl$_apiSufix';
 
 Future<void> init() async {
   // ================================================================
   // 1. FEATURES
   // ================================================================
+
+  // --- Kahoot (Épica de creación/edición) ---
+  // Data Source
+  sl.registerLazySingleton<KahootRemoteDataSource>(
+    () => KahootRemoteDataSource(),
+  );
+
+  // Repository
+  sl.registerLazySingleton<KahootRepository>(
+    () => KahootRepositoryImpl(sl<KahootRemoteDataSource>()),
+  );
+
+  // También registrar la implementación por si acaso se necesita
+  sl.registerLazySingleton<KahootRepositoryImpl>(
+    () => KahootRepositoryImpl(sl<KahootRemoteDataSource>()),
+  );
+
+  // Use Cases
+  sl.registerLazySingleton(() => SaveKahootUseCase(sl<KahootRepository>()));
 
   // --- Discovery (H6.1) ---
   sl.registerFactory(() => DiscoveryBloc(repository: sl()));
@@ -174,10 +201,8 @@ Future<void> init() async {
   sl.registerLazySingleton(() => GetMyGroupsUseCase(sl()));
   sl.registerLazySingleton(() => CreateGroupUseCase(sl()));
   sl.registerLazySingleton(() => JoinGroupUseCase(sl()));
-
   sl.registerLazySingleton(() => GetGroupQuizzesUseCase(sl()));
   sl.registerLazySingleton(() => GetGroupLeaderboardUseCase(sl()));
-
   sl.registerLazySingleton(() => GenerateInvitationUseCase(sl()));
   sl.registerLazySingleton(() => AssignQuizUseCase(sl()));
   sl.registerLazySingleton(() => UpdateGroupUseCase(sl()));
@@ -241,7 +266,6 @@ Future<void> init() async {
   );
 
   // --- Multiplayer ---
-
   // Data Source
   sl.registerLazySingleton<MultiplayerSocketDataSource>(
     () => MultiplayerSocketDataSourceImpl(),
@@ -312,23 +336,22 @@ Future<void> init() async {
   // ================================================================
   // AUTH & PROFILE FEATURE
   // ================================================================
-
   sl.registerLazySingleton(() => GetUserProfileUseCase(sl()));
   sl.registerLazySingleton(() => UpdateProfileUseCase(sl()));
 
   sl.registerFactory(
     () => ProfileBloc(
       getUserProfile: sl<GetUserProfileUseCase>(),
-      updateUserProfile: sl<UpdateProfileUseCase>(), // Añade esta dependencia
+      updateUserProfile: sl<UpdateProfileUseCase>(),
     ),
   );
 
-  // 3. Repository: Debes registrar la interfaz vinculada a su implementación
+  // Repository: Debes registrar la interfaz vinculada a su implementación
   sl.registerLazySingleton<AuthRepository>(
     () => AuthRepositoryImpl(dataSource: sl(), mapper: sl()),
   );
 
-  // 4. Data Source: La fuente de datos remota
+  // Data Source: La fuente de datos remota
   sl.registerLazySingleton<AuthDataSource>(
     () => AuthRemoteDataSourceImpl(client: sl()),
   );
@@ -341,7 +364,7 @@ Future<void> init() async {
   sl.registerLazySingleton(
     () => Dio(
       BaseOptions(
-        baseUrl: '$_baseUrl$_apiSufix',
+        baseUrl: apiBaseUrl, // 🔴 USANDO URL CENTRALIZADA
         connectTimeout: const Duration(seconds: 30),
         receiveTimeout: const Duration(seconds: 30),
       ),

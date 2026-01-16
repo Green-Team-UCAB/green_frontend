@@ -13,7 +13,6 @@ class ThemeRepositoryImpl implements ThemeRepository {
     try {
       final themesData = await remoteDataSource.getThemes();
       
-      // Filtrar solo los elementos que son temas (contienen "Tema" en el nombre)
       final filteredThemes = themesData.where((item) {
         final name = item['name']?.toString() ?? '';
         return name.contains('Tema') || name.contains('tema');
