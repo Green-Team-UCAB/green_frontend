@@ -4,7 +4,20 @@ class AuthSignUp extends AuthEvent {
   final String userName;
   final String email;
   final String password;
-  AuthSignUp({required this.userName, required this.email, required this.password});
+  final String name;      
+  final String type;      
+  final String? description;
+  final String? avatarAssetUrl;
+
+  AuthSignUp({
+    required this.userName,
+    required this.email,
+    required this.password,
+    required this.name,
+    required this.type,
+    this.description,
+    this.avatarAssetUrl,
+  });
 }
 
 class AuthLogin extends AuthEvent {

@@ -12,37 +12,39 @@ class MultiplayerGameScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocConsumer<MultiplayerBloc, MultiplayerState>(
       listener: (context, state) {
-        // Al terminar el tiempo, el server mandará un evento que cambie el estado
         if (state.status == MultiplayerStatus.showingResults) {
-          Navigator.pushReplacement( // Usamos replacement para no volver atrás a la pregunta
-      context,
-      MaterialPageRoute(builder: (_) => const MultiplayerResultsScreen()),
-    );
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const MultiplayerResultsScreen()),
+          );
         }
       },
       builder: (context, state) {
-        // Extraemos los datos del payload 'question_started'
-        final slide = state.currentSlide; 
-        final bool hasAnswered = state.hasAnswered;
+        final slide = state.currentSlide;
+
+        // 🔥 Evita crash si slide aún no ha llegado
+        if (slide == null) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
 
         return Scaffold(
           backgroundColor: const Color(0xFFF2F2F2),
           body: SafeArea(
             child: Column(
               children: [
-                // 1. Cronómetro y Progreso (Pág 64: timeRemainingMs)
                 _buildHeader(state),
 
-                // 2. Imagen y Pregunta (Pág 64: slideImageURL y questionText)
+                // 🔥 NO usar Expanded dentro de _buildQuestionArea
                 Expanded(
                   flex: 3,
                   child: _buildQuestionArea(slide),
                 ),
 
-                // 3. Opciones de Respuesta (Pág 64: options[])
                 Expanded(
                   flex: 4,
-                  child: _buildOptionsGrid(context, slide, hasAnswered, state),
+                  child: _buildOptionsGrid(context, slide, state),
                 ),
               ],
             ),
@@ -53,8 +55,6 @@ class MultiplayerGameScreen extends StatelessWidget {
   }
 
   Widget _buildHeader(MultiplayerState state) {
-    // Cronómetro y progreso (Pág 64: timeRemainingMs)
-    // Asumimos 30 segundos por pregunta
     const int totalTimeMs = 30000;
     final startTime = state.questionStartTime ?? DateTime.now();
     final elapsed = DateTime.now().difference(startTime).inMilliseconds;
@@ -71,7 +71,11 @@ class MultiplayerGameScreen extends StatelessWidget {
               value: progress,
               backgroundColor: Colors.grey[300],
               valueColor: AlwaysStoppedAnimation<Color>(
-                remaining > 10000 ? Colors.green : remaining > 5000 ? Colors.orange : Colors.red,
+                remaining > 10000
+                    ? Colors.green
+                    : remaining > 5000
+                        ? Colors.orange
+                        : Colors.red,
               ),
             ),
           ),
@@ -89,14 +93,15 @@ class MultiplayerGameScreen extends StatelessWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        if (slide?.slideImageURL != null)
-          Expanded(
-            child: Image.network(slide!.slideImageURL, fit: BoxFit.contain),
+        if (slide.slideImageURL != null)
+          SizedBox(
+            height: 180, // 🔥 Tamaño fijo, NO Expanded
+            child: Image.network(slide.slideImageURL, fit: BoxFit.contain),
           ),
         Padding(
           padding: const EdgeInsets.all(16.0),
           child: Text(
-            slide?.questionText ?? "Cargando...",
+            slide.questionText,
             style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
@@ -105,11 +110,17 @@ class MultiplayerGameScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildOptionsGrid(BuildContext context, dynamic slide, bool hasAnswered, MultiplayerState state) {
-    final options = slide?.options ?? [];
-    
-    // Colores clásicos de Kahoot para las opciones
-    final List<Color> colors = [Colors.red, Colors.blue, Colors.orange, Colors.green];
+  Widget _buildOptionsGrid(
+      BuildContext context, dynamic slide, MultiplayerState state) {
+    final options = slide.options;
+    final hasAnswered = state.hasAnswered;
+
+    final List<Color> colors = [
+      Colors.red,
+      Colors.blue,
+      Colors.orange,
+      Colors.green
+    ];
 
     return GridView.builder(
       padding: const EdgeInsets.all(16),
@@ -122,43 +133,41 @@ class MultiplayerGameScreen extends StatelessWidget {
       itemCount: options.length,
       itemBuilder: (context, index) {
         final option = options[index];
+
         return ElevatedButton(
           style: ElevatedButton.styleFrom(
             backgroundColor: colors[index % colors.length],
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            // Si ya respondió, deshabilitamos visualmente
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             elevation: hasAnswered ? 0 : 4,
           ),
-          // Bloqueamos el click si ya respondió o si es el Host
-          onPressed: hasAnswered 
-            ? null 
-            : () => _submitAnswer(context, state, option.index),
+          onPressed: hasAnswered
+              ? null
+              : () => _submitAnswer(context, state, option.index),
           child: Text(
             option.text,
-            style: const TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+                fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold),
           ),
         );
       },
     );
   }
 
- void _submitAnswer(BuildContext context, MultiplayerState state, int optionIndex) {
-  // 1. Obtenemos el ID de la pregunta
-  final String qId = state.currentSlide?.id ?? "";
+  void _submitAnswer(
+      BuildContext context, MultiplayerState state, int optionIndex) {
+    final String qId = state.currentSlide?.id ?? "";
 
-  // 2. Calculamos el tiempo
-  final startTime = state.questionStartTime ?? DateTime.now();
-  final int elapsed = DateTime.now().difference(startTime).inMilliseconds;
+    final startTime = state.questionStartTime ?? DateTime.now();
+    final int elapsed = DateTime.now().difference(startTime).inMilliseconds;
 
-  // 3. Enviamos el evento usando tus Value Objects
-  context.read<MultiplayerBloc>().add(
-    OnSubmitAnswer(
-      questionId: qId,
-      // Usamos tus Value Objects definidos en los imports
-      answerIds: AnswerIds([optionIndex.toString()]), 
-      timeElapsedMs: TimeElapsedMs(elapsed),
-    ),
-  );
-}
-
+    context.read<MultiplayerBloc>().add(
+          OnSubmitAnswer(
+            questionId: qId,
+            answerIds: AnswerIds([optionIndex.toString()]),
+            timeElapsedMs: TimeElapsedMs(elapsed),
+          ),
+        );
+  }
 }

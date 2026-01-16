@@ -12,7 +12,7 @@ class MultiplayerLobbyScreen extends StatelessWidget {
     return BlocConsumer<MultiplayerBloc, MultiplayerState>(
       listener: (context, state) {
         if (state.status == MultiplayerStatus.inQuestion) {
-          Navigator.pushNamed(context, '/multplayer_screen');
+          Navigator.pushNamed(context, '/multiplayer_screen');
         }
         if (state.status == MultiplayerStatus.error) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -24,57 +24,59 @@ class MultiplayerLobbyScreen extends StatelessWidget {
         return Scaffold(
           backgroundColor: const Color(0xFF46178F), 
           body: SafeArea(
-  child: Column(
-    children: [
-      _buildHeader(state),
-      const SizedBox(height: 10),
-
-      // Todo lo que crece va aquí
-      Expanded(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
-                    "Jugadores",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  _buildHeader(state),
+                  const SizedBox(height: 10),
+
+                  // Todo lo que crece va aquí
+                  Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              "Jugadores",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Chip(
+                              label: Text(
+                                "${state.lobby?.players.length ?? 0}",
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              backgroundColor: Colors.white,
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      // La lista ocupa el espacio flexible
+                      SizedBox(
+                        height: 300, // Fixed height for simplicity
+                        child: _buildPlayerList(state),
+                      ),
+                    ],
                   ),
-                  Chip(
-                    label: Text(
-                      "${state.lobby?.players.length ?? 0}",
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    backgroundColor: Colors.white,
+
+                  // Footer SIEMPRE fuera del Expanded
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    child: _buildFooter(context, state),
                   ),
                 ],
               ),
             ),
-
-            const SizedBox(height: 10),
-
-            // La lista ocupa el espacio flexible
-            Expanded(
-              child: _buildPlayerList(state),
-            ),
-          ],
-        ),
-      ),
-
-      // Footer SIEMPRE fuera del Expanded
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        child: _buildFooter(context, state),
-      ),
-    ],
-  ),
-),
+          ),
         );
       },
     );
@@ -125,40 +127,41 @@ class MultiplayerLobbyScreen extends StatelessWidget {
 
   // Lista de jugadores en tiempo real (Pág 58: event player_joined)
   Widget _buildPlayerList(MultiplayerState state) {
-    final players = state.lobby?.players ?? [];
-    
-    if (players.isEmpty) {
-      return const Center(
-        child: Text("Esperando a los jugadores...", 
-          style: TextStyle(color: Colors.white, fontSize: 20)),
-      );
-    }
+  final players = state.lobby?.players ?? [];
 
-    return GridView.builder(
-      padding: const EdgeInsets.all(20),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 3,
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
+  if (players.isEmpty) {
+    return const Center(
+      child: Text(
+        "Esperando a los jugadores...",
+        style: TextStyle(color: Colors.white, fontSize: 20),
       ),
-      itemCount: players.length,
-      itemBuilder: (context, index) {
-        return Container(
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.2),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Center(
-            child: Text(
-              players[index].nickname,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-            ),
-          ),
-        );
-      },
     );
   }
+
+  return ListView.builder(
+    padding: const EdgeInsets.all(20),
+    itemCount: players.length,
+    itemBuilder: (context, index) {
+      final player = players[index]; // 👈 Player fuertemente tipado
+
+      return Container(
+        margin: const EdgeInsets.symmetric(vertical: 5),
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.2),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          player.nickname, // 👈 Aquí está el fix
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      );
+    },
+  );
+}
 
   // Botón de acción (Solo para el Host)
   Widget _buildFooter(BuildContext context, MultiplayerState state) {

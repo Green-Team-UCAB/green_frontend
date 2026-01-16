@@ -59,7 +59,7 @@ Future<Either<Failure, Unit>> connect({
 
   @override
   void emitPlayerJoin(Nickname nickname) {
-    dataSource.emit('join_room', {'nickname': nickname.value});
+    dataSource.emit('player_join', {'nickname': nickname.value});
   }
 
   @override
@@ -90,7 +90,7 @@ Future<Either<Failure, Unit>> connect({
 
   @override
   void emitHostStartGame() {
-    dataSource.emit('start_game', {});
+    dataSource.emit('host_start_game', {});
   }
 
   // --- ESCUCHAS (Transformación de Datos) ---
