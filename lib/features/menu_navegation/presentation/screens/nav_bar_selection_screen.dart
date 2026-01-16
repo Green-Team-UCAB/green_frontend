@@ -18,14 +18,15 @@ class NavBarSelectionScreen extends StatelessWidget {
 
   // Lista actualizada: Solo 5 pantallas
   final List<Widget> pages = [
-    ProfileScreen(), // 0: Inicio
+     // 0: Inicio
     DiscoverScreen(), // 1: Descubre
+    CreateScreen(), // 3: Crear
     BlocProvider(
     create: (_) => sl<MultiplayerBloc>(),
     child: const JoinGameScreen(),
   ),
-    CreateScreen(), // 3: Crear
     LibraryPage(), // 4: Biblioteca (El nuevo Hub Principal)
+    ProfileScreen(), //Perfil de usuario
   ];
 
   @override
@@ -56,12 +57,12 @@ class NavBarSelectionScreen extends StatelessWidget {
         // Lista actualizada: Solo 5 ítems
         items: [
           const BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Inicio',
+            icon: Icon(Icons.search),
+            label: 'Buscar',
           ),
           const BottomNavigationBarItem(
-            icon: Icon(Icons.search),
-            label: 'Descubre',
+            icon: Icon(Icons.add_box_outlined),
+            label: 'Crear',
           ),
 
           // Botón central "Unirse" destacado (Opcional: puedes personalizarlo más si quieres)
@@ -81,14 +82,14 @@ class NavBarSelectionScreen extends StatelessWidget {
           ),
 
           const BottomNavigationBarItem(
-            icon: Icon(Icons.add_box_outlined),
-            label: 'Crear',
+            icon: Icon(Icons.library_books_outlined),
+            label: 'Biblioteca',
           ),
 
           // "Grupos" ELIMINADO ❌
           const BottomNavigationBarItem(
             icon: Icon(Icons.person_outline), // Icono de usuario/biblioteca
-            label: 'Biblioteca',
+            label: 'Perfil',
           ),
         ],
       ),
