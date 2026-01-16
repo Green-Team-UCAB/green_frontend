@@ -21,6 +21,9 @@ class KickMemberEvent extends GroupSettingsEvent {
   final String groupId;
   final String memberId;
   KickMemberEvent({required this.groupId, required this.memberId});
+  @override
+  String toString() =>
+      'KickMemberEvent(groupId: $groupId, memberId: $memberId)';
 }
 
 class DeleteGroupEvent extends GroupSettingsEvent {
